@@ -8,6 +8,7 @@
 - ADR-002: repo root is `C:\ai_projects_v1\resume-website` (not handoff's `E:\superposition`); orphan branch `main` with placeholder git author for public history; portable Node v24.18.0 in scratchpad (no system install); python 3.12 (not 3.14) serves.
 
 ### Position
-- P0 PASSED. ADR-001: single TSL codebase, both backends (spike numbers in ADR). Vendored three r185. Budget 289.7/900 KB gz.
-- Next: P1 content layer (semantic HTML/CSS from schema, print.css, static SVG, router, 404, fonts Ladder B).
-- Bite: browser pane is always `document.hidden` → rAF throttled; perf must be measured by awaited-loop throughput or Playwright headed mode. renderAsync deprecated in r185.
+- P0 PASSED (8e7b486+95d5dfd). ADR-001: single TSL codebase both backends. three r185 vendored.
+- P1 PASSED. Content layer complete: baked+runtime render (ADR-004), router/DOM contract, print, 404, static SVG, fonts 92.8 KB. LH 96/100/96/100. 25 tests green.
+- Next: P2 field engine (js/field/engine.js + attractors + TSL sim + pointer + pause courtesy; §5.3 spec; seeded PRNG `?seed=`).
+- Bite: browser pane is always `document.hidden` → rAF throttled; perf via awaited-loop throughput or Playwright. renderAsync deprecated in r185. WebGPU pads vec3 storage to stride 4 on readback; WebGL keeps stride 3. Lighthouse CLI exits 1 on Windows tmp cleanup AFTER writing reports.

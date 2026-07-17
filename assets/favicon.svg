@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- seven attractor dots, one Klein (live state) -->
+  <style>circle{fill:#10131A}@media(prefers-color-scheme:dark){circle{fill:#E9ECF2}}.k{fill:#002FA7!important}</style>
+  <circle cx="9" cy="8" r="3.4"/>
+  <circle cx="22" cy="6.5" r="2.3"/>
+  <circle class="k" cx="16.5" cy="21" r="3"/>
+  <circle cx="26" cy="18" r="1.6"/>
+  <circle cx="6" cy="19.5" r="1.8"/>
+  <circle cx="12" cy="27" r="1.5"/>
+  <circle cx="25" cy="26.5" r="1.9"/>
+</svg>

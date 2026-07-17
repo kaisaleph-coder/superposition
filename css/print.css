@@ -1,0 +1,51 @@
+/* SUPERPOSITION print (PLAN §8) — the canonical one-pager. Collapses everything to a
+   typeset chronological resume: galley typography, no field, ink on white. Renders
+   from the same DOM/data as the site — zero divergence by construction. */
+
+@page { size: auto; margin: 16mm 18mm; }
+
+:root {
+  --paper: #fff;
+  --paper-deep: #eee;
+  --ink: #10131A;
+  --ink-60: #444a56;
+}
+
+body { background: #fff !important; color: var(--ink); font-size: 10.5pt; line-height: 1.45; }
+
+/* field, chrome, and interactive hints vanish */
+#field, #rail, .skip, .hint, .back { display: none !important; }
+body[data-tier="0"] { background: #fff !important; }
+
+/* every view prints, stacked — the full record IS the page */
+main { height: auto !important; overflow: visible !important; padding: 0 !important; max-width: none !important; }
+.view { display: block !important; opacity: 1 !important; transform: none !important; margin: 0 0 9pt; max-width: none; }
+.view[hidden] { display: block !important; }
+
+/* print = record-first: home identity block, then record, then facet detail */
+#view-home { margin-bottom: 12pt; }
+h1 { font-size: 22pt; line-height: 1.05; margin-bottom: 3pt; }
+.positioning { font-size: 10.5pt; margin-bottom: 4pt; color: var(--ink-60); }
+.eyebrow { margin-bottom: 4pt; color: var(--ink-60); }
+
+.manifest { margin-bottom: 6pt; }
+.manifest li { font-size: 11.5pt; line-height: 1.25; margin-bottom: 2pt; }
+.manifest li.legend { display: none; }
+
+.dossiers { border-top: 1pt solid #ccc; }
+.dossier { border-bottom: .5pt solid #ddd; break-inside: avoid; }
+.dossier > button { padding: 3pt 0; cursor: default; }
+/* dossier bodies always open in print */
+.js .dossier .body, .dossier .body { max-height: none !important; overflow: visible !important; }
+.dossier p { font-size: 9.5pt; margin-bottom: 2pt; }
+.skillrun { font-size: 9pt; line-height: 1.5; }
+.chips { margin-top: 2pt; }
+.chip { border: .5pt solid #ccc; background: #fff; padding: 1pt 3pt; font-size: 7.5pt; }
+
+.record li { padding: 2.5pt 0; border-bottom: .5pt solid #eee; font-size: 9.5pt; grid-template-columns: 10ch 1fr; }
+
+/* links as visible URLs (§8) — only when an href is a real URL */
+a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 8pt; color: var(--ink-60); }
+
+footer { position: static !important; padding: 6pt 0 0; font-size: 8pt; color: var(--ink-60); }
+footer a { text-decoration: none; color: var(--ink-60); }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>No such state</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<style>
+  :root { --paper:#F2F4F7; --ink:#10131A; --ink-60:#4A5160; --klein:#002FA7; --klein-live:#2743FF; }
+  @media (prefers-color-scheme: dark) { :root { --paper:#0C0E13; --ink:#E9ECF2; --ink-60:#9AA3B2; } }
+  @font-face { font-family:"Archivo VF"; src:url("assets/fonts/archivo-vf.woff2") format("woff2-variations");
+               font-weight:100 900; font-stretch:62% 125%; font-display:swap; }
+  * { box-sizing:border-box; margin:0; }
+  body { min-height:100vh; background:var(--paper) url("assets/field-static.svg") no-repeat center / cover;
+         color:var(--ink); font-family:"Archivo VF",Archivo,system-ui,sans-serif;
+         display:grid; place-items:center; padding:24px; }
+  main { max-width:42ch; }
+  p.eyebrow { font-size:.72rem; font-stretch:118%; letter-spacing:.14em; text-transform:uppercase;
+              color:var(--ink-60); margin-bottom:1rem; }
+  h1 { font-size:clamp(2.2rem,6vw,4rem); font-weight:800; font-stretch:66%; line-height:1; margin-bottom:.8rem; }
+  p  { color:var(--ink-60); line-height:1.6; }
+  a  { color:var(--klein); }
+  a:hover, a:focus-visible { color:var(--klein-live); }
+</style>
+</head>
+<body data-state="404">
+<main>
+  <p class="eyebrow">Decoherence</p>
+  <h1>No such state</h1>
+  <p>The address you followed does not correspond to any observable state of this system.
+     <a href="./">Return to superposition</a>.</p>
+</main>
+</body>
+</html>
