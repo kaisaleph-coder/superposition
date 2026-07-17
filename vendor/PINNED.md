@@ -1,0 +1,1 @@
+﻿three.js r185 (npm three@0.185.1, MIT) — files: three.webgpu.min.js, three.core.min.js (relative import of the former), three.tsl.min.js. Vendored 2026-07-17; no CDN at runtime. Update = replace these three files together.

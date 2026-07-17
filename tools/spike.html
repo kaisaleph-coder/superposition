@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ADR-001 spike — TSL compute through WebGPU/WebGL2 backends</title>
+<style>body{background:#F2F4F7;color:#10131A;font:14px/1.5 monospace;margin:0}
+#hud{position:fixed;top:12px;left:12px;background:#fffc;padding:10px 14px;white-space:pre;z-index:2}
+canvas{position:fixed;inset:0}</style>
+<script type="importmap">
+{"imports":{
+  "three": "../vendor/three.webgpu.min.js",
+  "three/webgpu": "../vendor/three.webgpu.min.js",
+  "three/tsl": "../vendor/three.tsl.min.js"
+}}
+</script>
+</head>
+<body data-spike="booting">
+<div id="hud">booting…</div>
+<script type="module">
+import * as THREE from 'three/webgpu';
+import { Fn, instancedArray, instanceIndex, float, vec3, vec4, uniform, deltaTime, time, hash, mix, clamp, sin, length as tslLength } from 'three/tsl';
+
+const hud = document.getElementById('hud');
+const B = document.body;
+const q = new URLSearchParams(location.search);
+const N = parseInt(q.get('n') || '131072', 10);
+const forceWebGL = q.get('force') === 'webgl';
+const report = (obj) => { hud.textContent = JSON.stringify(obj, null, 1); };
+
+async function main() {
+  B.dataset.spike = 'init';
+  const renderer = new THREE.WebGPURenderer({ antialias: false, forceWebGL });
+  await renderer.init();
+  const backend = renderer.backend.isWebGPUBackend ? 'webgpu' : 'webgl';
+  B.dataset.backend = backend;
+
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  document.body.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xF2F4F7);
+  const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 2.7);
+
+  // storage buffers
+  const positions = instancedArray(N, 'vec3');
+  const velocities = instancedArray(N, 'vec3');
+
+  // init kernel: hash-scatter cloud
+  const init = Fn(() => {
+    const p = positions.element(instanceIndex);
+    const i = instanceIndex.toFloat();
+    p.x = hash(instanceIndex).sub(0.5).mul(3.2);
+    p.y = hash(instanceIndex.add(1e6)).sub(0.5).mul(3.2);
+    p.z = hash(instanceIndex.add(2e6)).sub(0.5).mul(3.2);
+    velocities.element(instanceIndex).assign(vec3(0));
+  })().compute(N);
+
+  // update kernel: spring toward a morphing target + sin noise, semi-implicit Euler
+  const kSpring = uniform(3.5);
+  const update = Fn(() => {
+    const p = positions.element(instanceIndex);
+    const v = velocities.element(instanceIndex);
+    const i = instanceIndex.toFloat();
+    // target: helix (mimics attractor math cost)
+    const t01 = i.div(N);
+    const th = t01.mul(44.0).add(time.mul(0.1));
+    const ty = t01.mul(1.84).sub(0.92);
+    const r = float(0.86).sub(t01.mul(0.55));
+    const target = vec3(th.cos().mul(r), ty, th.sin().mul(r));
+    const f = target.sub(p).mul(kSpring)
+      .add(vec3(sin(p.y.mul(3.1).add(time.mul(0.9))), sin(p.z.mul(2.7).add(time.mul(1.2))), sin(p.x.mul(3.4).add(time.mul(0.8)))).mul(0.4));
+    v.assign(v.add(f.mul(deltaTime)).mul(0.96));
+    p.assign(p.add(v.mul(deltaTime)));
+  })().compute(N);
+
+  const material = new THREE.SpriteNodeMaterial({ depthWrite: false });
+  material.positionNode = positions.toAttribute();
+  const speed = tslLength(velocities.toAttribute());
+  material.colorNode = vec4(mix(vec3(0.063, 0.075, 0.102), vec3(0.153, 0.263, 1.0), clamp(speed.mul(1.9), 0, 1)), 0.6);
+  material.scaleNode = float(0.006);
+  material.transparent = true;
+  const mesh = new THREE.Sprite(material);
+  mesh.count = N;
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+
+  await renderer.computeAsync(init);
+
+  // GPU sync: force queue drain via storage-buffer readback (falls back to renderAsync only)
+  async function sync() {
+    try { await renderer.getArrayBufferAsync(positions.value); return true; }
+    catch { return false; }
+  }
+
+  // Visibility-independent throughput measurement: warmup, then F frames wall-clocked
+  // between two GPU syncs. rAF/vsync unusable in hidden panes (ADR-001 methodology).
+  B.dataset.spike = 'measuring';
+  report({ backend, n: N, status: 'measuring…' });
+  const times = [];
+  for (let i = 0; i < 30; i++) { renderer.compute(update); await renderer.renderAsync(scene, camera); }
+  const synced = await sync();
+  const F = 300;
+  const t0 = performance.now();
+  for (let i = 0; i < F; i++) {
+    const f0 = performance.now();
+    renderer.compute(update);
+    await renderer.renderAsync(scene, camera);
+    times.push(performance.now() - f0);
+  }
+  await sync();
+  const dt = performance.now() - t0;
+  const sorted = [...times].sort((a, b) => a - b);
+  const result = {
+    backend, n: N, gpuSynced: synced,
+    throughputFps: +(1000 * F / dt).toFixed(1),
+    medianFrameMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
+    p95FrameMs: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
+  };
+  B.dataset.spike = 'done';
+  B.dataset.fps = result.throughputFps;
+  B.dataset.result = JSON.stringify(result);
+  report(result);
+}
+
+main().catch((e) => {
+  B.dataset.spike = 'error';
+  B.dataset.error = String(e && e.message || e);
+  report({ error: String(e), stack: e && e.stack });
+});
+</script>
+</body>
+</html>

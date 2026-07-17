@@ -1,0 +1,12 @@
+{
+  "name": "superposition-devtools",
+  "private": true,
+  "description": "Dev tooling only (budget script, Playwright). The site itself has no build step and no runtime dependencies.",
+  "scripts": {
+    "budget": "node tools/budget.mjs",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "three": "0.185.1"
+  }
+}
