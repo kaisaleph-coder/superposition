@@ -10,5 +10,6 @@
 ### Position
 - P0 PASSED (8e7b486+95d5dfd). ADR-001: single TSL codebase both backends. three r185 vendored.
 - P1 PASSED. Content layer complete: baked+runtime render (ADR-004), router/DOM contract, print, 404, static SVG, fonts 92.8 KB. LH 96/100/96/100. 25 tests green.
-- Next: P2 field engine (js/field/engine.js + attractors + TSL sim + pointer + pause courtesy; §5.3 spec; seeded PRNG `?seed=`).
+- P2 engine built & verified: webgpu T1 131k (pane, step API, pixel-proof 14.7%), webgl T3 60fps rAF-locked (headless), boot 692–805 ms, deterministic ?seed (fixed dt + frame-240 settle). 5-min soak in flight. Scroll integration (§2.5, a P3 item) landed during the soak idle window — noted as minor phase-order deviation.
+- History note: main was rebuilt once (cherry-pick) to purge an owner name-fragment from two receipt blobs; trees verified identical; full-history sweep clean.
 - Bite: browser pane is always `document.hidden` → rAF throttled; perf via awaited-loop throughput or Playwright. renderAsync deprecated in r185. WebGPU pads vec3 storage to stride 4 on readback; WebGL keeps stride 3. Lighthouse CLI exits 1 on Windows tmp cleanup AFTER writing reports.

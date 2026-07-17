@@ -11,6 +11,10 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:8080",
     screenshot: "only-on-failure",
+    // headless chromium needs explicit GPU wiring for WebGL2/WebGPU (probe-verified args)
+    launchOptions: {
+      args: ["--enable-unsafe-webgpu", "--enable-features=Vulkan,UseSkiaRenderer", "--use-angle=d3d11"],
+    },
   },
   expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.02 } },
   projects: [

@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "superposition-devtools",
   "private": true,
   "type": "module",
@@ -11,9 +11,9 @@
     "three": "0.185.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@fontsource-variable/archivo": "5.2.8",
     "@fontsource/fragment-mono": "5.2.8",
     "@playwright/test": "1.61.1"
   }
 }
-

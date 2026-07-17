@@ -1,0 +1,35 @@
+# Optional CI receipts (PLAN §9): budget + DOM/content/a11y QA on every push.
+# Field/visual/perf specs need a real GPU and run locally (see tools/soak.mjs);
+# CI runners get the content-layer matrix + budget gate as public green checks.
+name: qa
+on: [push, pull_request]
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Budget gate
+        run: node tools/budget.mjs
+      - name: Install dev tooling
+        run: npm install --no-fund --no-audit
+      - name: Install chromium
+        run: npx playwright install --with-deps chromium
+      - name: QA (content, state machine, print, a11y)
+        # --ignore-snapshots: visual baselines are Windows-rendered; CI checks behavior
+        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js --ignore-snapshots
+      - name: Dead-link check (rendered DOM, internal)
+        run: |
+          python -m http.server 8080 &
+          sleep 2
+          node -e "
+            const urls=['/','/404.html'];
+            for (const u of urls) {
+              const r = await fetch('http://localhost:8080'+u);
+              if (!r.ok) { console.error(u, r.status); process.exit(1); }
+            }
+            console.log('links ok');
+          "

@@ -22,6 +22,18 @@ const router = createRouter(document, {
   },
 });
 
+// §2.5 scroll-within-facet → engine (passive listener, native scroll untouched)
+const mainEl = document.querySelector("main");
+mainEl.addEventListener(
+  "scroll",
+  () => {
+    if (!engine) return;
+    const max = mainEl.scrollHeight - mainEl.clientHeight;
+    engine.setScroll(max > 0 ? mainEl.scrollTop / max : 0);
+  },
+  { passive: true }
+);
+
 // §5.4 tier detection → DOM contract attrs
 const tier = detectTier({ force: q.get("force") });
 body.dataset.tier = String(tier);
@@ -37,6 +49,7 @@ if (tier > 0) {
           tier,
           seed: q.get("seed"),
           force: q.get("force"),
+          run: q.has("run"),
           data,
         });
         // engine may have downgraded (e.g. WebGPU init failure → WebGL)
