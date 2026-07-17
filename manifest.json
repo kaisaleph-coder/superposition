@@ -1,0 +1,28 @@
+{
+  "schema": 2,
+  "id": "resume-website",
+  "name": "Resume Website",
+  "thesis": "Interactive personal resume website showcasing professional work and projects.",
+  "class": "L1",
+  "state": "planned",
+  "phases": [
+    {
+      "id": "P1",
+      "gate": "Design and project structure complete",
+      "status": "pending",
+      "owner": "[OWNER]",
+      "planned_start": "2026-07-17",
+      "planned_end": "2026-07-31",
+      "actual_start": null,
+      "actual_end": null,
+      "gate_date": null
+    }
+  ],
+  "cadence": {
+    "expected": "on-demand",
+    "ledger": "docs/"
+  },
+  "sunset_criteria": "unused 60d",
+  "review_date": null,
+  "repo": true
+}

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SUPERPOSITION — preview</title>
+<style>
+  :root{
+    --paper:#F2F4F7; --paper-deep:#E7EAF0;
+    --ink:#10131A; --ink-60:#4A5160;
+    --klein:#002FA7; --klein-live:#2743FF;
+    --galley:42ch;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:Archivo,"Archivo Variable",system-ui,-apple-system,"Segoe UI",sans-serif;
+    overflow:hidden;
+  }
+  #field{position:fixed; inset:0; z-index:0; display:block; transition:opacity .35s ease;}
+  body[data-dossier] #field{opacity:.35;}
+
+  /* ---------- galley ---------- */
+  main{
+    position:relative; z-index:2; height:100%;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    padding:clamp(20px,6vh,64px) clamp(20px,7vw,120px);
+    padding-right:clamp(64px,10vw,140px);
+    max-width:calc(var(--galley) + clamp(20px,7vw,120px) + clamp(64px,10vw,140px));
+  }
+  .view{max-width:var(--galley); opacity:0; transform:translateY(6px);
+        transition:opacity .24s ease, transform .24s ease;}
+  .view.on{opacity:1; transform:none;}
+  .view[hidden]{display:none;}
+
+  .eyebrow{
+    font-size:.72rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-60); display:flex; align-items:center; gap:.9em; margin-bottom:1.1rem;
+  }
+  .eyebrow .back{
+    all:unset; cursor:pointer; color:var(--klein); letter-spacing:.14em;
+    font-size:.72rem; text-transform:uppercase;
+  }
+  .eyebrow .back:hover,.eyebrow .back:focus-visible{color:var(--klein-live);}
+  h1{
+    font-size:clamp(2.5rem,7vw,4.6rem); font-weight:800; line-height:.98;
+    letter-spacing:-.035em; margin-bottom:.6rem;
+  }
+  .positioning{font-size:1.05rem; color:var(--ink-60); line-height:1.55; margin-bottom:2.2rem;}
+  .hint{font-size:.8rem; color:var(--ink-60); letter-spacing:.02em;}
+  .hint b{color:var(--klein); font-weight:600;}
+
+  .manifest{list-style:none; margin:0 0 2rem;}
+  .manifest li{
+    font-size:clamp(1.35rem,3.4vw,2.1rem); font-weight:800; line-height:1.16;
+    letter-spacing:-.028em; margin-bottom:.45em;
+  }
+  .manifest li.legend{
+    font-size:.8rem; font-weight:400; letter-spacing:.02em; line-height:1.55;
+    color:var(--ink-60); margin-top:1rem;
+  }
+  .manifest li.legend b{color:var(--ink); font-weight:700;}
+  .manifest li::selection{background:var(--klein); color:#fff;}
+
+  /* ---------- dossiers ---------- */
+  .dossiers{border-top:1px solid var(--paper-deep);}
+  .dossier{border-bottom:1px solid var(--paper-deep);}
+  .dossier>button{
+    all:unset; cursor:pointer; display:flex; width:100%; gap:1em;
+    align-items:baseline; justify-content:space-between; padding:.95rem 0;
+  }
+  .dossier>button:focus-visible{outline:2px solid var(--klein-live); outline-offset:3px;}
+  .dossier .t{font-weight:700; font-size:1rem; letter-spacing:-.01em;}
+  .dossier .m{font-family:"Fragment Mono",ui-monospace,Menlo,monospace;
+              font-size:.72rem; color:var(--ink-60); white-space:nowrap;}
+  .dossier .body{overflow:hidden; max-height:0; transition:max-height .22s ease;}
+  .dossier[open] .body{max-height:560px;}
+  .dossier .body-in{padding:.2rem 0 1.2rem;}
+  .dossier p{font-size:.95rem; line-height:1.62; color:var(--ink); margin-bottom:.55rem;}
+  .skillrun{font-size:.92rem; line-height:1.9;}
+  .skillrun .s1{font-weight:700; color:var(--ink);}
+  .skillrun .s2{font-weight:400; color:var(--ink);}
+  .skillrun .s3{color:var(--ink-60);}
+  .chips{display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.7rem;}
+  .chip{
+    font-family:"Fragment Mono",ui-monospace,Menlo,monospace; font-size:.7rem;
+    background:var(--paper-deep); border:1px solid #dadfe8; border-radius:3px;
+    padding:.28em .55em; color:var(--ink-60);
+  }
+  .chip b{color:var(--klein); font-weight:400;}
+
+  /* ---------- facet rail ---------- */
+  nav{
+    position:fixed; z-index:3; right:clamp(14px,2.6vw,34px); top:50%;
+    transform:translateY(-50%); display:flex; flex-direction:column; gap:12px;
+  }
+  nav button{
+    all:unset; cursor:pointer; width:44px; height:44px; border-radius:8px;
+    display:grid; place-items:center; position:relative; color:var(--ink-60);
+    transition:color .18s, background .18s;
+  }
+  nav button:hover{color:var(--ink); background:rgba(16,19,26,.05);}
+  nav button:focus-visible{outline:2px solid var(--klein-live); outline-offset:2px;}
+  nav button[aria-pressed="true"]{color:var(--klein);}
+  nav button svg{width:22px; height:22px; stroke:currentColor; fill:none;
+                 stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round;}
+  nav button .dotfill{fill:currentColor; stroke:none;}
+  nav button .lbl{
+    position:absolute; right:calc(100% + 10px); top:50%; transform:translateY(-50%);
+    font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; white-space:nowrap;
+    color:var(--ink-60); opacity:0; transition:opacity .15s; pointer-events:none;
+  }
+  nav button:hover .lbl, nav button[aria-pressed="true"] .lbl{opacity:1;}
+
+  footer{
+    position:fixed; z-index:2; left:clamp(20px,7vw,120px); bottom:18px;
+    font-family:"Fragment Mono",ui-monospace,Menlo,monospace;
+    font-size:.68rem; color:var(--ink-60); letter-spacing:.02em;
+  }
+  footer span{margin-right:1.4em;}
+  .tag{
+    position:fixed; z-index:2; right:clamp(14px,2.6vw,34px); bottom:18px;
+    font-family:"Fragment Mono",ui-monospace,Menlo,monospace; font-size:.62rem;
+    color:var(--ink-60); opacity:.75; letter-spacing:.03em; text-align:right;
+  }
+
+  /* ---------- mobile ---------- */
+  @media (max-width:720px){
+    main{padding:22px 20px 130px; max-width:none;}
+    nav{
+      right:auto; top:auto; transform:none; left:0; bottom:0; width:100%;
+      flex-direction:row; justify-content:center; gap:6px;
+      padding:10px 8px calc(10px + env(safe-area-inset-bottom));
+      background:linear-gradient(to top, var(--paper) 62%, rgba(242,244,247,0));
+    }
+    nav button{width:40px; height:40px;}
+    nav button .lbl{display:none;}
+    footer{left:20px; bottom:calc(70px + env(safe-area-inset-bottom));}
+    .tag{right:16px; bottom:calc(70px + env(safe-area-inset-bottom));}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .view,.dossier .body,#field{transition:none;}
+  }
+</style>
+</head>
+<body data-state="superposition">
+
+<canvas id="field" aria-hidden="true"></canvas>
+
+<main>
+  <section id="view-home" class="view on">
+    <p class="eyebrow">Superposition — all states resident</p>
+    <h1>[NAME]</h1>
+    <p class="positioning">[One-line positioning — 90 characters of exactly what this person is.]</p>
+    <p class="hint">Tap a mark to <b>collapse the field</b> into one state. Keys <b>1–7</b> · <b>Esc</b> returns.</p>
+  </section>
+
+  <section id="view-facet" class="view" hidden>
+    <p class="eyebrow"><button class="back" id="back">◂ superposition</button><span id="facet-name"></span></p>
+    <ul class="manifest" id="manifest"></ul>
+    <div class="dossiers" id="dossiers"></div>
+  </section>
+</main>
+
+<nav aria-label="States" id="rail"></nav>
+
+<footer><span>[EMAIL]</span><span>[LINK]</span><span>[LOCATION]</span></footer>
+<div class="tag">PREVIEW · placeholder content only<br>prod: Archivo VF · WebGPU/TSL · 131K particles</div>
+
+<script>
+/* ============================================================
+   SUPERPOSITION — preview build v2 (7 states)
+   Dependency-free. CPU sim + WebGL points. Placeholder content.
+   Production: three.js WebGPURenderer + TSL compute per plan v1.3
+   ============================================================ */
+
+/* ---------- placeholder content (schema-shaped, §4.2) ---------- */
+const mkRun = (c,w,f)=>{
+  const s=[];
+  for(let i=0;i<c;i++) s.push('<span class="s1">[Core skill]</span>');
+  for(let i=0;i<w;i++) s.push('<span class="s2">[Working skill]</span>');
+  for(let i=0;i<f;i++) s.push('<span class="s3">[Familiar]</span>');
+  return s.join(", ");
+};
+
+const DATA = {
+  facets: [
+    { id:"columns", name:"Finance executive", mark:"columns",
+      manifest:["[Positioning line — the executive claim]","[Scope line — scale, entities, mandate]","[Signature outcome line]"],
+      dossiers:[
+        { t:"[Role]", m:"[ORG] · [SPAN]",
+          lines:["[Dense line — metric-led accomplishment, written numbers-first.]","[Dense line — second proof point with receipt.]"],
+          chips:[["scope","[00 units]"],["Δ","[+00.0%]"],["basis","[metric]"]] },
+        { t:"[Role, prior]", m:"[ORG] · [SPAN]",
+          lines:["[Dense line — accomplishment.]"],
+          chips:[["Δ","[+00.0%]"]] } ]},
+    { id:"frame", name:"Construction executive", mark:"frame",
+      manifest:["[Positioning line — the build claim]","[Scope line — sites, capex, trades]","[Delivery line — on-time, on-budget proof]"],
+      dossiers:[
+        { t:"[Program]", m:"[ORG] · [SPAN]",
+          lines:["[Dense line — sites delivered, capex managed, schedule performance.]","[Dense line — second proof point.]"],
+          chips:[["sites","[00]"],["capex","[$00M]"],["var","[±0.0%]"]] },
+        { t:"[Project]", m:"[ORG] · [SPAN]",
+          lines:["[Dense line.]"],
+          chips:[["Δt","[on time]"]] } ]},
+    { id:"lattice", name:"AI / technical", mark:"lattice",
+      manifest:["[Positioning line — the builder claim]","[Systems line — what gets built, how]","[Depth line — the hard part]"],
+      dossiers:[
+        { t:"[System or project]", m:"[SOLO BUILD] · [SPAN]",
+          lines:["[Dense line — architecture, constraint, result.]","[Dense line — verification or scale detail.]"],
+          chips:[["stack","[· · ·]"],["loc","[00k]"],["status","[shipped]"]] },
+        { t:"[System]", m:"[SOLO BUILD] · [SPAN]",
+          lines:["[Dense line.]"],
+          chips:[["status","[active]"]] } ]},
+    { id:"surface", name:"Investing / trading", mark:"surface",
+      manifest:["[Positioning line — the market claim]","[Method line — instruments, horizon, edge]","[Discipline line — risk stance]"],
+      dossiers:[
+        { t:"[Research program]", m:"[PERSONAL] · [SPAN]",
+          lines:["[Dense line — thesis, instrument, measured result.]"],
+          chips:[["universe","[· · ·]"],["horizon","[EOD]"]] } ]},
+    { id:"clusters", name:"Skills", mark:"clusters",
+      manifest:["[Positioning line — the range claim]","[Depth line — where mastery concentrates]"],
+      dossiers:[
+        { t:"[Domain: Finance & accounting]", m:"[34 skills]", run:mkRun(6,10,8), chips:[["tier","[core-heavy]"]] },
+        { t:"[Domain: Data, AI & engineering]", m:"[52 skills]", run:mkRun(8,14,10), chips:[["tier","[core-heavy]"]] },
+        { t:"[Domain: Markets & risk]", m:"[28 skills]", run:mkRun(5,8,6), chips:[["tier","[mixed]"]] },
+        { t:"[Domain: Construction & facilities]", m:"[19 skills]", run:mkRun(3,6,5), chips:[["tier","[working]"]] },
+        { t:"[Domain: Operations]", m:"[41 skills]", run:mkRun(6,10,9), chips:[["tier","[mixed]"]] },
+        { t:"[Domain: Leadership & org]", m:"[23 skills]", run:mkRun(5,6,4), chips:[["tier","[core-heavy]"]] },
+        { t:"[Domain: Tooling]", m:"[15 skills]", run:mkRun(3,5,4), chips:[["tier","[working]"]] },
+        { t:"[Domain: Craft & hobby]", m:"[30 skills]", run:mkRun(4,8,7), chips:[["tier","[joy]"]] } ]},
+    { id:"vector", name:"Entrepreneur", mark:"vector",
+      manifest:["[Positioning line — the zero-to-one claim]","[Trajectory line — scattered starts, one direction]"],
+      dossiers:[
+        { t:"[Venture or initiative]", m:"[FOUNDER] · [SPAN]",
+          lines:["[Dense line — what was built from nothing and what it did.]"],
+          chips:[["from","[0]"],["to","[1]"]] } ]},
+    { id:"orbit", name:"Hobbyist", mark:"orbit",
+      manifest:["[Positioning line — the curiosity claim]","[Orbit line — the recurring obsessions]"],
+      dossiers:[
+        { t:"[Pursuit]", m:"[ONGOING]",
+          lines:["[Dense line — depth achieved for its own sake.]"],
+          chips:[["why","[joy]"]] } ]}
+  ]
+};
+
+/* ---------- facet marks (attractor silhouettes as nav icons) ---------- */
+const MARKS = {
+  columns:'<svg viewBox="0 0 22 22"><path d="M4 18V9M11 18V4.5M18 18v-8"/></svg>',
+  frame:'<svg viewBox="0 0 22 22"><path d="M5 18V7M11 18V4M17 18V7M4 9.5h9M4 14.5h14"/></svg>',
+  lattice:'<svg viewBox="0 0 22 22"><path d="M11 4.5 4.8 16.5h12.4L11 4.5Z"/><circle class="dotfill" cx="11" cy="4.5" r="1.7"/><circle class="dotfill" cx="4.8" cy="16.5" r="1.7"/><circle class="dotfill" cx="17.2" cy="16.5" r="1.7"/></svg>',
+  surface:'<svg viewBox="0 0 22 22"><path d="M3 13c3-6 5.5 5 8 0s5.5-6 8-1"/><path d="M3 17c3-6 5.5 5 8 0s5.5-6 8-1" opacity=".38"/></svg>',
+  clusters:'<svg viewBox="0 0 22 22"><path d="M8.3 8.6 10.2 13M13.9 7.4 12.5 13.1" opacity=".35"/><circle class="dotfill" cx="6.5" cy="7" r="2.4"/><circle class="dotfill" cx="15.5" cy="6" r="1.7"/><circle class="dotfill" cx="11.5" cy="15" r="2.1"/><circle class="dotfill" cx="17.6" cy="12.6" r="1.1"/><circle class="dotfill" cx="4.4" cy="13.6" r="1.2"/></svg>',
+  vector:'<svg viewBox="0 0 22 22"><path d="M4.5 17.5c7 0 11-3 9.5-6.5-1.2-2.8-5.5-1.4-4.4 1 .8 1.8 3.4 1 4.9-.4"/><circle class="dotfill" cx="15.6" cy="6.6" r="1.8"/></svg>',
+  orbit:'<svg viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8.5" ry="3.6"/><ellipse cx="11" cy="11" rx="8.5" ry="3.6" transform="rotate(62 11 11)"/><circle class="dotfill" cx="11" cy="11" r="1.6"/></svg>'
+};
+
+/* ---------- tiny deterministic hash ---------- */
+const fract = x => x - Math.floor(x);
+const hash  = n => fract(Math.sin(n*127.1)*43758.5453);
+
+/* ---------- particle counts (tiering, preview scale) ---------- */
+const coarse = matchMedia("(pointer:coarse)").matches;
+const REDUCED = matchMedia("(prefers-reduced-motion:reduce)").matches;
+let N = coarse ? 8000 : 20000;
+if ((navigator.hardwareConcurrency||8) < 6) N = Math.floor(N*0.7);
+let drawN = N;
+const DOM_OF = new Uint8Array(N);   // skills facet: particle → domain
+
+/* ---------- attractor target sets (precomputed, §2.2) ---------- */
+function buildTargets(){
+  const T = {};
+  const mk = () => new Float32Array(N*3);
+
+  /* COLUMNS — staggered skyline grid */
+  {const a = mk(), G = 9;
+   for(let i=0;i<N;i++){
+     const col = i % (G*G), cx = col%G, cz = (col/G)|0;
+     const h = 0.28 + 0.72*hash(col*3.7+1.1);
+     a[i*3]   = -0.9 + 1.8*cx/(G-1) + (hash(i*1.3)-.5)*.05;
+     a[i*3+1] = -0.85 + 1.65*h*hash(i*2.1+.7);
+     a[i*3+2] = -0.9 + 1.8*cz/(G-1) + (hash(i*1.9)-.5)*.05;
+   } T.columns = a;}
+
+  /* FRAME — post-and-beam skeleton, top level deliberately unfinished */
+  {const a = mk(), GX=4, GZ=3, F=4;
+   for(let i=0;i<N;i++){
+     const r = hash(i*.41+3.3), j=i*3;
+     if(r < .42){                                   /* posts */
+       const p = i % (GX*GZ);
+       a[j]  = -0.8 + 1.6*(p%GX)/(GX-1) + (hash(i*1.2)-.5)*.02;
+       a[j+1]= -0.85 + 1.62*hash(i*2.6+.4);
+       a[j+2]= -0.55 + 1.1*((p/GX)|0)/(GZ-1) + (hash(i*1.8)-.5)*.02;
+     }else if(r < .74){                             /* beams along x */
+       const f = i % F, zr = (i>>2) % GZ, top = f === F-1;
+       const ext = top ? .28 : 1;
+       a[j]  = -0.8 + 1.6*ext*hash(i*3.9);
+       a[j+1]= -0.85 + 1.62*f/(F-1) + (hash(i*5.2)-.5)*.02;
+       a[j+2]= -0.55 + 1.1*zr/(GZ-1) + (hash(i*2.2)-.5)*.02;
+     }else{                                         /* beams along z */
+       const f = i % F, xr = (i>>2) % GX, top = f === F-1;
+       a[j]  = -0.8 + 1.6*xr/(GX-1) + (hash(i*6.1)-.5)*.02;
+       a[j+1]= -0.85 + 1.62*f/(F-1) + (hash(i*4.4)-.5)*.02;
+       a[j+2]= -0.55 + 1.1*(top ? .3*hash(i*7.3) : hash(i*7.3)) + (hash(i*3.1)-.5)*.02;
+     }
+   } T.frame = a;}
+
+  /* LATTICE — fibonacci-sphere nodes + edges */
+  {const a = mk(), M = 42, nodes = [];
+   for(let k=0;k<M;k++){
+     const y = 1-2*(k+.5)/M, r = Math.sqrt(Math.max(0,1-y*y)), th = k*2.399963;
+     nodes.push([Math.cos(th)*r*.88, y*.88, Math.sin(th)*r*.88]);
+   }
+   const near = nodes.map((p,k)=>{
+     return nodes.map((q,j)=>[j,(p[0]-q[0])**2+(p[1]-q[1])**2+(p[2]-q[2])**2])
+       .sort((u,v)=>u[1]-v[1]).slice(1,4).map(u=>u[0]);
+   });
+   for(let i=0;i<N;i++){
+     const k = i%M, r = hash(i*.73+2.2);
+     if(r < .6){
+       a[i*3]  = nodes[k][0]+(hash(i*3.1)-.5)*.11;
+       a[i*3+1]= nodes[k][1]+(hash(i*4.3)-.5)*.11;
+       a[i*3+2]= nodes[k][2]+(hash(i*5.7)-.5)*.11;
+     }else{
+       const b = near[k][i%3], t = hash(i*1.7+.3);
+       a[i*3]  = nodes[k][0]+(nodes[b][0]-nodes[k][0])*t+(hash(i*6.1)-.5)*.03;
+       a[i*3+1]= nodes[k][1]+(nodes[b][1]-nodes[k][1])*t+(hash(i*7.9)-.5)*.03;
+       a[i*3+2]= nodes[k][2]+(nodes[b][2]-nodes[k][2])*t+(hash(i*8.3)-.5)*.03;
+     }
+   } T.lattice = a;}
+
+  /* SURFACE — volatility sheet */
+  {const a = mk(), W = Math.ceil(Math.sqrt(N));
+   for(let i=0;i<N;i++){
+     const u = (i%W)/(W-1), v = ((i/W)|0 % W)/(W-1);
+     const x = -1.08 + 2.16*u, z = -0.85 + 1.7*fract(v + hash(i)*0.002);
+     const y = .3*Math.sin(2.6*x+1.6*z) + .2*Math.sin(4.6*z-2.1*x) + .08*Math.sin(7*x*z);
+     a[i*3]=x; a[i*3+1]=y*.9; a[i*3+2]=z;
+   } T.surface = a;}
+
+  /* CLUSTERS — skill domains as gravitational clusters + filaments */
+  {const a = mk(), CNT=[34,52,28,19,41,23,15,30], D=CNT.length;
+   const tot = CNT.reduce((s,c)=>s+c,0), maxC = Math.max.apply(null,CNT);
+   const cum=[]; let acc=0; CNT.forEach(c=>{acc+=c/tot; cum.push(acc);});
+   const ctr=[];
+   for(let d=0; d<D; d++){
+     const y = 1-2*(d+.5)/D, rr = Math.sqrt(Math.max(0,1-y*y)), th = d*2.399963;
+     const R = .58 + (hash(d*9.7)-.5)*.22;
+     ctr.push([Math.cos(th)*rr*R, y*.62, Math.sin(th)*rr*R]);
+   }
+   for(let i=0;i<N;i++){
+     const u = hash(i*.531+7.7); let d=0; while(d<D-1 && u>cum[d]) d++;
+     DOM_OF[i] = d;
+     const j=i*3, c=ctr[d];
+     if (hash(i*7.9) < .07){                        /* inter-domain filaments */
+       const b = ctr[(d+3)%D], t = hash(i*2.9);
+       a[j]=c[0]+(b[0]-c[0])*t; a[j+1]=c[1]+(b[1]-c[1])*t; a[j+2]=c[2]+(b[2]-c[2])*t;
+     }else{
+       let dx=hash(i*3.7)-.5, dy=hash(i*5.3)-.5, dz=hash(i*8.9)-.5;
+       const L = Math.hypot(dx,dy,dz)+1e-5;
+       const R = .34*Math.sqrt(CNT[d]/maxC) * Math.cbrt(hash(i*6.7));
+       a[j]=c[0]+dx/L*R; a[j+1]=c[1]+dy/L*R; a[j+2]=c[2]+dz/L*R;
+     }
+   } T.clusters = a;}
+
+  /* VECTOR — convergent ascending helix */
+  {const a = mk();
+   for(let i=0;i<N;i++){
+     const t = i/N, th = t*44 + hash(i)*0.2;
+     const y = -0.92 + 1.84*Math.pow(t,.85);
+     const spread = .025 + .16*(1-t);
+     const r = .86*(1-.62*t) + (hash(i*2.7)-.5)*spread*2;
+     a[i*3]  = Math.cos(th)*r + (hash(i*3.3)-.5)*spread;
+     a[i*3+1]= y;
+     a[i*3+2]= Math.sin(th)*r + (hash(i*4.9)-.5)*spread;
+   } T.vector = a;}
+
+  /* ORBIT — interleaved Lissajous rings */
+  {const a = mk();
+   const R = [[3,2,5,.88,.5,.7,0],[5,4,3,.62,.8,.55,1.3],[2,3,4,.75,.62,.85,2.5],[4,5,2,.55,.72,.62,4.1]];
+   for(let i=0;i<N;i++){
+     const g = R[i%4], t = i*0.618033*2*Math.PI;
+     a[i*3]  = g[3]*Math.sin(g[0]*t+g[6]) + (hash(i*1.1)-.5)*.03;
+     a[i*3+1]= g[4]*Math.sin(g[1]*t+g[6]*.5)*.9 + (hash(i*2.3)-.5)*.03;
+     a[i*3+2]= g[5]*Math.cos(g[2]*t) + (hash(i*3.7)-.5)*.03;
+   } T.orbit = a;}
+
+  /* HOME — true superposition: each particle resident in its i%7 state */
+  {const a = mk(), ids = ["columns","frame","lattice","surface","clusters","vector","orbit"];
+   for(let i=0;i<N;i++){
+     const s = T[ids[i%ids.length]];
+     a[i*3]=s[i*3]; a[i*3+1]=s[i*3+1]; a[i*3+2]=s[i*3+2];
+   } T.home = a;}
+  return T;
+}
+const T = buildTargets();
+
+/* ---------- state params per mode ---------- */
+const MODES = {
+  home:    {k:1.35, noise:.46, damp:.935, pitch:-.32},
+  columns: {k:5.0,  noise:.13, damp:.885, pitch:-.20},
+  frame:   {k:5.0,  noise:.13, damp:.885, pitch:-.24},
+  lattice: {k:5.0,  noise:.15, damp:.885, pitch:-.34},
+  surface: {k:5.0,  noise:.12, damp:.885, pitch:-.58},
+  clusters:{k:4.6,  noise:.17, damp:.895, pitch:-.34},
+  vector:  {k:5.0,  noise:.14, damp:.885, pitch:-.26},
+  orbit:   {k:4.4,  noise:.18, damp:.895, pitch:-.38},
+};
+
+/* ---------- sim state ---------- */
+const pos = new Float32Array(N*3), vel = new Float32Array(N*3);
+const fromT = new Float32Array(N*3);           /* snapshot at retarget */
+let toKey = "home", fromMode = MODES.home, toMode = MODES.home;
+let blend = 1, blendStart = 0; const BLEND_MS = 1150;
+for(let i=0;i<N*3;i++){                         /* boot: uniform noise cloud */
+  pos[i] = (hash(i*.9+5.5)-.5)*3.2; vel[i]=0; fromT[i]=pos[i];
+}
+if (REDUCED){ pos.set(T.home); fromT.set(T.home); } /* reduced motion: start settled */
+
+function retarget(key){
+  const to = T[toKey];
+  const e = easeInOut(blend);
+  for(let i=0;i<N*3;i++) fromT[i] = fromT[i] + (to[i]-fromT[i])*e;
+  fromMode = lerpMode(fromMode, toMode, e);
+  toKey = key; toMode = MODES[key === "home" ? "home" : key];
+  blend = 0; blendStart = performance.now();
+}
+const easeInOut = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const lerpMode = (a,b,t)=>({k:a.k+(b.k-a.k)*t, noise:a.noise+(b.noise-a.noise)*t,
+                            damp:a.damp+(b.damp-a.damp)*t, pitch:a.pitch+(b.pitch-a.pitch)*t});
+
+/* ---------- WebGL setup ---------- */
+const canvas = document.getElementById("field");
+const gl = canvas.getContext("webgl",{alpha:false, antialias:false, powerPreference:"high-performance"});
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR = Math.min(devicePixelRatio||1, 2);
+  W = innerWidth; H = innerHeight;
+  canvas.width = W*DPR; canvas.height = H*DPR;
+  gl.viewport(0,0,canvas.width,canvas.height);
+}
+addEventListener("resize", resize); resize();
+
+function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER,
+  "attribute vec4 a; varying float vS;"+
+  "void main(){ gl_Position=vec4(a.x,a.y,0.,1.); gl_PointSize=a.z; vS=a.w; }"));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER,
+  "precision mediump float; varying float vS;"+
+  "uniform vec3 uInk; uniform vec3 uLive;"+
+  "void main(){"+
+  "  vec2 d = gl_PointCoord - .5;"+
+  "  float m = smoothstep(.5,.16,length(d));"+
+  "  if(m < .02) discard;"+
+  "  vec3 c = mix(uInk, uLive, clamp(vS,0.,1.));"+
+  "  gl_FragColor = vec4(c, m*(.40 + .45*clamp(vS,0.,1.)));"+
+  "}"));
+gl.linkProgram(prog); gl.useProgram(prog);
+gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+const hex = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+gl.uniform3fv(gl.getUniformLocation(prog,"uInk"),  hex("#10131A"));
+gl.uniform3fv(gl.getUniformLocation(prog,"uLive"), hex("#2743FF"));
+gl.clearColor(hex("#F2F4F7")[0],hex("#F2F4F7")[1],hex("#F2F4F7")[2],1);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+const attr = new Float32Array(N*4);
+gl.bufferData(gl.ARRAY_BUFFER, attr, gl.DYNAMIC_DRAW);
+const loc = gl.getAttribLocation(prog,"a");
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc,4,gl.FLOAT,false,0,0);
+
+/* ---------- pointer repulsor ---------- */
+const ptr = {x:0,y:0,s:0,target:0};
+function setPtr(e){
+  ptr.x = (e.clientX/W)*2-1; ptr.y = -((e.clientY/H)*2-1); ptr.target = 1;
+}
+addEventListener("pointermove", setPtr, {passive:true});
+addEventListener("pointerdown", setPtr, {passive:true});
+addEventListener("pointerup",   ()=>ptr.target=0, {passive:true});
+addEventListener("pointerleave",()=>ptr.target=0, {passive:true});
+
+/* ---------- main loop ---------- */
+const FOV=2.05, CAMD=2.7;
+let last=performance.now(), yaw=0, paused=false, dimmed=false, focusDomain=-1;
+let fpsFrames=0, fpsClock=performance.now(), lowStreak=0;
+
+function frame(now){
+  requestAnimationFrame(frame);
+  if (paused || document.hidden) { last = now; return; }
+  const dt = Math.min((now-last)/1000, .033); last = now;
+  const t  = now/1000;
+
+  blend = Math.min(1,(now-blendStart)/BLEND_MS);
+  const e = easeInOut(blend);
+  const mode = lerpMode(fromMode, toMode, e);
+  const slow = dimmed ? .5 : 1;
+  const noise = mode.noise * (REDUCED ? .12 : 1) * slow;
+
+  yaw += (REDUCED ? .012 : .07)*dt*slow;
+  const pitch = mode.pitch + .05*Math.sin(t*.11);
+  const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
+  const aspect = W/H;
+
+  /* pointer → world (unproject at focal plane, undo pitch then yaw) */
+  ptr.s += (ptr.target-ptr.s)*Math.min(1,dt*8);
+  const pvx = ptr.x*aspect*CAMD/FOV, pvy = ptr.y*CAMD/FOV;
+  const wy1 = pvy*cp, wz1 = -pvy*sp;                   /* inverse pitch */
+  const pwx = pvx*cy + wz1*sy, pwy = wy1, pwz = -pvx*sy + wz1*cy; /* inverse yaw */
+  const PR = .48, PS = 3.4*ptr.s;
+
+  const to = T[toKey], damp = Math.pow(mode.damp, dt*60), k = mode.k;
+  const focusOn = (toKey==="clusters" && focusDomain>=0);
+  for(let i=0;i<drawN;i++){
+    const j=i*3;
+    const tx = fromT[j]  +(to[j]  -fromT[j])  *e;
+    const ty = fromT[j+1]+(to[j+1]-fromT[j+1])*e;
+    const tz = fromT[j+2]+(to[j+2]-fromT[j+2])*e;
+    let px=pos[j], py=pos[j+1], pz=pos[j+2];
+
+    let kk = k, charge = 0;
+    if (focusOn && DOM_OF[i]===focusDomain){ kk = k*1.9; charge = .42; }
+    let fx=(tx-px)*kk, fy=(ty-py)*kk, fz=(tz-pz)*kk;
+    fx += Math.sin(py*3.1+t*.9)      *noise;
+    fy += Math.sin(pz*2.7+t*1.23)    *noise;
+    fz += Math.sin(px*3.4+t*.77)     *noise;
+    if (PS>0.01){
+      const dx=px-pwx, dy=py-pwy, dz=pz-pwz;
+      const d2=dx*dx+dy*dy+dz*dz;
+      if (d2 < PR*PR){
+        const d=Math.sqrt(d2)+1e-4, f=PS*(1-d/PR)/d;
+        fx+=dx*f; fy+=dy*f; fz+=dz*f;
+      }
+    }
+    let vx=(vel[j]+fx*dt)*damp, vy=(vel[j+1]+fy*dt)*damp, vz=(vel[j+2]+fz*dt)*damp;
+    px+=vx*dt; py+=vy*dt; pz+=vz*dt;
+    vel[j]=vx; vel[j+1]=vy; vel[j+2]=vz;
+    pos[j]=px; pos[j+1]=py; pos[j+2]=pz;
+
+    /* project: yaw → pitch → translate → perspective */
+    const rx =  px*cy - pz*sy, rz0 = px*sy + pz*cy;
+    const ry =  py*cp - rz0*sp, rz = py*sp + rz0*cp + CAMD;
+    const s  = FOV/Math.max(.35,rz);
+    const sp2= Math.min(1, Math.sqrt(vx*vx+vy*vy+vz*vz)*1.9 + charge);
+    const q=i*4;
+    attr[q]  = rx*s/aspect;
+    attr[q+1]= ry*s;
+    attr[q+2]= (coarse?2.2:1.9)*DPR*s*(.75+.5*sp2);
+    attr[q+3]= sp2;
+  }
+
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.bufferSubData(gl.ARRAY_BUFFER, 0, attr.subarray(0, drawN*4));
+  gl.drawArrays(gl.POINTS, 0, drawN);
+
+  /* fps guard → downshift */
+  fpsFrames++;
+  if (now - fpsClock > 1000){
+    const fps = fpsFrames*1000/(now-fpsClock);
+    fpsFrames=0; fpsClock=now;
+    if (fps < 38){ if(++lowStreak>=2){ drawN=Math.max(3500,(drawN*.7)|0); lowStreak=0; } }
+    else lowStreak=0;
+  }
+}
+requestAnimationFrame(frame);
+
+/* ---------- UI: rail, views, state machine (§5.6 DOM contract) ---------- */
+const rail = document.getElementById("rail");
+DATA.facets.forEach((f,idx)=>{
+  const b = document.createElement("button");
+  b.innerHTML = MARKS[f.mark] + '<span class="lbl">'+f.name+'</span>';
+  b.setAttribute("aria-label", f.name);
+  b.setAttribute("aria-pressed","false");
+  b.dataset.facet = f.id; b.dataset.key = idx+1;
+  b.addEventListener("click", ()=>go(f.id));
+  rail.appendChild(b);
+});
+
+const vHome = document.getElementById("view-home");
+const vFacet= document.getElementById("view-facet");
+const elName= document.getElementById("facet-name");
+const elMan = document.getElementById("manifest");
+const elDos = document.getElementById("dossiers");
+document.getElementById("back").addEventListener("click", ()=>go("home"));
+
+function renderFacet(f){
+  elName.textContent = f.name;
+  elMan.innerHTML = f.manifest.map(l=>"<li>"+l+"</li>").join("");
+  if (f.id === "clusters"){
+    elMan.innerHTML += '<li class="legend">Type weight encodes tier — <b>core</b>, working, familiar. Open a domain to collapse its cluster in the field.</li>';
+  }
+  elDos.innerHTML = f.dossiers.map((d,i)=>
+    '<div class="dossier" data-i="'+i+'">'+
+      '<button aria-expanded="false">'+
+        '<span class="t">'+d.t+'</span><span class="m">'+d.m+'</span>'+
+      '</button>'+
+      '<div class="body"><div class="body-in">'+
+        (d.run ? '<p class="skillrun">'+d.run+'</p>'
+               : d.lines.map(p=>"<p>"+p+"</p>").join(""))+
+        '<div class="chips">'+d.chips.map(c=>'<span class="chip">'+c[0]+' <b>'+c[1]+'</b></span>').join("")+'</div>'+
+      '</div></div>'+
+    '</div>').join("");
+  elDos.querySelectorAll(".dossier > button").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      const d = b.parentElement, open = d.hasAttribute("open");
+      elDos.querySelectorAll(".dossier[open]").forEach(x=>{ x.removeAttribute("open");
+        x.querySelector("button").setAttribute("aria-expanded","false"); });
+      if(!open){ d.setAttribute("open",""); b.setAttribute("aria-expanded","true"); }
+      const anyOpen = elDos.querySelector(".dossier[open]") !== null;
+      if (f.id === "clusters"){
+        focusDomain = anyOpen ? +d.dataset.i : -1;   /* sub-collapse; field stays lit */
+        dimmed = false;
+      } else {
+        focusDomain = -1;
+        dimmed = anyOpen;
+      }
+      document.body.toggleAttribute("data-dossier", dimmed);
+    });
+  });
+}
+
+function swap(fromEl, toEl){
+  fromEl.classList.remove("on");
+  setTimeout(()=>{ fromEl.hidden = true; toEl.hidden = false;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>toEl.classList.add("on")));
+  }, REDUCED ? 0 : 160);
+}
+
+function go(id){
+  const cur = document.body.dataset.state === "superposition" ? "home" : document.body.dataset.facet;
+  if (id === cur) return;
+  dimmed = false; focusDomain = -1; document.body.removeAttribute("data-dossier");
+  retarget(id);
+  rail.querySelectorAll("button").forEach(b=>
+    b.setAttribute("aria-pressed", String(b.dataset.facet===id)));
+  if (id === "home"){
+    document.body.dataset.state = "superposition";
+    delete document.body.dataset.facet;
+    swap(vFacet, vHome);
+  } else {
+    const f = DATA.facets.find(x=>x.id===id);
+    renderFacet(f);
+    document.body.dataset.state = "facet";
+    document.body.dataset.facet = id;
+    if (!vHome.hidden) swap(vHome, vFacet);
+    else { vFacet.classList.remove("on");
+           requestAnimationFrame(()=>requestAnimationFrame(()=>vFacet.classList.add("on"))); }
+  }
+}
+
+addEventListener("keydown", e=>{
+  if (e.key >= "1" && e.key <= "7") go(DATA.facets[+e.key-1].id);
+  else if (e.key === "Escape") go("home");
+  else if (e.key === ".") paused = !paused;
+  else if (e.key === "ArrowRight" || e.key === "ArrowLeft"){
+    const ids = DATA.facets.map(f=>f.id);
+    const cur = document.body.dataset.facet;
+    let i = cur ? ids.indexOf(cur) : (e.key==="ArrowRight" ? -1 : ids.length);
+    i = (i + (e.key==="ArrowRight"?1:-1) + ids.length) % ids.length;
+    go(ids[i]);
+  }
+});
+</script>
+</body>
+</html>
