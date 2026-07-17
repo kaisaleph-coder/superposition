@@ -28,4 +28,19 @@ Note: r185 deprecates `renderAsync()` — the engine uses `render()` after `awai
 storage buffers — the exact §5.3 force model) initializes and runs on both backends with
 identical code; vendor set fits the 340 KB gzip cap; both tiers exceed perf targets by an
 order of magnitude on reference hardware.
-**Date / commit:** 2026-07-17 · gate(P0) commit (hash in GATES.md)
+**Date / commit:** 2026-07-17 · gate(P0) = 8e7b486 (+ adversarial addendum commit)
+
+## Adversarial VERIFIER addendum (post-gate, same day)
+Attack: "throughput numbers could be a black canvas / dead compute." Added end-of-run
+verification to the spike — (a) storage-buffer readback: fraction of particles inside the
+analytic helix envelope; (b) canvas → 2D `drawImage` immediately after a render: fraction of
+non-background pixels.
+- First run exposed a real gap: with wall-clock `deltaTime` in the uncapped loop only ~0.3
+  sim-seconds elapsed → envelopeFrac 0.161 ≈ the random-cube baseline (0.155). Added `?dt=`
+  fixed-timestep mode (5.3 sim-seconds over the measured window).
+- **WebGL2, N=65,536, dt=1/60: envelopeFrac 1.000**, 831.0 fps, render draws (nonBg 2.7% — condensed helix).
+- **WebGPU, N=131,072, dt=1/60: envelopeFrac 1.000**, 448.1 fps, render draws (nonBg 2.8%).
+- Buffer strides differ by backend (WebGL tight vec3 ×3, WebGPU padded ×4) — engine must not
+  assume stride when reading back.
+Decision unchanged and now positively verified: compute integrates correctly on BOTH backends.
+Engine note: clamp/fix dt per frame; per-frame damping must be dt-normalized (`damp^(dt*60)`).

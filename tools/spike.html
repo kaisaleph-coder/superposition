@@ -57,6 +57,10 @@ async function main() {
   })().compute(N);
 
   // update kernel: spring toward a morphing target + sin noise, semi-implicit Euler
+  // ?dt=0.016 pins the timestep so N sim-seconds elapse regardless of wall-clock frame
+  // rate (needed for convergence verification in the uncapped measurement loop).
+  const dtFixed = parseFloat(q.get('dt') || '0');
+  const dtNode = dtFixed > 0 ? uniform(dtFixed) : deltaTime;
   const kSpring = uniform(3.5);
   const update = Fn(() => {
     const p = positions.element(instanceIndex);
@@ -70,8 +74,8 @@ async function main() {
     const target = vec3(th.cos().mul(r), ty, th.sin().mul(r));
     const f = target.sub(p).mul(kSpring)
       .add(vec3(sin(p.y.mul(3.1).add(time.mul(0.9))), sin(p.z.mul(2.7).add(time.mul(1.2))), sin(p.x.mul(3.4).add(time.mul(0.8)))).mul(0.4));
-    v.assign(v.add(f.mul(deltaTime)).mul(0.96));
-    p.assign(p.add(v.mul(deltaTime)));
+    v.assign(v.add(f.mul(dtNode)).mul(0.96));
+    p.assign(p.add(v.mul(dtNode)));
   })().compute(N);
 
   const material = new THREE.SpriteNodeMaterial({ depthWrite: false });
@@ -117,6 +121,31 @@ async function main() {
     medianFrameMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
     p95FrameMs: +sorted[Math.floor(sorted.length * 0.95)].toFixed(2),
   };
+  // Adversarial verify: (a) compute really moved particles into the helix envelope,
+  // (b) render really puts non-background pixels on the canvas.
+  try {
+    const buf = new Float32Array(await renderer.getArrayBufferAsync(positions.value));
+    let inEnv = 0;
+    const S = Math.min(N, 4096);
+    const stride = Math.round(buf.length / N);
+    for (let i = 0; i < S; i++) {
+      const x = buf[i * stride], y = buf[i * stride + 1], z = buf[i * stride + 2];
+      if (x * x + z * z <= 0.95 * 0.95 && Math.abs(y) <= 1.0) inEnv++;
+    }
+    renderer.compute(update);
+    renderer.render(scene, camera);
+    const c2 = document.createElement('canvas');
+    c2.width = 200; c2.height = 200;
+    const ctx = c2.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(renderer.domElement, 0, 0, 200, 200);
+    const px = ctx.getImageData(0, 0, 200, 200).data;
+    let nonBg = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      if (Math.abs(px[i] - 242) + Math.abs(px[i + 1] - 244) + Math.abs(px[i + 2] - 247) > 24) nonBg++;
+    }
+    result.verify = { envelopeFrac: +(inEnv / S).toFixed(3), nonBgPixelFrac: +(nonBg / 40000).toFixed(3), bufLen: buf.length };
+  } catch (e) { result.verify = { error: String(e) }; }
+
   B.dataset.spike = 'done';
   B.dataset.fps = result.throughputFps;
   B.dataset.result = JSON.stringify(result);
