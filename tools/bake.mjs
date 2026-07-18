@@ -42,6 +42,13 @@ for (const [id, content] of Object.entries(sections)) {
   if (!re.test(html)) { missing.push(id); continue; }
   html = html.replace(re, `$1\n${content}\n    $2`);
 }
+
+// §6: inline critical CSS from css/main.css (comment markers inside <style>);
+// urls are relative to css/ — rebase them to the document root
+const css = readFileSync(join(ROOT, "css/main.css"), "utf8").trim().replace(/url\("\.\.\//g, 'url("');
+const cssRe = /(\/\*BAKE:css BEGIN\*\/)[\s\S]*?(\/\*BAKE:css END\*\/)/;
+if (!cssRe.test(html)) missing.push("css");
+else html = html.replace(cssRe, `$1\n${css}\n$2`);
 if (missing.length) throw new Error(`markers not found: ${missing.join(", ")}`);
 writeFileSync(htmlPath, html);
 console.log(`baked ${Object.keys(sections).length} sections into index.html (facets: ${FACET_ORDER.join(", ")})`);
