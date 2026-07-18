@@ -6,7 +6,7 @@ import { test, expect } from "@playwright/test";
 const FACETS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
 
 test.describe("visual regression (fixed seed)", () => {
-  test.skip(({ browserName }, testInfo) => testInfo.project.name === "mobile", "desktop VR set");
+  test.skip(({ isMobile }) => isMobile, "desktop VR set");
 
   for (const scheme of ["light", "dark"]) {
     test.describe(scheme, () => {

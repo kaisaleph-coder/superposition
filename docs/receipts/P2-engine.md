@@ -1,5 +1,11 @@
 # P2 receipt — field engine
 
+> **Superseded note (P3):** the P3 legibility gate exposed silent WebGL-backend compute
+> failures invisible to the checks below; the sim was re-architected (ADR-005) and every
+> WebGL number re-taken — see P3-choreography.md. This receipt stands as the historical
+> record of what P2 verified and how the gap slipped through (structure was never
+> asserted, only motion/fps/pixels).
+
 **Date:** 2026-07-17 · phase P2 · branch per ADR-001 (single TSL codebase, both backends).
 
 ## Built (§5.3 file spec)

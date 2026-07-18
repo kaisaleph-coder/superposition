@@ -1,94 +1,81 @@
 /* TSL compute kernels (PLAN §5.3) — single codebase, both backends (ADR-001).
-   force = k1·(blendTarget − pos)  attractor spring
-         + k2·curl(pos, t)         life — analytic curl of the preview's sin potential
-                                   (divergence-free; same visual field as the prototype)
-         + k3·pointerRepulse       interaction
-   vel = (vel + force·dt)·damp^(dt·60) ; pos += vel·dt   (semi-implicit Euler, dt-normalized) */
+   force = k1·(target − pos)      attractor spring (morphs ARE the spring flight)
+         + k2·curl(pos, t)        life — analytic curl of the preview's sin potential
+                                  (divergence-free; same visual field as the prototype)
+         + k3·pointerRepulse      interaction
+   vel = (vel + force·dt)·damp^(dt·60) ; pos += vel·dt   (semi-implicit Euler, dt-normalized)
+
+   WebGL-backend constraints (ADR-005, all empirically root-caused at the P3 gate):
+   1. ≥5 distinct storage buffers in one kernel → silent no-op.
+   2. Compute-stage storage reads are attribute-backed — buffer[instanceIndex] only.
+   3. `needsUpdate` re-uploads are ignored — buffer contents immutable after creation.
+   4. Same-task chained reads of freshly TF-written buffers are unreliable.
+   5. Compute-written buffers read by OTHER kernels interleave stale ping-pong halves.
+   Design under those constraints: EIGHT static per-state target buffers (7 attractors +
+   citizenship home §2.3, CLUSTERS domain id in w) baked at boot, and EIGHT update
+   kernels, each hard-bound to its state's static buffer. Retargeting = the CPU picks
+   which update kernel runs — zero inter-kernel GPU data flow; the only RMW is pos/vel
+   within one kernel (empirically solid). Morph timing comes from the spring itself plus
+   the CPU-eased mode parameters — flight, not tween (§5.3). setWeights: true blend
+   kernel on WebGPU; documented dominant-state approximation on WebGL. */
 
 import {
-  Fn, If, instancedArray, instanceIndex, uniform,
-  float, int, uint, vec3, mix, clamp, cos, sqrt,
+  Fn, If, instancedArray, uniform, instanceIndex,
+  float, vec3, vec4, cos, sqrt, abs,
 } from "three/tsl";
 
-export function createSim(N, { targetsData, citData, domData, seed }) {
-  const positions = instancedArray(N, "vec3");
+export function createSim(N, { stateTargets, seed, webgpu }) {
+  const positions = instancedArray(N, "vec4"); // xyz pos, w render charge (§2.4)
   const velocities = instancedArray(N, "vec3");
-  const fromT = instancedArray(N, "vec3");
-  const toT = instancedArray(N, "vec3");
-  const targets = instancedArray(targetsData, "vec3"); // 7·N packed, index a*N+i
-  const cit = instancedArray(citData, "uint");
-  const dom = instancedArray(domData, "uint");
+  // 8 static state buffers: xyz target, w domain id (−1 outside CLUSTERS)
+  const T = stateTargets.map((arr) => instancedArray(arr, "vec4"));
 
   const u = {
     dt: uniform(1 / 60),
     t: uniform(0),
-    blend: uniform(1),          // eased 0→1 (CPU-eased per frame)
     k: uniform(1.35),
     noise: uniform(0.46),
     damp: uniform(0.935),
-    state: uniform(7, "uint"),  // 0–6 facet, 7 = home (citizenship)
-    focusDomain: uniform(-1, "int"), // §2.4 sub-collapse
+    focusDomain: uniform(-1.0),   // §2.4 sub-collapse; -1 outside CLUSTERS
     pointer: uniform(vec3(0, 0, 0)),
     pointerStrength: uniform(0),
     seed: uniform(seed),
-    slow: uniform(1),           // dossier-open courtesy (0.5) §2.1
+    slow: uniform(1),             // dossier-open courtesy (0.5) §2.1
   };
+  const w = Array.from({ length: 8 }, () => uniform(0)); // setWeights surface (float — ADR-005)
 
   // hash matching attractors.js: fract(sin(n·127.1)·43758.5453)
   const gpuHash = (n) => n.mul(127.1).sin().mul(43758.5453).fract();
 
-  const targetIndex = Fn(() => {
-    const a = uint(u.state).lessThan(uint(7)).select(uint(u.state), cit.element(instanceIndex));
-    return a.mul(uint(N)).add(instanceIndex);
-  });
-
-  const init = Fn(() => {
+  // boot: seeded noise scatter — pure writes
+  const initScatter = Fn(() => {
     const i = instanceIndex.toFloat();
-    const p = positions.element(instanceIndex);
-    p.x = gpuHash(i.mul(0.9).add(u.seed)).sub(0.5).mul(3.2);
-    p.y = gpuHash(i.mul(1.7).add(u.seed).add(31.7)).sub(0.5).mul(3.2);
-    p.z = gpuHash(i.mul(2.3).add(u.seed).add(77.1)).sub(0.5).mul(3.2);
-    velocities.element(instanceIndex).assign(vec3(0));
-    fromT.element(instanceIndex).assign(p);
-    toT.element(instanceIndex).assign(targets.element(targetIndex()));
-  })().compute(N);
-
-  // On state change: snapshot current eased target into fromT, point toT at new state.
-  // u.state must be set to the NEW state and u.blend to the OLD eased value before dispatch.
-  const prevEased = uniform(1);
-  const retarget = Fn(() => {
-    const f = fromT.element(instanceIndex);
-    f.assign(mix(f, toT.element(instanceIndex), prevEased));
-    toT.element(instanceIndex).assign(targets.element(targetIndex()));
-  })().compute(N);
-
-  // §5.3 setWeights path: toT ← Σ w[a]·attractor_a (normalized on CPU). Unrolled over
-  // the 7 attractors; used by the public setWeights API (state machine uses retarget).
-  const w = Array.from({ length: 7 }, () => uniform(0));
-  const blendWeights = Fn(() => {
-    const acc = vec3(0).toVar();
-    for (let a = 0; a < 7; a++) {
-      acc.addAssign(targets.element(uint(a * N).add(instanceIndex)).mul(w[a]));
-    }
-    const f = fromT.element(instanceIndex);
-    f.assign(mix(f, toT.element(instanceIndex), prevEased));
-    toT.element(instanceIndex).assign(acc);
-  })().compute(N);
-
-  const update = Fn(() => {
-    const p = positions.element(instanceIndex);
-    const v = velocities.element(instanceIndex);
-    const target = mix(fromT.element(instanceIndex), toT.element(instanceIndex), u.blend);
-
-    // spring (+ sub-collapse ×1.9 for focused domain in CLUSTERS §2.4)
-    const kk = float(u.k).toVar();
-    If(
-      u.focusDomain.greaterThanEqual(int(0))
-        .and(dom.element(instanceIndex).equal(uint(u.focusDomain)))
-        .and(uint(u.state).equal(uint(4))),
-      () => { kk.assign(kk.mul(1.9)); }
+    const p = vec3(
+      gpuHash(i.mul(0.9).add(u.seed)).sub(0.5).mul(3.2),
+      gpuHash(i.mul(1.7).add(u.seed).add(31.7)).sub(0.5).mul(3.2),
+      gpuHash(i.mul(2.3).add(u.seed).add(77.1)).sub(0.5).mul(3.2)
     );
-    const force = target.sub(p).mul(kk).toVar();
+    positions.element(instanceIndex).assign(vec4(p, 0));
+    velocities.element(instanceIndex).assign(vec3(0));
+  })().compute(N);
+
+  const el = (b) => b.element(instanceIndex);
+
+  // shared integration body; targetNode supplies this kernel's per-particle vec4 target
+  const integrate = (targetNode) => () => {
+    const pc = positions.element(instanceIndex);
+    const v = velocities.element(instanceIndex);
+    const p = pc.xyz.toVar();
+    const t4 = targetNode();
+
+    // spring (+ sub-collapse ×1.9 and charge for the focused domain §2.4)
+    const kk = float(u.k).toVar();
+    const chg = float(0).toVar();
+    If(u.focusDomain.greaterThanEqual(0).and(abs(t4.w.sub(u.focusDomain)).lessThan(0.5)), () => {
+      kk.assign(kk.mul(1.9));
+      chg.assign(0.42);
+    });
+    const force = t4.xyz.sub(p).mul(kk).toVar();
 
     // curl of ψ = (sin(3.1y+.9t), sin(2.7z+1.23t), sin(3.4x+.77t)) — scaled to preview feel
     const n = u.noise.mul(u.slow);
@@ -106,16 +93,34 @@ export function createSim(N, { targetsData, citData, domData, seed }) {
     const d2 = d.dot(d);
     If(u.pointerStrength.greaterThan(0.01).and(d2.lessThan(PR.mul(PR))), () => {
       const dist = sqrt(d2).add(1e-4);
-      const f = u.pointerStrength.mul(float(1).sub(dist.div(PR))).div(dist).mul(3.4);
-      force.addAssign(d.mul(f));
+      const rf = u.pointerStrength.mul(float(1).sub(dist.div(PR))).div(dist).mul(3.4);
+      force.addAssign(d.mul(rf));
     });
 
     const damp = u.damp.pow(u.dt.mul(60));
     v.assign(v.add(force.mul(u.dt)).mul(damp));
-    p.assign(p.add(v.mul(u.dt)));
-  })().compute(N);
+    pc.assign(vec4(p.add(v.mul(u.dt)), chg));
+  };
 
-  return { positions, velocities, dom, uniforms: u, prevEased, weights: w, kernels: { init, retarget, update, blendWeights } };
+  // eight per-state update kernels, each hard-bound to its static target buffer
+  // (static read + pos/vel RMW = 3 buffers; retarget = CPU-side kernel switch)
+  const updateFor = T.map((t) => Fn(integrate(() => el(t)))().compute(N));
+
+  // §5.3 setWeights (WebGPU only): Σ w[s]·T[s] in-kernel — 10 buffers, fine there;
+  // the engine approximates with the dominant state on WebGL (ADR-005).
+  const updateBlend = webgpu
+    ? Fn(integrate(() => {
+        const acc = vec4(0).toVar();
+        for (let s = 0; s < 8; s++) acc.addAssign(el(T[s]).mul(w[s]));
+        return vec4(acc.xyz, -1);
+      }))().compute(N)
+    : null;
+
+  return {
+    positions, velocities,
+    uniforms: u, weights: w,
+    kernels: { initScatter, updateFor, updateBlend },
+  };
 }
 
 /* Per-state field parameters — ported verbatim from the approved preview MODES. */

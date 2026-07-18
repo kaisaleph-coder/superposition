@@ -41,6 +41,8 @@ h1 { font-size: 22pt; line-height: 1.05; margin-bottom: 3pt; }
 .skillrun { font-size: 9pt; line-height: 1.5; }
 .chips { margin-top: 2pt; }
 .chip { border: .5pt solid #ccc; background: #fff; padding: 1pt 3pt; font-size: 7.5pt; }
+/* §8: ink on white — no accent color survives print */
+.chip b, .hint b, .back, .eyebrow .back { color: var(--ink-60) !important; }
 
 .record li { padding: 2.5pt 0; border-bottom: .5pt solid #eee; font-size: 9.5pt; grid-template-columns: 10ch 1fr; }
 

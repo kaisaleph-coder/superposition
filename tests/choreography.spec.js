@@ -22,10 +22,16 @@ test.describe("choreography", () => {
   });
 
   test("scroll within facet reaches the engine (§2.5)", async ({ page }) => {
+    // placeholder content is short — shrink the viewport so the galley overflows
+    await page.setViewportSize({ width: 800, height: 380 });
     await page.goto("/?seed=1&run=1#/clusters");
     await page.waitForSelector("body[data-settled]", { timeout: 20000 });
-    // open a dossier so the galley can actually scroll on tall viewports
     await page.locator("#view-clusters .dossier > button").first().click();
+    // dossier body expands over 180 ms; the galley only overflows after that
+    await page.waitForFunction(() => {
+      const m = document.querySelector("main");
+      return m.scrollHeight > m.clientHeight;
+    });
     await page.locator("main").evaluate((el) => { el.scrollTop = el.scrollHeight; });
     await expect
       .poll(async () => await page.getAttribute("body", "data-scroll"), { timeout: 5000 })

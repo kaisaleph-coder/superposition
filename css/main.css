@@ -1,4 +1,4 @@
-/* SUPERPOSITION — design system (PLAN §3, anti-default clause binding)
+﻿/* SUPERPOSITION — design system (PLAN §3, anti-default clause binding)
    Palette: iron gall on cold paper. One accent family (Klein), spent in one place. */
 
 @font-face {
@@ -24,6 +24,10 @@
   --ink-60: #4A5160;
   --klein: #002FA7;
   --klein-live: #2743FF;
+  /* text-accent indirection: Klein is too dark for text on the dark ground (P4 a11y);
+     the FIELD keeps true Klein per §3.1 — only typography switches */
+  --accent: var(--klein);
+  --accent-live: var(--klein-live);
   --galley: 42ch;
   --gutter: clamp(24px, 7vw, 120px);
   --sans: "Archivo VF", Archivo, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -49,7 +53,7 @@ body {
   background: var(--klein); color: #fff; padding: .6em 1em;
   font-size: .85rem; text-decoration: none;
 }
-.skip:focus-visible { left: 0; outline: 2px solid var(--klein-live); outline-offset: 2px; }
+.skip:focus-visible { left: 0; outline: 2px solid var(--accent-live); outline-offset: 2px; }
 
 #field {
   position: fixed; inset: 0; z-index: 0; display: block;
@@ -91,10 +95,10 @@ main {
 }
 h2.eyebrow { font-size: .72rem; }
 .eyebrow .back {
-  color: var(--klein); text-decoration: none;
+  color: var(--accent); text-decoration: none;
   letter-spacing: .14em; text-transform: uppercase; font-size: .72rem;
 }
-.eyebrow .back:hover, .eyebrow .back:focus-visible { color: var(--klein-live); }
+.eyebrow .back:hover, .eyebrow .back:focus-visible { color: var(--accent-live); }
 
 h1 {
   font-size: clamp(2.6rem, 6vw, 5.2rem);
@@ -106,7 +110,7 @@ h1 {
 }
 .positioning { font-size: 1.05rem; color: var(--ink-60); line-height: 1.55; margin-bottom: 2.2rem; }
 .hint { font-size: .8rem; color: var(--ink-60); letter-spacing: .02em; }
-.hint b { color: var(--klein); font-weight: 600; }
+.hint b { color: var(--accent); font-weight: 600; }
 :root:not(.js) .hint { display: none; }
 
 .manifest { list-style: none; margin: 0 0 2rem; }
@@ -134,7 +138,7 @@ h1 {
   align-items: baseline; justify-content: space-between; padding: .95rem 0;
   font-family: inherit;
 }
-.dossier > button:focus-visible { outline: 2px solid var(--klein-live); outline-offset: 3px; }
+.dossier > button:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 3px; }
 .dossier .t { font-weight: 700; font-size: 1rem; letter-spacing: -.01em; }
 .dossier .m { font-family: var(--mono); font-size: .72rem; color: var(--ink-60); white-space: nowrap; }
 .js .dossier .body { overflow: hidden; max-height: 0; transition: max-height .18s ease-out; }
@@ -151,7 +155,7 @@ h1 {
   background: var(--paper-deep); border: 1px solid #dadfe8; border-radius: 3px;
   padding: .28em .55em; color: var(--ink-60);
 }
-.chip b { color: var(--klein); font-weight: 400; }
+.chip b { color: var(--accent); font-weight: 400; }
 
 /* ---------- record ---------- */
 .record { list-style: none; }
@@ -174,8 +178,8 @@ h1 {
   transition: color .18s, background .18s;
 }
 #rail a:hover { color: var(--ink); background: rgba(16, 19, 26, .05); }
-#rail a:focus-visible { outline: 2px solid var(--klein-live); outline-offset: 2px; }
-#rail a[aria-current="page"] { color: var(--klein); }
+#rail a:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 2px; }
+#rail a[aria-current="page"] { color: var(--accent); }
 #rail svg {
   width: 22px; height: 22px; stroke: currentColor; fill: none;
   stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
@@ -198,7 +202,7 @@ footer {
 :root:not(.js) footer { padding: 2rem var(--gutter); }
 footer span, footer a { margin-right: 1.4em; }
 footer a { color: var(--ink-60); text-decoration: none; }
-footer a:hover, footer a:focus-visible { color: var(--klein); }
+footer a:hover, footer a:focus-visible { color: var(--accent); }
 
 /* ---------- mobile (§3.3) ---------- */
 @media (max-width: 720px) {
@@ -226,6 +230,8 @@ footer a:hover, footer a:focus-visible { color: var(--klein); }
     --paper-deep: #171B23;
     --ink: #E9ECF2;
     --ink-60: #9AA3B2;
+    --accent: #8FA2FF;      /* pale Klein for dark-ground text (>=7:1) */
+    --accent-live: #A9B7FF;
   }
   #rail a:hover { background: rgba(233, 236, 242, .06); }
   .chip { border-color: #262c38; }

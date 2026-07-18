@@ -13,7 +13,10 @@ import { createPointer } from "./pointer.js";
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const lerp = (a, b, t) => a + (b - a) * t;
-const BLEND_MS = 1150, BOOT_MS = 2000, SETTLE_FRAME = 240;
+// SETTLE_FRAME: deterministic test-mode freeze point. 420 frames = 7 sim-seconds —
+// boot/retarget flight (≤2 s) + full spring equilibrium (pos error ≈ noise/k) so
+// fixed-seed screenshots capture settled structure, not flight blur.
+const BLEND_MS = 1150, BOOT_MS = 2000, SETTLE_FRAME = 420;
 
 export const FieldEngine = {
   async init(canvas, { tier, seed = null, force = null, data = null, run = false } = {}) {
@@ -46,7 +49,24 @@ export const FieldEngine = {
     const domData = new Uint32Array(N);
     for (let i = 0; i < N; i++) domData[i] = domainOf(i);
 
-    const sim = createSim(N, { targetsData, citData, domData, seed: seedNum });
+    // Eight static per-state target sets (ADR-005: no uploads or dynamic reads on the
+    // WebGL backend — everything the GPU will ever target is baked at boot):
+    // 0–6 attractors (dom id in w for CLUSTERS), 7 = citizenship home (§2.3).
+    const stateTargets = [];
+    for (let s = 0; s < 8; s++) {
+      const arr = new Float32Array(N * 4);
+      for (let i = 0; i < N; i++) {
+        const a = s === 7 ? citData[i] : s;
+        const j = (a * N + i) * 3;
+        arr[i * 4] = targetsData[j];
+        arr[i * 4 + 1] = targetsData[j + 1];
+        arr[i * 4 + 2] = targetsData[j + 2];
+        arr[i * 4 + 3] = a === 4 ? domData[i] : -1;
+      }
+      stateTargets.push(arr);
+    }
+
+    const sim = createSim(N, { stateTargets, seed: seedNum, webgpu: backend === "webgpu" });
     const { mesh, uniforms: rUniforms } = createRenderMesh(N, sim, { mobile });
     scene.add(mesh);
 
@@ -74,12 +94,13 @@ export const FieldEngine = {
 
     const eased = () => easeInOut(Math.min(1, (simT - blendStart) / blendDur));
 
+    // Retarget = CPU-side kernel switch (ADR-005: no inter-kernel GPU data flow).
+    let activeState = 7, weightsMode = false;
     function dispatchRetarget(newStateIdx) {
-      sim.prevEased.value = eased();
-      sim.uniforms.state.value = newStateIdx;
-      renderer.compute(sim.kernels.retarget);
-      blendStart = simT;
-      blendDur = BLEND_MS / 1000;
+      activeState = newStateIdx;
+      weightsMode = false;
+      blendStart = simT;          // paces the CPU mode-parameter easing; the morph
+      blendDur = BLEND_MS / 1000; // itself is the spring flight (§5.3, ADR-005)
     }
 
     function stateIndexOf(id) {
@@ -87,13 +108,10 @@ export const FieldEngine = {
       return i === -1 ? 7 : i; // 7 = home/citizenship (record keeps last/home targets)
     }
 
-    // boot: seeded noise → superposition over 2 s (§3.4); instant on repeat visits
-    sim.uniforms.state.value = 7;
-    renderer.compute(sim.kernels.init);
+    // boot: seeded noise → superposition (§3.4); the 2 s assembly is the spring flight
+    renderer.compute(sim.kernels.initScatter);
     if (repeatVisit || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      sim.prevEased.value = 1;
-      renderer.compute(sim.kernels.retarget); // fromT ← toT: start settled
-      blendStart = -10; blendDur = 0.001;
+      blendStart = -10; blendDur = 0.001; // mode params settle instantly
     } else {
       blendStart = 0; blendDur = BOOT_MS / 1000;
     }
@@ -140,7 +158,6 @@ export const FieldEngine = {
       const slowF = sim.uniforms.slow.value;
       sim.uniforms.dt.value = dt;
       sim.uniforms.t.value = simT;
-      sim.uniforms.blend.value = e;
       // §2.5 scroll: field firms up as you read deeper (facet states only)
       const scrollTighten = stateId !== "home" && stateId !== "record" ? 1 + 0.35 * scrollP : 1;
       sim.uniforms.k.value = lerp(modeFrom.k, modeTo.k, e) * scrollTighten;
@@ -162,7 +179,13 @@ export const FieldEngine = {
       sim.uniforms.pointer.value.copy(pointer.state.world);
       sim.uniforms.pointerStrength.value = frozen ? 0 : pointer.state.strength;
 
-      if (!frozen) renderer.compute(sim.kernels.update);
+      if (!frozen) {
+        renderer.compute(
+          weightsMode && sim.kernels.updateBlend
+            ? sim.kernels.updateBlend
+            : sim.kernels.updateFor[activeState]
+        );
+      }
       renderer.render(scene, camera);
 
       if (!bootMarked) {
@@ -198,6 +221,7 @@ export const FieldEngine = {
 
     // ---------- public surface ----------
     const api = {
+      _debug: { sim, renderer, mesh }, // internal — not part of the §5.3 contract
       renderer: backend,
       get tier() { return curTier; },
       get state() { return stateId; },
@@ -225,14 +249,21 @@ export const FieldEngine = {
       },
 
       /* PLAN-named surface (§5.3): arbitrary attractor weights → blended target.
-         Normalizes, snapshots the current eased target, morphs to the weighted blend.
-         The internal state machine uses the citizenship retarget (§2.3) instead. */
+         Normalizes, snapshots the current eased target, morphs to the weighted blend
+         (CPU-built per ADR-005). The state machine uses the citizenship retarget (§2.3). */
       setWeights(w) {
-        const arr = FACET_IDS.map((_, a) => Math.max(0, w?.[a] ?? 0));
-        const sum = arr.reduce((s, x) => s + x, 0) || 1;
-        sim.prevEased.value = eased();
-        arr.forEach((x, a) => { sim.weights[a].value = x / sum; });
-        renderer.compute(sim.kernels.blendWeights);
+        const ws = FACET_IDS.map((_, a) => Math.max(0, w?.[a] ?? 0));
+        const sum = ws.reduce((s, x) => s + x, 0) || 1;
+        if (sim.kernels.updateBlend) {
+          sim.weights.forEach((wu, s) => { wu.value = (ws[s] ?? 0) / sum; });
+          weightsMode = true;
+        } else {
+          // WebGL backend: the blend kernel exceeds its buffer budget (ADR-005) —
+          // documented approximation: morph to the dominant-weight state
+          const dom = ws.indexOf(Math.max(...ws));
+          activeState = dom === -1 ? 7 : dom;
+          weightsMode = false;
+        }
         blendStart = simT;
         blendDur = BLEND_MS / 1000;
       },

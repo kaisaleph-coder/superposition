@@ -55,6 +55,7 @@ if (tier > 0) {
         // engine may have downgraded (e.g. WebGPU init failure → WebGL)
         body.dataset.tier = String(engine.tier);
         body.dataset.renderer = engine.renderer;
+        if (q.has("seed")) window.__engineDebug = engine; // dev/test builds only
         engine.setState(router.current, { first: true });
       } catch (err) {
         // init failure → T0 static ground (§2.1); site remains fully functional
