@@ -25,19 +25,24 @@ test.describe("a11y", () => {
     expect(critical(r).map((v) => v.id)).toEqual([]);
   });
 
-  test("tab order: skip link first, rail marks reachable in order", async ({ page }, testInfo) => {
+  test("tab order: skip link first, header then rail marks in order", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name === "mobile", "hardware-keyboard flow");
-    await page.goto("/?seed=1");
+    // a domain page: the brand is visible there (hidden on home under the monumental h1)
+    await page.goto("/?seed=1#/columns");
     await page.keyboard.press("Tab");
     await expect(page.locator(".skip")).toBeFocused();
-    // through the home view's focusables to the rail
+    await page.keyboard.press("Tab");
+    await expect(page.locator("header.site .brand")).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(page.locator("header.site .resume-btn")).toBeFocused();
+    // then through the home view's focusables to the rail
     const seq = [];
-    for (let i = 0; i < 12 && seq.length < 7; i++) {
+    for (let i = 0; i < 14 && seq.length < 8; i++) {
       await page.keyboard.press("Tab");
       const f = await page.evaluate(() => document.activeElement?.dataset?.facet || null);
       if (f) seq.push(f);
     }
-    expect(seq).toEqual(["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"]);
+    expect(seq).toEqual(["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"]);
   });
 
   test("focus-visible ring on rail (§7) — visual receipt", async ({ page }, testInfo) => {

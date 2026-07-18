@@ -33,6 +33,17 @@ const A = {
     const f = i % F, xr = (i >> 2) % GX, top = f === F - 1;
     return [-0.8 + (1.6 * xr) / (GX - 1), -0.85 + (1.62 * f) / (F - 1), -0.55 + 1.1 * (top ? 0.3 * hash(i * 7.3) : hash(i * 7.3))];
   },
+  tables(i) {
+    const r = hash(i * 0.67 + 4.1);
+    if (r < 0.12) return [(hash(i * 5.9) - 0.5) * 0.16, -0.52 + hash(i * 8.3) * 0.1, -0.85 + 1.7 * hash(i * 3.9)];
+    const COLS = [-0.82, -0.44, 0.44, 0.82], ROWS = [-0.72, -0.36, 0, 0.36, 0.72];
+    const t = i % (COLS.length * ROWS.length);
+    const cx = COLS[t % COLS.length], cz = ROWS[(t / COLS.length) | 0];
+    const th = hash(i * 2.3) * Math.PI * 2;
+    const isTop = hash(i * 9.7) < 0.88;
+    const rad = (isTop ? 0.15 : 0.03) * Math.sqrt(hash(i * 6.1));
+    return [cx + Math.cos(th) * rad, isTop ? -0.42 + hash(i * 7.7) * 0.045 : -0.61 + hash(i * 7.7) * 0.16, cz + Math.sin(th) * rad];
+  },
   lattice(i) {
     const M = 42, k = i % M;
     const node = (k2) => {
@@ -78,13 +89,13 @@ const A = {
   },
 };
 
-const IDS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+const IDS = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 const W = 1600, H = 1000, FOV = 2.05, CAMD = 2.7;
 const yaw = 0.6, pitch = -0.32;
 const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
 const dots = [];
 for (let i = 0; i < N; i++) {
-  let [x, y, z] = A[IDS[i % 7]](i);
+  let [x, y, z] = A[IDS[i % IDS.length]](i);
   // home-state wander: structure without resolution
   x += (hash(i * 9.1) - 0.5) * 0.22; y += (hash(i * 10.3) - 0.5) * 0.22; z += (hash(i * 11.7) - 0.5) * 0.22;
   const rx = x * cy - z * sy, rz0 = x * sy + z * cy;

@@ -14,7 +14,7 @@
 body { background: #fff !important; color: var(--ink); font-size: 10.5pt; line-height: 1.45; }
 
 /* field, chrome, and interactive hints vanish */
-#field, #rail, .skip, .hint, .back { display: none !important; }
+#field, #rail, .skip, .hint, .back, .backrow, header.site { display: none !important; }
 body[data-tier="0"] { background: #fff !important; }
 
 /* every view prints, stacked — the full record IS the page */

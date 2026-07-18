@@ -24,11 +24,13 @@ import {
   float, vec3, vec4, cos, sqrt, abs,
 } from "three/tsl";
 
-export function createSim(N, { stateTargets, seed, webgpu }) {
+export function createSim(N, { stateTargets, stateIds, colorsData, seed, webgpu }) {
   const positions = instancedArray(N, "vec4"); // xyz pos, w render charge (§2.4)
   const velocities = instancedArray(N, "vec3");
-  // 8 static state buffers: xyz target, w domain id (−1 outside CLUSTERS)
+  // static per-state target buffers: xyz target, w domain id (−1 outside CLUSTERS)
   const T = stateTargets.map((arr) => instancedArray(arr, "vec4"));
+  // static per-particle rest color (I4): pale hue of the particle's home domain
+  const colors = instancedArray(colorsData, "vec3");
 
   const u = {
     dt: uniform(1 / 60),
@@ -42,7 +44,8 @@ export function createSim(N, { stateTargets, seed, webgpu }) {
     seed: uniform(seed),
     slow: uniform(1),             // dossier-open courtesy (0.5) §2.1
   };
-  const w = Array.from({ length: 8 }, () => uniform(0)); // setWeights surface (float — ADR-005)
+  const S = stateTargets.length; // facets + home
+  const w = Array.from({ length: S }, () => uniform(0)); // setWeights surface (float — ADR-005)
 
   // hash matching attractors.js: fract(sin(n·127.1)·43758.5453)
   const gpuHash = (n) => n.mul(127.1).sin().mul(43758.5453).fract();
@@ -61,12 +64,45 @@ export function createSim(N, { stateTargets, seed, webgpu }) {
 
   const el = (b) => b.element(instanceIndex);
 
+  // I5: per-domain idle motion — an analytic, time-varying offset on the static target,
+  // computed in-kernel (no extra buffers, deterministic in u.t). Each state moves in its
+  // own characteristic way instead of sharing one noise field.
+  const motionFor = (id) => (t4) => {
+    const t = u.t;
+    switch (id) {
+      case "columns": // skyline breathing: columns rise/settle in phase bands
+        return vec3(0, t.mul(0.8).add(t4.x.mul(3.0)).sin().mul(0.025), 0);
+      case "frame": // structural sway, stronger up high
+        return vec3(t.mul(0.5).add(t4.y.mul(2.0)).sin().mul(0.016).mul(t4.y.add(1.0)), 0, 0);
+      case "tables": // service-floor drift along the aisle axis
+        return vec3(0, 0, t.mul(0.5).add(t4.x.mul(2.0)).sin().mul(0.03));
+      case "lattice": // node pulse: radial in/out
+        return t4.xyz.normalize().mul(t.mul(1.1).add(t4.xyz.length().mul(5.0)).sin().mul(0.03));
+      case "surface": // waves actually roll across the sheet
+        return vec3(0, t4.x.mul(2.6).add(t.mul(0.9)).sin().mul(0.05), 0);
+      case "clusters": // per-domain slow bob (phase from domain id in w)
+        return vec3(0, t.mul(0.7).add(t4.w.mul(2.1)).sin().mul(0.02), 0);
+      case "vector": // upward-travelling wave: the spiral streams
+        return vec3(0, t.mul(0.9).sub(t4.y.mul(3.0)).sin().mul(0.04), 0);
+      case "orbit": { // rings genuinely revolve about Y
+        const a = t.mul(0.16);
+        const ca = a.cos(), sa = a.sin();
+        const rx = t4.x.mul(ca).sub(t4.z.mul(sa));
+        const rz = t4.x.mul(sa).add(t4.z.mul(ca));
+        return vec3(rx.sub(t4.x), 0, rz.sub(t4.z));
+      }
+      default: // home: the curl field already breathes
+        return vec3(0);
+    }
+  };
+
   // shared integration body; targetNode supplies this kernel's per-particle vec4 target
-  const integrate = (targetNode) => () => {
+  const integrate = (targetNode, motion) => () => {
     const pc = positions.element(instanceIndex);
     const v = velocities.element(instanceIndex);
     const p = pc.xyz.toVar();
     const t4 = targetNode();
+    const tgt = motion ? t4.xyz.add(motion(t4)) : t4.xyz;
 
     // spring (+ sub-collapse ×1.9 and charge for the focused domain §2.4)
     const kk = float(u.k).toVar();
@@ -75,7 +111,7 @@ export function createSim(N, { stateTargets, seed, webgpu }) {
       kk.assign(kk.mul(1.9));
       chg.assign(0.42);
     });
-    const force = t4.xyz.sub(p).mul(kk).toVar();
+    const force = tgt.sub(p).mul(kk).toVar();
 
     // curl of ψ = (sin(3.1y+.9t), sin(2.7z+1.23t), sin(3.4x+.77t)) — scaled to preview feel
     const n = u.noise.mul(u.slow);
@@ -102,22 +138,24 @@ export function createSim(N, { stateTargets, seed, webgpu }) {
     pc.assign(vec4(p.add(v.mul(u.dt)), chg));
   };
 
-  // eight per-state update kernels, each hard-bound to its static target buffer
+  // per-state update kernels, each hard-bound to its static target buffer
   // (static read + pos/vel RMW = 3 buffers; retarget = CPU-side kernel switch)
-  const updateFor = T.map((t) => Fn(integrate(() => el(t)))().compute(N));
+  const updateFor = T.map((t, s) =>
+    Fn(integrate(() => el(t), motionFor(stateIds[s])))().compute(N)
+  );
 
   // §5.3 setWeights (WebGPU only): Σ w[s]·T[s] in-kernel — 10 buffers, fine there;
   // the engine approximates with the dominant state on WebGL (ADR-005).
   const updateBlend = webgpu
     ? Fn(integrate(() => {
         const acc = vec4(0).toVar();
-        for (let s = 0; s < 8; s++) acc.addAssign(el(T[s]).mul(w[s]));
+        for (let s = 0; s < S; s++) acc.addAssign(el(T[s]).mul(w[s]));
         return vec4(acc.xyz, -1);
       }))().compute(N)
     : null;
 
   return {
-    positions, velocities,
+    positions, velocities, colors,
     uniforms: u, weights: w,
     kernels: { initScatter, updateFor, updateBlend },
   };
@@ -128,6 +166,7 @@ export const MODES = {
   home:     { k: 1.35, noise: 0.46, damp: 0.935, pitch: -0.32 },
   columns:  { k: 5.0,  noise: 0.13, damp: 0.885, pitch: -0.20 },
   frame:    { k: 5.0,  noise: 0.13, damp: 0.885, pitch: -0.24 },
+  tables:   { k: 5.0,  noise: 0.12, damp: 0.885, pitch: -0.46 },
   lattice:  { k: 5.0,  noise: 0.15, damp: 0.885, pitch: -0.34 },
   surface:  { k: 5.0,  noise: 0.12, damp: 0.885, pitch: -0.58 },
   clusters: { k: 4.6,  noise: 0.17, damp: 0.895, pitch: -0.34 },

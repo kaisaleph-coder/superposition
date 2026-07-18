@@ -3,7 +3,7 @@
    no PRNG state). CLUSTERS is data-driven: domain counts come from resume data
    (§2.4 field-as-dataset); placeholder counts pre-authorized until owner data. */
 
-export const FACET_IDS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+export const FACET_IDS = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 
 const fract = (x) => x - Math.floor(x);
 export const hash = (n) => fract(Math.sin(n * 127.1) * 43758.5453);
@@ -43,6 +43,32 @@ export function buildAttractors(N, data) {
       -0.8 + (1.6 * xr) / (GX - 1) + (hash(i * 6.1) - 0.5) * 0.02,
       -0.85 + (1.62 * f) / (F - 1) + (hash(i * 4.4) - 0.5) * 0.02,
       -0.55 + 1.1 * (top ? 0.3 * hash(i * 7.3) : hash(i * 7.3)) + (hash(i * 3.1) - 0.5) * 0.02,
+    ];
+  };
+
+  // TABLES — dining floor (I2): round table-discs on a floor grid, aisle through the
+  // middle, a thin service stream along the aisle. Distinct silhouette: uniform flat
+  // discs in a regular plan vs CLUSTERS' random spheres.
+  gens.tables = (i) => {
+    const r = hash(i * 0.67 + 4.1);
+    if (r < 0.12) {
+      // service stream down the aisle
+      return [
+        (hash(i * 5.9) - 0.5) * 0.16,
+        -0.52 + hash(i * 8.3) * 0.1,
+        -0.85 + 1.7 * hash(i * 3.9),
+      ];
+    }
+    const COLS = [-0.82, -0.44, 0.44, 0.82], ROWS = [-0.72, -0.36, 0, 0.36, 0.72];
+    const t = i % (COLS.length * ROWS.length);
+    const cx = COLS[t % COLS.length], cz = ROWS[(t / COLS.length) | 0];
+    const th = hash(i * 2.3) * Math.PI * 2;
+    const isTop = hash(i * 9.7) < 0.88;
+    const rad = (isTop ? 0.15 : 0.03) * Math.sqrt(hash(i * 6.1)); // disc top vs slim pedestal
+    return [
+      cx + Math.cos(th) * rad,
+      isTop ? -0.42 + hash(i * 7.7) * 0.045 : -0.61 + hash(i * 7.7) * 0.16,
+      cz + Math.sin(th) * rad,
     ];
   };
 

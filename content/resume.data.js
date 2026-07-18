@@ -31,6 +31,16 @@ window.__RESUME__ = {
           metrics: [ { k: "[sites]", v: "[00]" }, { k: "[capex]", v: "[$00M]" } ],
           links: [] } ] },
 
+    { id: "tables", name: "Restaurant executive", attractor: "TABLES",
+      manifest: ["[Positioning line — the hospitality claim]",
+                 "[Scope line — venues, covers, concepts]",
+                 "[Standard line — service, margin, repeat rate]"],
+      dossiers: [
+        { title: "[Venue or group]", org: "[ORG]", span: "[SPAN]",
+          lines: ["[Dense line — covers, revenue, margin, ratings.]"],
+          metrics: [ { k: "[venues]", v: "[00]" }, { k: "[covers/yr]", v: "[000k]" } ],
+          links: [] } ] },
+
     { id: "lattice", name: "AI / technical", attractor: "LATTICE",
       manifest: ["[Positioning line — the builder claim]",
                  "[Systems line — what gets built, how]",

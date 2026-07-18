@@ -1,7 +1,7 @@
-/* §10.1 content integrity + ADR-004 no-drift. DOM-only assertions. */
+﻿/* §10.1 content integrity + ADR-004 no-drift. DOM-only assertions. */
 import { test, expect } from "@playwright/test";
 
-const FACETS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+const FACETS = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 
 test.describe("content integrity", () => {
   test("every schema field renders (JS on)", async ({ page }) => {
@@ -14,7 +14,17 @@ test.describe("content integrity", () => {
       expect(await v.locator(".dossier").count()).toBeGreaterThan(0);
     }
     expect(await page.locator("#view-record .record li").count()).toBeGreaterThan(0);
-    await expect(page.locator("footer .row")).toContainText("[LOCATION");
+    // I1: persistent header carries the name + always-available full résumé
+    await expect(page.locator("header.site .brand")).toContainText("[NAME]");
+    await expect(page.locator("header.site .resume-btn")).toBeVisible();
+  });
+
+  test("I1 removals: no 'superposition' text, no location, no footer record link", async ({ page }) => {
+    await page.goto("/?seed=1#/columns");
+    const text = (await page.evaluate(() => document.body.innerText)).toLowerCase();
+    expect(text).not.toContain("superposition");
+    expect(text).not.toContain("[location");
+    expect(await page.locator("footer [data-record-link]").count()).toBe(0);
   });
 
   test("placeholder policy: bracketed placeholders present in this build (P1 waiver)", async ({ page }) => {

@@ -1,13 +1,13 @@
-/* §10.2 state machine — DOM contract (§5.6) only. */
+﻿/* §10.2 state machine — DOM contract (§5.6) only. */
 import { test, expect } from "@playwright/test";
 
-const FACETS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+const FACETS = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 const body = (page) => page.locator("body");
 
 test.describe("state machine", () => {
-  test("keys 1–7 drive data-state/data-facet; Esc returns; r opens record", async ({ page }) => {
+  test("keys 1–8 drive data-state/data-facet; Esc returns; r opens record", async ({ page }) => {
     await page.goto("/?seed=1");
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 8; i++) {
       await page.keyboard.press(String(i + 1));
       await expect(body(page)).toHaveAttribute("data-state", "facet");
       await expect(body(page)).toHaveAttribute("data-facet", FACETS[i]);

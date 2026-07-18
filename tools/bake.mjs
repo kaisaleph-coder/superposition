@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const { homeHTML, facetHTML, recordHTML, footerHTML, FACET_ORDER } = await import(
+const { homeHTML, facetHTML, recordHTML, footerHTML, headerHTML, FACET_ORDER } = await import(
   new URL("../js/render-dom.js", import.meta.url)
 );
 
@@ -22,6 +22,7 @@ if (!data) throw new Error("content/resume.data.js did not set window.__RESUME__
 const sections = {
   "view-home": homeHTML(data.identity),
   "view-record": recordHTML(data.record),
+  header: headerHTML(data.identity),
   footer: footerHTML(data.identity),
 };
 for (const f of data.facets) sections[`view-${f.id}`] = facetHTML(f);

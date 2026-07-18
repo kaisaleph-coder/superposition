@@ -52,27 +52,45 @@ export const FieldEngine = {
     // Eight static per-state target sets (ADR-005: no uploads or dynamic reads on the
     // WebGL backend — everything the GPU will ever target is baked at boot):
     // 0–6 attractors (dom id in w for CLUSTERS), 7 = citizenship home (§2.3).
+    const F = FACET_IDS.length, HOME = F; // state indices: 0..F-1 facets, F = home
+    const CLUSTERS_IDX = FACET_IDS.indexOf("clusters");
     const stateTargets = [];
-    for (let s = 0; s < 8; s++) {
+    for (let s = 0; s <= F; s++) {
       const arr = new Float32Array(N * 4);
       for (let i = 0; i < N; i++) {
-        const a = s === 7 ? citData[i] : s;
+        const a = s === HOME ? citData[i] : s;
         const j = (a * N + i) * 3;
         arr[i * 4] = targetsData[j];
         arr[i * 4 + 1] = targetsData[j + 1];
         arr[i * 4 + 2] = targetsData[j + 2];
-        arr[i * 4 + 3] = a === 4 ? domData[i] : -1;
+        arr[i * 4 + 3] = a === CLUSTERS_IDX ? domData[i] : -1;
       }
       stateTargets.push(arr);
     }
 
-    const sim = createSim(N, { stateTargets, seed: seedNum, webgpu: backend === "webgpu" });
+    // I4: pale per-domain palette — one hue per home domain, applied per particle.
+    // Order matches FACET_IDS: columns, frame, tables, lattice, surface, clusters, vector, orbit.
+    const PALETTE = ["#9FBBE0", "#ADB6CE", "#DCC49A", "#B5A6E0", "#93C6C2", "#A8CBA0", "#8FB0EE", "#D3A9C5"]
+      .map((h) => new THREE.Color(h));
+    const colorsData = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const c = PALETTE[citData[i] % PALETTE.length];
+      colorsData[i * 3] = c.r; colorsData[i * 3 + 1] = c.g; colorsData[i * 3 + 2] = c.b;
+    }
+
+    const sim = createSim(N, {
+      stateTargets,
+      stateIds: [...FACET_IDS, "home"],
+      colorsData,
+      seed: seedNum,
+      webgpu: backend === "webgpu",
+    });
     const { mesh, uniforms: rUniforms } = createRenderMesh(N, sim, { mobile });
     scene.add(mesh);
 
-    // dark scheme: pale particles (§3.1); Klein unchanged
+    // dark scheme: brighten the pastel palette slightly (§3.1: Klein charge unchanged)
     const darkMq = matchMedia("(prefers-color-scheme: dark)");
-    const applyScheme = () => rUniforms.uInk.value.set(darkMq.matches ? "#C9CFDB" : "#10131A");
+    const applyScheme = () => { rUniforms.uTone.value = darkMq.matches ? 1.18 : 1.0; };
     applyScheme();
     darkMq.addEventListener("change", applyScheme);
 
@@ -84,6 +102,9 @@ export const FieldEngine = {
     let rafId = 0, running = false, disposed = false, settled = false;
     let curTier = tier, drawN = N, lowStreak = 0, fpsFrames = 0, fpsClock = performance.now();
     let bootMarked = false, scrollP = 0;
+    const par = { x: 0, y: 0, tx: 0, ty: 0, gyro: false }; // I5 parallax state
+    const finePointer = matchMedia("(pointer: fine)").matches;
+    let castTarget = 0; // I4 domain-cast blend target
 
     const doc = canvas.ownerDocument;
     const pointer = createPointer(canvas);
@@ -95,7 +116,7 @@ export const FieldEngine = {
     const eased = () => easeInOut(Math.min(1, (simT - blendStart) / blendDur));
 
     // Retarget = CPU-side kernel switch (ADR-005: no inter-kernel GPU data flow).
-    let activeState = 7, weightsMode = false;
+    let activeState = HOME, weightsMode = false;
     function dispatchRetarget(newStateIdx) {
       activeState = newStateIdx;
       weightsMode = false;
@@ -105,7 +126,7 @@ export const FieldEngine = {
 
     function stateIndexOf(id) {
       const i = FACET_IDS.indexOf(id);
-      return i === -1 ? 7 : i; // 7 = home/citizenship (record keeps last/home targets)
+      return i === -1 ? HOME : i; // HOME = citizenship blend (record keeps home targets)
     }
 
     // boot: seeded noise → superposition (§3.4); the 2 s assembly is the spring flight
@@ -165,8 +186,12 @@ export const FieldEngine = {
       sim.uniforms.damp.value = lerp(modeFrom.damp, modeTo.damp, e);
 
       yaw += 0.07 * dt * slowF;
-      const yawView = yaw + (scrollP * 2 - 1) * 0.1396 * (stateId !== "home" && stateId !== "record" ? 1 : 0); // ±8°
-      const pitch = lerp(modeFrom.pitch, modeTo.pitch, e) + 0.05 * Math.sin(simT * 0.11);
+      // I5 parallax: mouse (fine pointers) or gyro (setParallax) eases the camera a few degrees
+      if (finePointer && !par.gyro) { par.tx = pointer.state.x; par.ty = pointer.state.y; }
+      par.x += (par.tx - par.x) * Math.min(1, dt * 2.5);
+      par.y += (par.ty - par.y) * Math.min(1, dt * 2.5);
+      const yawView = yaw + par.x * 0.06 + (scrollP * 2 - 1) * 0.1396 * (stateId !== "home" && stateId !== "record" ? 1 : 0); // ±8°
+      const pitch = lerp(modeFrom.pitch, modeTo.pitch, e) + 0.05 * Math.sin(simT * 0.11) + par.y * 0.045;
       const el = -pitch, D = 2.7;
       camera.position.set(
         D * Math.cos(el) * Math.sin(yawView),
@@ -178,6 +203,7 @@ export const FieldEngine = {
       pointer.update(camera, dt);
       sim.uniforms.pointer.value.copy(pointer.state.world);
       sim.uniforms.pointerStrength.value = frozen ? 0 : pointer.state.strength;
+      rUniforms.uCast.value += (castTarget - rUniforms.uCast.value) * Math.min(1, dt * 2);
 
       if (!frozen) {
         renderer.compute(
@@ -232,8 +258,14 @@ export const FieldEngine = {
         const target = id === "home" || id === "record" ? id : FACET_IDS.includes(id) ? id : "home";
         const changed = target !== stateId;
         stateId = target;
-        frozen = target === "record"; // §2.1: record freezes to a faint still
-        sim.uniforms.slow.value = dossier && target !== "clusters" ? 0.5 : 1;
+        // I5: record no longer freezes — it drifts faintly; dossier slows less harshly
+        frozen = false;
+        sim.uniforms.slow.value =
+          target === "record" ? 0.3 : dossier && target !== "clusters" ? 0.6 : 1;
+        // I4: collapsed views cast the field toward the domain hue
+        const fi = FACET_IDS.indexOf(target);
+        castTarget = fi === -1 ? 0 : 0.65;
+        if (fi !== -1) rUniforms.uStateColor.value.copy(PALETTE[fi]);
         sim.uniforms.focusDomain.value = target === "clusters" ? domain : -1;
         if (changed) {
           const e = eased();
@@ -274,6 +306,12 @@ export const FieldEngine = {
       setScroll(p) {
         scrollP = Math.max(0, Math.min(1, p));
         if (testMode) body.dataset.scroll = scrollP.toFixed(2);
+      },
+      /* I5: gyro/mouse parallax target, both ∈ [-1, 1]. Gyro takes priority once seen. */
+      setParallax(x, y) {
+        par.gyro = true;
+        par.tx = Math.max(-1, Math.min(1, x));
+        par.ty = Math.max(-1, Math.min(1, y));
       },
       /* Deterministic manual stepping (debug/QA): advance n fixed-dt frames now,
          independent of rAF/visibility. */

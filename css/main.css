@@ -55,12 +55,41 @@ body {
 }
 .skip:focus-visible { left: 0; outline: 2px solid var(--accent-live); outline-offset: 2px; }
 
+/* ---------- persistent header (I1): name + full résumé, every view ---------- */
+header.site {
+  position: fixed; z-index: 4; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px var(--gutter) 10px;
+  pointer-events: none; /* children re-enable — keeps the field clickable between them */
+}
+:root:not(.js) header.site { position: static; }
+header.site a { pointer-events: auto; }
+.brand {
+  font-weight: 800; font-stretch: 66%; font-size: 1.15rem; letter-spacing: -.01em;
+  color: var(--ink); text-decoration: none;
+}
+.brand:hover, .brand:focus-visible { color: var(--accent); }
+.brand:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 3px; }
+/* home already carries the monumental name — avoid the duplicate */
+body[data-state="superposition"] .brand { visibility: hidden; }
+:root:not(.js) .brand { visibility: visible; }
+.resume-btn {
+  font-size: .72rem; font-stretch: 118%; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); text-decoration: none;
+  border: 1px solid currentColor; border-radius: 999px; padding: .5em 1.1em;
+  transition: color .18s, background .18s;
+}
+.resume-btn:hover, .resume-btn:focus-visible { color: #fff; background: var(--klein); border-color: var(--klein); }
+.resume-btn:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 3px; }
+body[data-state="record"] .resume-btn { visibility: hidden; }
+
 #field {
   position: fixed; inset: 0; z-index: 0; display: block;
   transition: opacity .35s ease;
 }
-body[data-state="dossier"]:not([data-facet="clusters"]) #field { opacity: .35; }
-body[data-state="record"] #field { opacity: .18; }
+/* I5: the field never fully dies — soft dim on dossier, faint drift on record */
+body[data-state="dossier"]:not([data-facet="clusters"]) #field { opacity: .6; }
+body[data-state="record"] #field { opacity: .32; }
 /* T0 static ground (no JS, reduced motion, init failure) */
 body[data-tier="0"] { background: var(--paper) url("../assets/field-static.svg") no-repeat center / cover; }
 
@@ -71,7 +100,7 @@ main {
   padding-right: clamp(64px, 10vw, 140px);
   max-width: calc(var(--galley) + var(--gutter) + clamp(64px, 10vw, 140px));
 }
-.js main { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.js main { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: clamp(58px, 9vh, 90px); }
 
 .view { max-width: var(--galley); }
 .js .view {
@@ -94,11 +123,22 @@ main {
   font-weight: 400;
 }
 h2.eyebrow { font-size: .72rem; }
-.eyebrow .back {
+.backrow { margin-bottom: .5rem; }
+.back {
   color: var(--accent); text-decoration: none;
-  letter-spacing: .14em; text-transform: uppercase; font-size: .72rem;
+  letter-spacing: .14em; text-transform: uppercase; font-size: .72rem; font-stretch: 118%;
 }
-.eyebrow .back:hover, .eyebrow .back:focus-visible { color: var(--accent-live); }
+.back:hover, .back:focus-visible { color: var(--accent-live); }
+
+/* domain title (I1): the domain name is the monumental heading on its page */
+.domain-title {
+  font-size: clamp(2rem, 4.6vw, 3.6rem);
+  font-weight: 800;
+  font-stretch: 66%;
+  line-height: 1;
+  letter-spacing: -.02em;
+  margin-bottom: 1.2rem;
+}
 
 h1 {
   font-size: clamp(2.6rem, 6vw, 5.2rem);
@@ -213,7 +253,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
     padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
     background: linear-gradient(to top, var(--paper) 62%, rgba(242, 244, 247, 0));
   }
-  .js #rail a { width: 40px; height: 40px; }
+  .js #rail { gap: 4px; }
+  .js #rail a { width: 38px; height: 38px; } /* 8 marks fit a 375px viewport */
   .js #rail .lbl { display: none; }
   .js footer { left: 20px; bottom: calc(70px + env(safe-area-inset-bottom)); }
 }

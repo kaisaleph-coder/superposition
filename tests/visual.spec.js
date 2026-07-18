@@ -1,9 +1,9 @@
-/* §10.4 visual regression — fixed-seed deterministic screenshots: superposition +
+﻿/* §10.4 visual regression — fixed-seed deterministic screenshots: superposition +
    each facet settled + dossier open + record, light & dark. The engine freezes at
    sim-frame 240 under ?seed (fixed dt), so shots are pixel-stable by construction. */
 import { test, expect } from "@playwright/test";
 
-const FACETS = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+const FACETS = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 
 test.describe("visual regression (fixed seed)", () => {
   test.skip(({ isMobile }) => isMobile, "desktop VR set");

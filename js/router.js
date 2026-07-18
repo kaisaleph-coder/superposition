@@ -105,7 +105,7 @@ export function createRouter(doc, { onState } = {}) {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = doc.activeElement && doc.activeElement.tagName;
     if (tag === "INPUT" || tag === "TEXTAREA") return;
-    if (e.key >= "1" && e.key <= "7") go(FACET_ORDER[+e.key - 1]);
+    if (e.key >= "1" && e.key <= String(FACET_ORDER.length)) go(FACET_ORDER[+e.key - 1]);
     else if (e.key === "Escape") go("home");
     else if (e.key === "r") go("record");
     else if (e.key === "p") { e.preventDefault(); window.print(); }

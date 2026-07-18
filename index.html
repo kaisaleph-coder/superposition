@@ -73,12 +73,41 @@ body {
 }
 .skip:focus-visible { left: 0; outline: 2px solid var(--accent-live); outline-offset: 2px; }
 
+/* ---------- persistent header (I1): name + full résumé, every view ---------- */
+header.site {
+  position: fixed; z-index: 4; top: 0; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px var(--gutter) 10px;
+  pointer-events: none; /* children re-enable — keeps the field clickable between them */
+}
+:root:not(.js) header.site { position: static; }
+header.site a { pointer-events: auto; }
+.brand {
+  font-weight: 800; font-stretch: 66%; font-size: 1.15rem; letter-spacing: -.01em;
+  color: var(--ink); text-decoration: none;
+}
+.brand:hover, .brand:focus-visible { color: var(--accent); }
+.brand:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 3px; }
+/* home already carries the monumental name — avoid the duplicate */
+body[data-state="superposition"] .brand { visibility: hidden; }
+:root:not(.js) .brand { visibility: visible; }
+.resume-btn {
+  font-size: .72rem; font-stretch: 118%; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); text-decoration: none;
+  border: 1px solid currentColor; border-radius: 999px; padding: .5em 1.1em;
+  transition: color .18s, background .18s;
+}
+.resume-btn:hover, .resume-btn:focus-visible { color: #fff; background: var(--klein); border-color: var(--klein); }
+.resume-btn:focus-visible { outline: 2px solid var(--accent-live); outline-offset: 3px; }
+body[data-state="record"] .resume-btn { visibility: hidden; }
+
 #field {
   position: fixed; inset: 0; z-index: 0; display: block;
   transition: opacity .35s ease;
 }
-body[data-state="dossier"]:not([data-facet="clusters"]) #field { opacity: .35; }
-body[data-state="record"] #field { opacity: .18; }
+/* I5: the field never fully dies — soft dim on dossier, faint drift on record */
+body[data-state="dossier"]:not([data-facet="clusters"]) #field { opacity: .6; }
+body[data-state="record"] #field { opacity: .32; }
 /* T0 static ground (no JS, reduced motion, init failure) */
 body[data-tier="0"] { background: var(--paper) url("assets/field-static.svg") no-repeat center / cover; }
 
@@ -89,7 +118,7 @@ main {
   padding-right: clamp(64px, 10vw, 140px);
   max-width: calc(var(--galley) + var(--gutter) + clamp(64px, 10vw, 140px));
 }
-.js main { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.js main { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-top: clamp(58px, 9vh, 90px); }
 
 .view { max-width: var(--galley); }
 .js .view {
@@ -112,11 +141,22 @@ main {
   font-weight: 400;
 }
 h2.eyebrow { font-size: .72rem; }
-.eyebrow .back {
+.backrow { margin-bottom: .5rem; }
+.back {
   color: var(--accent); text-decoration: none;
-  letter-spacing: .14em; text-transform: uppercase; font-size: .72rem;
+  letter-spacing: .14em; text-transform: uppercase; font-size: .72rem; font-stretch: 118%;
 }
-.eyebrow .back:hover, .eyebrow .back:focus-visible { color: var(--accent-live); }
+.back:hover, .back:focus-visible { color: var(--accent-live); }
+
+/* domain title (I1): the domain name is the monumental heading on its page */
+.domain-title {
+  font-size: clamp(2rem, 4.6vw, 3.6rem);
+  font-weight: 800;
+  font-stretch: 66%;
+  line-height: 1;
+  letter-spacing: -.02em;
+  margin-bottom: 1.2rem;
+}
 
 h1 {
   font-size: clamp(2.6rem, 6vw, 5.2rem);
@@ -231,7 +271,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
     padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
     background: linear-gradient(to top, var(--paper) 62%, rgba(242, 244, 247, 0));
   }
-  .js #rail a { width: 40px; height: 40px; }
+  .js #rail { gap: 4px; }
+  .js #rail a { width: 38px; height: 38px; } /* 8 marks fit a 375px viewport */
   .js #rail .lbl { display: none; }
   .js footer { left: 20px; bottom: calc(70px + env(safe-area-inset-bottom)); }
 }
@@ -274,18 +315,25 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
 <a class="skip" href="#main">Skip to content</a>
 <canvas id="field" aria-hidden="true"></canvas>
 
+<header class="site">
+  <!--BAKE:header BEGIN-->
+<a class="brand" href="#/">[NAME]</a>
+<a class="resume-btn" href="#/record">Full résumé</a>
+    <!--BAKE:header END-->
+</header>
+
 <main id="main">
   <section id="view-home" class="view" data-view="home">
     <!--BAKE:view-home BEGIN-->
-<p class="eyebrow">Superposition — all states resident</p>
 <h1>[NAME]</h1>
 <p class="positioning">[One-line positioning — 90 characters of exactly what this person is.]</p>
-<p class="hint">Choose a mark to <b>collapse the field</b> into one state. Keys <b>1–7</b> · <b>Esc</b> returns · <b>r</b> full record.</p>
+<p class="hint">Choose a mark. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> full résumé.</p>
     <!--BAKE:view-home END-->
   </section>
   <section id="view-columns" class="view facet" data-view="facet">
     <!--BAKE:view-columns BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Finance executive</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Finance executive</h2>
 <ul class="manifest">
 <li>[Positioning line — the executive claim]</li>
 <li>[Scope line — scale, entities, mandate]</li>
@@ -307,7 +355,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-frame" class="view facet" data-view="facet">
     <!--BAKE:view-frame BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Construction executive</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Construction executive</h2>
 <ul class="manifest">
 <li>[Positioning line — the build claim]</li>
 <li>[Scope line — sites, capex, trades]</li>
@@ -326,9 +375,32 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
 </div>
     <!--BAKE:view-frame END-->
   </section>
+  <section id="view-tables" class="view facet" data-view="facet">
+    <!--BAKE:view-tables BEGIN-->
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Restaurant executive</h2>
+<ul class="manifest">
+<li>[Positioning line — the hospitality claim]</li>
+<li>[Scope line — venues, covers, concepts]</li>
+<li>[Standard line — service, margin, repeat rate]</li>
+</ul>
+<div class="dossiers">
+<div class="dossier">
+<button aria-expanded="false" aria-controls="d-tables-0" id="db-tables-0">
+<span class="t">[Venue or group]</span><span class="m">[ORG] · [SPAN]</span>
+</button>
+<div class="body" id="d-tables-0" role="region" aria-labelledby="db-tables-0"><div class="body-in">
+<p>[Dense line — covers, revenue, margin, ratings.]</p>
+<div class="chips"><span class="chip">[venues] <b>[00]</b></span><span class="chip">[covers/yr] <b>[000k]</b></span></div>
+</div></div>
+</div>
+</div>
+    <!--BAKE:view-tables END-->
+  </section>
   <section id="view-lattice" class="view facet" data-view="facet">
     <!--BAKE:view-lattice BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>AI / technical</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">AI / technical</h2>
 <ul class="manifest">
 <li>[Positioning line — the builder claim]</li>
 <li>[Systems line — what gets built, how]</li>
@@ -349,7 +421,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-surface" class="view facet" data-view="facet">
     <!--BAKE:view-surface BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Investing / trading</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Investing / trading</h2>
 <ul class="manifest">
 <li>[Positioning line — the market claim]</li>
 <li>[Method line — instruments, horizon, edge]</li>
@@ -370,7 +443,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-clusters" class="view facet" data-view="facet">
     <!--BAKE:view-clusters BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Skills</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Skills</h2>
 <ul class="manifest">
 <li>[Positioning line — the range claim]</li>
 <li>[Depth line — where mastery concentrates]</li>
@@ -400,7 +474,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-vector" class="view facet" data-view="facet">
     <!--BAKE:view-vector BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Entrepreneur</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Entrepreneur</h2>
 <ul class="manifest">
 <li>[Positioning line — the zero-to-one claim]</li>
 <li>[Trajectory line — scattered starts, one direction]</li>
@@ -420,7 +495,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-orbit" class="view facet" data-view="facet">
     <!--BAKE:view-orbit BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Hobbyist</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Hobbyist</h2>
 <ul class="manifest">
 <li>[Positioning line — the curiosity claim]</li>
 <li>[Orbit line — the recurring obsessions]</li>
@@ -440,7 +516,8 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   </section>
   <section id="view-record" class="view" data-view="record">
     <!--BAKE:view-record BEGIN-->
-<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Full record</h2></div>
+<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Full résumé</h2>
 <ol class="record">
 <li><span class="span">[SPAN]</span><span class="line">[Chronological record line.]</span></li>
 </ol>
@@ -452,18 +529,19 @@ footer a:hover, footer a:focus-visible { color: var(--accent); }
   <!--BAKE:rail BEGIN-->
 <a href="#/columns" data-facet="columns" aria-label="Finance executive" data-key="1"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M4 18V9M11 18V4.5M18 18v-8"/></svg><span class="lbl">Finance executive</span></a>
   <a href="#/frame" data-facet="frame" aria-label="Construction executive" data-key="2"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M5 18V7M11 18V4M17 18V7M4 9.5h9M4 14.5h14"/></svg><span class="lbl">Construction executive</span></a>
-  <a href="#/lattice" data-facet="lattice" aria-label="AI / technical" data-key="3"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M11 4.5 4.8 16.5h12.4L11 4.5Z"/><circle class="dotfill" cx="11" cy="4.5" r="1.7"/><circle class="dotfill" cx="4.8" cy="16.5" r="1.7"/><circle class="dotfill" cx="17.2" cy="16.5" r="1.7"/></svg><span class="lbl">AI / technical</span></a>
-  <a href="#/surface" data-facet="surface" aria-label="Investing / trading" data-key="4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M3 13c3-6 5.5 5 8 0s5.5-6 8-1"/><path d="M3 17c3-6 5.5 5 8 0s5.5-6 8-1" opacity=".38"/></svg><span class="lbl">Investing / trading</span></a>
-  <a href="#/clusters" data-facet="clusters" aria-label="Skills" data-key="5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M8.3 8.6 10.2 13M13.9 7.4 12.5 13.1" opacity=".35"/><circle class="dotfill" cx="6.5" cy="7" r="2.4"/><circle class="dotfill" cx="15.5" cy="6" r="1.7"/><circle class="dotfill" cx="11.5" cy="15" r="2.1"/><circle class="dotfill" cx="17.6" cy="12.6" r="1.1"/><circle class="dotfill" cx="4.4" cy="13.6" r="1.2"/></svg><span class="lbl">Skills</span></a>
-  <a href="#/vector" data-facet="vector" aria-label="Entrepreneur" data-key="6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M4.5 17.5c7 0 11-3 9.5-6.5-1.2-2.8-5.5-1.4-4.4 1 .8 1.8 3.4 1 4.9-.4"/><circle class="dotfill" cx="15.6" cy="6.6" r="1.8"/></svg><span class="lbl">Entrepreneur</span></a>
-  <a href="#/orbit" data-facet="orbit" aria-label="Hobbyist" data-key="7"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8.5" ry="3.6"/><ellipse cx="11" cy="11" rx="8.5" ry="3.6" transform="rotate(62 11 11)"/><circle class="dotfill" cx="11" cy="11" r="1.6"/></svg><span class="lbl">Hobbyist</span></a>
+  <a href="#/tables" data-facet="tables" aria-label="Restaurant executive" data-key="3"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><circle cx="6" cy="6.5" r="2.6"/><circle cx="16" cy="6.5" r="2.6"/><circle cx="6" cy="15.5" r="2.6"/><circle cx="16" cy="15.5" r="2.6"/><path d="M11 3v16" opacity=".35"/></svg><span class="lbl">Restaurant executive</span></a>
+  <a href="#/lattice" data-facet="lattice" aria-label="AI / technical" data-key="4"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M11 4.5 4.8 16.5h12.4L11 4.5Z"/><circle class="dotfill" cx="11" cy="4.5" r="1.7"/><circle class="dotfill" cx="4.8" cy="16.5" r="1.7"/><circle class="dotfill" cx="17.2" cy="16.5" r="1.7"/></svg><span class="lbl">AI / technical</span></a>
+  <a href="#/surface" data-facet="surface" aria-label="Investing / trading" data-key="5"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M3 13c3-6 5.5 5 8 0s5.5-6 8-1"/><path d="M3 17c3-6 5.5 5 8 0s5.5-6 8-1" opacity=".38"/></svg><span class="lbl">Investing / trading</span></a>
+  <a href="#/clusters" data-facet="clusters" aria-label="Skills" data-key="6"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M8.3 8.6 10.2 13M13.9 7.4 12.5 13.1" opacity=".35"/><circle class="dotfill" cx="6.5" cy="7" r="2.4"/><circle class="dotfill" cx="15.5" cy="6" r="1.7"/><circle class="dotfill" cx="11.5" cy="15" r="2.1"/><circle class="dotfill" cx="17.6" cy="12.6" r="1.1"/><circle class="dotfill" cx="4.4" cy="13.6" r="1.2"/></svg><span class="lbl">Skills</span></a>
+  <a href="#/vector" data-facet="vector" aria-label="Entrepreneur" data-key="7"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path d="M4.5 17.5c7 0 11-3 9.5-6.5-1.2-2.8-5.5-1.4-4.4 1 .8 1.8 3.4 1 4.9-.4"/><circle class="dotfill" cx="15.6" cy="6.6" r="1.8"/></svg><span class="lbl">Entrepreneur</span></a>
+  <a href="#/orbit" data-facet="orbit" aria-label="Hobbyist" data-key="8"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><ellipse cx="11" cy="11" rx="8.5" ry="3.6"/><ellipse cx="11" cy="11" rx="8.5" ry="3.6" transform="rotate(62 11 11)"/><circle class="dotfill" cx="11" cy="11" r="1.6"/></svg><span class="lbl">Hobbyist</span></a>
     <!--BAKE:rail END-->
 </nav>
 
 <footer>
   <div class="row">
     <!--BAKE:footer BEGIN-->
-<span>[LOCATION — owner-chosen granularity]</span><a href="#/record" data-record-link>Full record</a>
+
     <!--BAKE:footer END-->
   </div>
 </footer>

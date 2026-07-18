@@ -7,6 +7,9 @@
 ### Session decisions (details in docs/receipts/ADR-*)
 - ADR-002: repo root is `C:\ai_projects_v1\resume-website` (not handoff's `E:\superposition`); orphan branch `main` with placeholder git author for public history; portable Node v24.18.0 in scratchpad (no system install); python 3.12 (not 3.14) serves.
 
+## 2026-07-18 — v1.1 owner iterations (I1–I5)
+- Owner-approved changes shipped: chrome/identity rework (header + Full résumé button, superposition/location/footer-record removed, domain titles monumental), 8th domain "Restaurant executive" (TABLES dining-floor attractor), swipe + wheel-at-edge domain paging, per-domain pale particle palette with collapsed-view cast, per-domain idle motion + mouse/gyro parallax, field never fully dims/freezes. Suite 82/82 after re-baseline; budget 713.2 KB. Receipt: docs/receipts/I1-I5-iterations.md.
+
 ### RUN COMPLETE (2026-07-17)
 - ALL GATES PASSED. Deployed live: https://kaisaleph-coder.github.io/superposition/ (public repo, Pages main/root, v1.0.0). RUN-REPORT.md is the authoritative summary. Owner's next move: real-content swap (README §Content update / RUN-REPORT §Owner next steps).
 

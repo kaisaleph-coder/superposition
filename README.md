@@ -1,9 +1,10 @@
 # SUPERPOSITION
 
 One GPU particle field is the whole visual identity: ~131K particles that never leave the
-screen, reorganizing into seven attractor states — one per professional facet. At rest the
-field is the weighted blend of all seven at low amplitude: the identity in superposition;
-navigation collapses it. The name is a description of the compute shader.
+screen, reorganizing into eight attractor states — one per professional domain. At rest
+the field is the blend of all eight at low amplitude; navigation collapses it into one.
+Each particle is permanently tinted by its home domain (pale hues — the text always wins);
+collapsed views cast the field toward that domain's color.
 
 **All content in this build is `[PLACEHOLDER]`.** Real content is a data-only swap (below).
 
@@ -20,7 +21,9 @@ python -m http.server 8080     # from repo root (any static server works)
 Open http://localhost:8080. Useful flags: `?seed=1` deterministic test mode (freezes at
 sim-frame 240; add `&run=1` to keep running) · `?force=webgl` forces the WebGL2 backend.
 
-Keys: `1–7` facets · `←/→` cycle · `Esc` home · `r` full record · `p` print · `.` pause.
+Keys: `1–8` domains · `←/→` cycle · `Esc` home · `r` full résumé · `p` print · `.` pause.
+Also: horizontal swipe (touch) and wheel-past-content-edge (desktop) page between domains;
+subtle mouse/gyro parallax (gyro is tap-to-enable on iOS).
 
 ## Content update (owner)
 1. Edit `content/resume.data.js` — the single source of truth (schema §4.2 in PLAN.md).

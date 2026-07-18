@@ -4,7 +4,7 @@
    Skills rule (§4.2, binding): three-tier typeset prose + count chips only —
    no bars, no percentages, no clouds, no radar. */
 
-export const FACET_ORDER = ["columns", "frame", "lattice", "surface", "clusters", "vector", "orbit"];
+export const FACET_ORDER = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
 
 const esc = (s) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -20,10 +20,15 @@ const linksHTML = (links) =>
     : "";
 
 export function homeHTML(identity) {
-  return `<p class="eyebrow">Superposition — all states resident</p>
-<h1>${esc(identity.name)}</h1>
+  return `<h1>${esc(identity.name)}</h1>
 <p class="positioning">${esc(identity.positioning)}</p>
-<p class="hint">Choose a mark to <b>collapse the field</b> into one state. Keys <b>1–7</b> · <b>Esc</b> returns · <b>r</b> full record.</p>`;
+<p class="hint">Choose a mark. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> full résumé.</p>`;
+}
+
+/* Persistent header (every view): name + always-available full résumé (I1). */
+export function headerHTML(identity) {
+  return `<a class="brand" href="#/">${esc(identity.name)}</a>
+<a class="resume-btn" href="#/record">Full résumé</a>`;
 }
 
 function dossierHTML(facetId, d, i) {
@@ -68,7 +73,8 @@ export function facetHTML(facet) {
   const legend = isClusters
     ? `\n<li class="legend">Type weight encodes tier — <b>core</b>, working, familiar. Open a domain to collapse its cluster in the field.</li>`
     : "";
-  return `<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>${esc(facet.name)}</h2></div>
+  return `<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">${esc(facet.name)}</h2>
 <ul class="manifest">
 ${(facet.manifest || []).map((l) => `<li>${esc(l)}</li>`).join("\n")}${legend}
 </ul>
@@ -78,17 +84,17 @@ ${items.join("\n")}
 }
 
 export function recordHTML(record) {
-  return `<div class="eyebrow"><a class="back" href="#/">◂ superposition</a> <h2>Full record</h2></div>
+  return `<p class="backrow"><a class="back" href="#/">◂ home</a></p>
+<h2 class="domain-title">Full résumé</h2>
 <ol class="record">
 ${(record.entries || []).map((e) => `<li><span class="span">${esc(e.span)}</span><span class="line">${esc(e.line)}</span></li>`).join("\n")}
 </ol>`;
 }
 
 export function footerHTML(identity) {
-  const links = (identity.links || [])
+  return (identity.links || [])
     .map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`)
     .join("");
-  return `${links}<span>${esc(identity.location)}</span><a href="#/record" data-record-link>Full record</a>`;
 }
 
 /* Browser entry: re-render every view from data (source of truth for JS visitors). */
@@ -99,5 +105,6 @@ export function renderAll(data, doc) {
     if (el) el.innerHTML = facetHTML(f);
   }
   doc.getElementById("view-record").innerHTML = recordHTML(data.record);
+  doc.querySelector("header.site").innerHTML = headerHTML(data.identity);
   doc.querySelector("footer .row").innerHTML = footerHTML(data.identity);
 }

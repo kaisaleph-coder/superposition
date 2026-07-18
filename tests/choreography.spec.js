@@ -38,13 +38,43 @@ test.describe("choreography", () => {
       .not.toBeNull();
   });
 
+  test("I3 wheel-at-edge pages between domains (desktop)", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop", "wheel is a desktop affordance");
+    await page.goto("/?seed=1");
+    await expect(page.locator("#view-home")).toHaveClass(/on/);
+    await page.mouse.move(400, 450);
+    await page.mouse.wheel(0, 160); // home → first domain
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "columns");
+    await page.waitForTimeout(1000); // cooldown
+    await page.mouse.wheel(0, 160); // columns → frame (content fits: at-edge)
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "frame");
+    await page.waitForTimeout(1000);
+    await page.mouse.wheel(0, -160); // frame → columns
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "columns");
+  });
+
+  test("I3 horizontal swipe pages between domains (touch)", async ({ page }) => {
+    await page.goto("/?seed=1#/columns");
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "columns");
+    const swipe = (fromX, toX) =>
+      page.evaluate(([a, b]) => {
+        const opts = { bubbles: true, pointerId: 9, pointerType: "touch", clientY: 400 };
+        window.dispatchEvent(new PointerEvent("pointerdown", { ...opts, clientX: a }));
+        window.dispatchEvent(new PointerEvent("pointerup", { ...opts, clientX: b }));
+      }, [fromX, toX]);
+    await swipe(320, 90); // swipe left → next
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "frame");
+    await swipe(90, 320); // swipe right → back
+    await expect(page.locator("body")).toHaveAttribute("data-facet", "columns");
+  });
+
   test("morph transition completes within 1.3 s (§11 P3 gate)", async ({ page }) => {
     await page.goto("/?seed=1&run=1");
     await page.waitForSelector("body[data-settled]", { timeout: 20000 });
     // data-state flips immediately; the field morph is BLEND_MS=1150 < 1300 by
     // construction — assert the DOM contract transition is immediate and stable
     const t0 = Date.now();
-    await page.keyboard.press("3");
+    await page.keyboard.press("4");
     await expect(page.locator("body")).toHaveAttribute("data-facet", "lattice");
     expect(Date.now() - t0).toBeLessThan(1300);
   });
