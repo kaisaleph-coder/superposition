@@ -7,6 +7,6 @@
 | P2 Field engine | ☑ PASSED 2026-07-17 (WebGL numbers later invalidated & re-taken at P3 — see superseded note in receipt + ADR-005) | docs/receipts/P2-engine.md | bdb98ab |
 | P3 Choreography | ☑ PASSED 2026-07-17 — legibility gate caught 5 silent WebGL compute bugs → engine re-architected (ADR-005); all 7 silhouettes verified; convergence 0.026–0.029 both backends; downshift CDP-proven; suite 74/74; soak re-run (result in receipt); budget 431.2 KB | docs/receipts/P3-choreography.md, ADR-005, 7 facet screenshots reviewed | gate(P3) (hash backfilled at P4) |
 | P4 Polish | ☑ PASSED 2026-07-17 — matrix 75/75; axe 0 critical+0 serious; FCP 784 ms Fast-3G lab (<1.0 s); 0 long tasks; budget 709/900 KB; anti-default signoff; dark-text a11y accents; OG from live engine; Lighthouse via Ladder-C substitute (CLI spawn-blocked; P1 LH 96/100/96/100 stands) | docs/receipts/P4-polish.md, P4-design-critique.md | gate(P4) (hash backfilled at P5) |
-| P5 Ship | ☐ pending · auto-push iff `gh` authenticated (Ladder D), else deploy-ready + DEPLOY.md · ends with RUN-REPORT.md | docs/receipts/P5-* | — |
+| P5 Ship | ☑ PASSED 2026-07-17 — Ladder D auto-deploy: PUBLIC repo `superposition`, Pages live & verified at https://kaisaleph-coder.github.io/superposition/ · tag v1.0.0 · RUN-REPORT.md written | docs/receipts/P5-ship.md, RUN-REPORT.md | bbc0745 + gate(P5) final |
 
 **Resume-from-cold:** read CLAUDE.md → PLAN.md → this file → latest receipts in docs/receipts/. The repo alone must be sufficient.
