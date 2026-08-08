@@ -20,7 +20,10 @@
 - `manifest.json` was INVALID (`owner: "[OWNER]"` is not in the schema enum), so this project had never registered in the Portfolio Console. Fixed, plus `id` resume-website→resume, `state` planned→building, and phases restated to the real ladder (P0–P5 done 07-17/07-18, P6 pending for real content).
 - Baseline artifacts refreshed verbatim from `_meta\project-template` (all three had drifted); `settings.json` now guards `mcp__.*` tool calls too. Unadapted `example-zone.md` removed.
 - Verified: HEAD 11129ff preserved across the move, `git fsck` clean, 107 files, clean tree, housekeeping-scan clean on all three step-8 gates. 1 commit ahead of origin, deliberately NOT pushed.
-- Open flags: instruction budget reads `project=28 total=60 OVER-BUDGET` (~40 is the cap); `CLAUDE.md` carries the rules while `AGENTS.md` is only a pointer, so non-Claude tools read the thin file.
+- Open flag: instruction budget. After the merge below it reads `project=20 total=52` against a ~40 cap — but global alone is 32, and 12 of 23 anchor projects are over, so this is portfolio-wide, not resume-specific. Prune with `instruction-probe`, never freehand.
+- **Instruction-file inversion fixed (same day).** Content moved into `AGENTS.md`; `CLAUDE.md` is now the canonical `@AGENTS.md` stub (OPERATING_LAWS §Instruction-file authorship) so Codex and Claude read one source. Verified: 0 of 33 rule-phrases dropped, housekeeping "instruction-file load gap" clean, project rules cut 28→20 by de-duplication.
+  - Three stale facts corrected in the move: "seven attractor states" → **eight** (v1.1 added TABLES; live `__RESUME__` reports 8 facets); the asserted repo root `C:\ai_projects_v1\resume-website` → `E:\ai_project_v1\resume`, kept only as drive-letter history; `master` recorded as gone rather than merely unpushed.
+  - The one-shot run's rules (ONE agent · ZERO interaction · gate commits · Ladder-D push) are now under a **"Spent rules"** heading, not deleted — EXECUTE.md still narrates them as live, and "never ask the owner anything" would be actively wrong for owner-directed content work.
 
 ### Position
 - P0 PASSED (8e7b486+95d5dfd). ADR-001: single TSL codebase both backends. three r185 vendored.
