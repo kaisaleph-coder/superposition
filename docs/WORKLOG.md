@@ -13,6 +13,15 @@
 ### RUN COMPLETE (2026-07-17)
 - ALL GATES PASSED. Deployed live: https://kaisaleph-coder.github.io/superposition/ (public repo, Pages main/root, v1.0.0). RUN-REPORT.md is the authoritative summary. Owner's next move: real-content swap (README §Content update / RUN-REPORT §Owner next steps).
 
+## 2026-08-08 — adopted into the portfolio anchor (`E:\ai_project_v1\resume`)
+
+- Cloned from GitHub into `E:\ai_project_v1\resume`. No local copy existed on any of the five drives; the unpushed `master` scaffold branch (real author) is gone — ADR-002's privacy design working as intended, not a loss to recover.
+- Owner decisions: (1) the repo's 10-commit history wins over a throwaway anchor scaffold, which was discarded; (2) git identity stays the SUPERPOSITION placeholder, now pinned **repo-locally** so anchor commits cannot leak a real identity into public history; (3) `docs/TASKS.md` added as the Build lane's input — deliberately no second `PLAN.md`, the root one stays law.
+- `manifest.json` was INVALID (`owner: "[OWNER]"` is not in the schema enum), so this project had never registered in the Portfolio Console. Fixed, plus `id` resume-website→resume, `state` planned→building, and phases restated to the real ladder (P0–P5 done 07-17/07-18, P6 pending for real content).
+- Baseline artifacts refreshed verbatim from `_meta\project-template` (all three had drifted); `settings.json` now guards `mcp__.*` tool calls too. Unadapted `example-zone.md` removed.
+- Verified: HEAD 11129ff preserved across the move, `git fsck` clean, 107 files, clean tree, housekeeping-scan clean on all three step-8 gates. 1 commit ahead of origin, deliberately NOT pushed.
+- Open flags: instruction budget reads `project=28 total=60 OVER-BUDGET` (~40 is the cap); `CLAUDE.md` carries the rules while `AGENTS.md` is only a pointer, so non-Claude tools read the thin file.
+
 ### Position
 - P0 PASSED (8e7b486+95d5dfd). ADR-001: single TSL codebase both backends. three r185 vendored.
 - P1 PASSED. Content layer complete: baked+runtime render (ADR-004), router/DOM contract, print, 404, static SVG, fonts 92.8 KB. LH 96/100/96/100. 25 tests green.
