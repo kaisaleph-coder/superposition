@@ -20,8 +20,8 @@ Personal résumé site: one GPU particle field, eight attractor states. Static, 
 
 ## Constraints (always true)
 - **No real personal data**, and no external personal links, anywhere — content, commits, receipts, metadata — until the owner swaps `content/resume.data.js`. Placeholders stay visible `[BRACKETS]`. Git identity is pinned repo-locally to `SUPERPOSITION <owner@superposition.invalid>`; never commit here under a real identity. <!-- earned: ADR-002; identity pinned in git config 2026-08-08 -->
-- **No build step, no frameworks.** Hand-authored ES modules; npm is dev-tooling only, never a runtime dependency.
-- **Zero third-party runtime requests.** three.js vendored & pinned in `/vendor`, fonts self-hosted & subset. No CDNs, no analytics.
+- **npm is dev-tooling only** (Playwright, `tools/budget.mjs`) — never a runtime dependency. The site itself has no build step.
+- **three.js is vendored & pinned in `/vendor`**; fonts self-hosted & subset. Zero third-party runtime requests.
 - **DOM-state contract** (PLAN §5.6): all app state mirrors to `<body data-*>`. Playwright asserts DOM ONLY — never `window` or module internals.
 - **Budget caps** (PLAN §6): ≤ 900 KB gzip, hard fail 1.2 MB. Run `node tools/budget.mjs` before shipping.
 - **Design anti-default clause** (PLAN §3) binds through polish.
@@ -30,8 +30,7 @@ Personal résumé site: one GPU particle field, eight attractor states. Static, 
 - Secrets live in `.env` / `secrets\` — the floor guard blocks access.
 
 ## Spent rules — governed the one-shot P0→P5 run, NOT current work
-Binding only for the autonomous build that completed 2026-07-18. EXECUTE.md still
-describes them as live; it is describing a finished run.
+EXECUTE.md still describes these as live; it is describing a run that finished 2026-07-18.
 - ONE agent, no subagents, sequential P0→P5.
 - ZERO interaction — never ask the owner anything. **Current work is owner-directed: ask.**
 - Commit at every gate as `gate(PX):`; push only under EXECUTE.md Ladder D at P5. Already done — the repo is public, Pages serves `main` at root, and `master` (the real-author scaffold branch) was never pushed and no longer exists anywhere.
