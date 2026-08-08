@@ -1,18 +1,29 @@
 {
   "schema": 2,
-  "id": "resume-website",
+  "id": "resume",
   "name": "Resume Website",
-  "thesis": "Interactive personal resume website showcasing professional work and projects.",
+  "thesis": "A personal résumé rendered as eight audience-specific facets over one GPU particle field — static, no build step, three.js WebGPU/TSL.",
   "class": "L1",
-  "state": "planned",
+  "state": "building",
   "phases": [
     {
-      "id": "P1",
-      "gate": "Design and project structure complete",
-      "status": "pending",
-      "owner": "[OWNER]",
+      "id": "P0-P5",
+      "gate": "Build & ship v1.0.0 — foundations, content layer, field engine, choreography, polish, live on GitHub Pages",
+      "status": "done",
+      "owner": "claude-code",
       "planned_start": "2026-07-17",
-      "planned_end": "2026-07-31",
+      "planned_end": "2026-07-18",
+      "actual_start": "2026-07-17",
+      "actual_end": "2026-07-18",
+      "gate_date": "2026-07-18"
+    },
+    {
+      "id": "P6",
+      "gate": "Real résumé content replaces the [BRACKET] placeholders in content/resume.data.js",
+      "status": "pending",
+      "owner": "you",
+      "planned_start": "2026-08-08",
+      "planned_end": "2026-08-31",
       "actual_start": null,
       "actual_end": null,
       "gate_date": null

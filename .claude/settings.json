@@ -40,7 +40,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit",
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit|NotebookEdit|mcp__.*",
         "hooks": [
           { "type": "command", "command": ".claude\\hooks\\floor_guard.cmd" }
         ]
