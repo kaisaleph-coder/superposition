@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Light-tier floor guard (PreToolUse hook). Exit 0 = allow, exit 2 = block.
+r"""Light-tier floor guard (PreToolUse hook). Exit 0 = allow, exit 2 = block.
 
 DEPLOYED COPY — canonical source: E:\ai_project_v1\_meta\foundation\hooks\floor_guard_light.py
 Do not edit here; edit the canonical file and re-deploy.
@@ -11,7 +11,7 @@ projects push to remotes with user approval via the settings.json ask list.
 
 Fail closed (Law 1): malformed input or any internal error blocks.
 Defense-in-depth only: regexes are bypassable; the hard line is the permission
-model and the user. See _meta\\foundation\\OPERATING_LAWS.md.
+model and the user. See _meta\foundation\OPERATING_LAWS.md.
 """
 import json
 import re
