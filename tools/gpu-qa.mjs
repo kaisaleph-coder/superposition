@@ -52,10 +52,11 @@ function gpuErrorStrings(values = []) {
 
 async function caps(page) {
   return await page.evaluate(async () => {
-    const c = document.createElement("canvas");
+    const c1 = document.createElement("canvas");
+    const c2 = document.createElement("canvas");
     let gl = null, gl2 = null;
-    try { gl = c.getContext("webgl"); } catch {}
-    try { gl2 = c.getContext("webgl2"); } catch {}
+    try { gl = c1.getContext("webgl"); } catch {}
+    try { gl2 = c2.getContext("webgl2"); } catch {}
     const info = (g) => g ? {
       version: g.getParameter(g.VERSION),
       renderer: g.getParameter(g.RENDERER),
