@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   accept:
-    if: github.event.pull_request.number == 3 && github.head_ref == 'rc1-cloudflare-preview-pr'
+    if: github.head_ref == 'rc1-cloudflare-preview-pr'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
