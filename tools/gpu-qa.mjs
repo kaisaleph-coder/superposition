@@ -127,13 +127,19 @@ const bestWebgpu = report.launches.find((x) => x.capabilities?.webgpuAdapter);
 
 async function rendererRun(kind, launch) {
   if (!launch) return { kind, available: false, states: [], errors: [], console: [], consoleExpected: [], consoleUnexpected: [], gpuErrors: [] };
-  const run = { kind, available: true, launch: launch.name, states: [], errors: [], console: [] };
+  const run = {
+    kind, available: true, launch: launch.name, states: [], errors: [], console: [],
+    teardownErrors: [], teardownUnexpected: [], deviceLost: null,
+  };
   let browser;
+  let capturingRuntime = true;
   try {
     browser = await chromium.launch({ headless: true, args: launch.args });
     run.browserVersion = browser.version();
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    page.on("pageerror", (e) => run.errors.push(String(e)));
+    page.on("pageerror", (e) => {
+      (capturingRuntime ? run.errors : run.teardownErrors).push(String(e));
+    });
     page.on("console", (m) => {
       if (["error", "warning"].includes(m.type())) run.console.push(m.type() + ": " + m.text());
     });
@@ -166,15 +172,50 @@ async function rendererRun(kind, launch) {
       const file = path.join(outDir, `${kind}-${domain}.png`);
       await page.screenshot({ path: file, fullPage: false });
       run.states.push({ domain, ...state, screenshot: file, screenshotExists: fs.existsSync(file) });
+
+      if (kind === "webgpu" && domain === "home") {
+        await page.evaluate(() => {
+          const device = window.__engineDebug?._debug?.renderer?.backend?.device;
+          if (!device || window.__spGpuLossWatchInstalled) return;
+          window.__spGpuLossWatchInstalled = true;
+          window.__spGpuDeviceLost = null;
+          device.lost.then((info) => {
+            window.__spGpuDeviceLost = {
+              reason: String(info?.reason || "unknown"),
+              message: String(info?.message || ""),
+            };
+          });
+        });
+      }
     }
+
+    // Drain submitted work while the WebGPU instance is still alive. Chromium maps
+    // pending popErrorScope callbacks cancelled by deliberate instance destruction to
+    // "OperationError: Instance dropped in popErrorScope"; those teardown-only events
+    // are evidence about shutdown, not active renderer faults.
+    if (kind === "webgpu") {
+      await page.evaluate(async () => {
+        const device = window.__engineDebug?._debug?.renderer?.backend?.device;
+        if (device?.queue?.onSubmittedWorkDone) await device.queue.onSubmittedWorkDone();
+      });
+      await page.waitForTimeout(500);
+      run.deviceLost = await page.evaluate(() => window.__spGpuDeviceLost || null);
+    }
+
+    capturingRuntime = false;
+    await page.close();
   } catch (e) {
     run.runError = String(e);
   } finally {
+    capturingRuntime = false;
     await browser?.close().catch(() => {});
   }
   const classified = classifyConsole(run.console);
   run.consoleExpected = classified.expected;
   run.consoleUnexpected = classified.unexpected;
+  run.teardownUnexpected = run.teardownErrors.filter(
+    (message) => message !== "OperationError: Instance dropped in popErrorScope"
+  );
   run.gpuErrors = gpuErrorStrings([...run.errors, ...run.consoleUnexpected, run.runError || ""]);
   return run;
 }
@@ -197,7 +238,8 @@ function clean(run) {
     !run.runError &&
     run.errors.length === 0 &&
     run.consoleUnexpected.length === 0 &&
-    run.gpuErrors.length === 0;
+    run.gpuErrors.length === 0 &&
+    run.teardownUnexpected.length === 0;
 }
 
 const swiftshaderWebgpu = /swiftshader/i.test(String(bestWebgpu?.capabilities?.webgpuInfo?.architecture || ""));
@@ -218,6 +260,7 @@ report.verdict = {
   webgpuAdapterAvailable: !!bestWebgpu,
   webgpuExecutedAllStates: statesExactly(report.webgpu, "webgpu"),
   webgpuErrorClean: clean(report.webgpu),
+  webgpuDeviceStable: report.webgpu.deviceLost === null,
   portableParticleProfile: portableParticlePass,
 };
 report.pass = Object.values(report.verdict).every(Boolean);
