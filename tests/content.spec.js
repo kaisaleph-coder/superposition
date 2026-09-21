@@ -20,6 +20,16 @@ test.describe("content integrity", () => {
     expect(await page.locator(".index-list a").count()).toBe(8);
   });
 
+  test("minimal chrome removes redundant snippet surfaces", async ({ page }) => {
+    await page.goto("/?seed=1&force=static");
+    await expect(page.locator(".brand-system")).toHaveCount(0);
+    await expect(page.locator(".home-kicker")).toHaveCount(0);
+    await expect(page.locator(".home-statement")).toHaveCount(0);
+    await expect(page.locator(".home-hint")).toHaveCount(0);
+    await expect(page.locator("footer.site-foot")).toBeHidden();
+    await expect(page.locator("footer.site-foot")).toHaveText("");
+  });
+
   test("placeholder policy remains explicit until P6 real-content swap", async ({ page }) => {
     await page.goto("/?seed=1&force=static");
     const text = await page.locator("main").innerText();

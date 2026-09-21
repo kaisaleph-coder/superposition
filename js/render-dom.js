@@ -38,13 +38,10 @@ function skillDossierHTML(facetId,d,i){
 </article>`;
 }
 
-export function homeHTML(identity){return `<div class="home-kicker">MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS</div>
-<h1>${esc(identity.name)}</h1>
-<p class="positioning">${esc(identity.positioning)}</p>
-<div class="home-statement" aria-label="Superposition concept"><span>ONE FIELD</span><span>EIGHT LAWS</span><span>ONE IDENTITY</span></div>
-<p class="home-hint">Choose a domain below or open the index. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> résumé.</p>`}
+export function homeHTML(identity){return `<h1>${esc(identity.name)}</h1>
+<p class="positioning">${esc(identity.positioning)}</p>`}
 
-export function headerHTML(identity){return `<a class="brand" href="#/" aria-label="Home"><span class="brand-name">${esc(identity.name)}</span><span class="brand-system">SUPERPOSITION <b>2.0</b></span></a>
+export function headerHTML(identity){return `<a class="brand" href="#/" aria-label="Home"><span class="brand-name">${esc(identity.name)}</span></a>
 <nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="#/record">Résumé</a><button type="button" data-ui="contact" aria-expanded="false" aria-controls="contactPanel">Contact</button><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>`}
 
 export function facetHTML(facet){
@@ -60,7 +57,7 @@ export function recordHTML(record){return `<div class="facet-kicker">FULL RECORD
 
 export function domainStripHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}"><span>${m.no}</span><b>${esc(m.short||f?.name||id)}</b></a>`}).join('')}
 export function indexHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}" data-preview="${id}"><span>${m.no}</span><b>${esc(m.label||f?.name||id)}</b><i>${esc(m.law3)}</i></a>`}).join('')}
-export function footerHTML(){return `<span id="footerState">SUPERPOSITION</span><span>EIGHT DOMAINS / PROCEDURAL FIELD</span><span class="footer-shortcuts">1–8 / ESC / R / .</span>`}
+export function footerHTML(){return ``}
 
 export function renderAll(data,doc){
   doc.getElementById('view-home').innerHTML=homeHTML(data.identity);

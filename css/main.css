@@ -5,7 +5,7 @@
   color-scheme:dark;
   --ground:#090b10;--ground2:#10151d;--ink:#f2f4f6;--muted:#8f99a6;--rule:rgba(220,230,240,.18);
   --accent:#86d6ff;--accent2:#b59cff;--panel:rgba(7,9,13,.76);
-  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:38px;--strip-h:82px;
+  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:0px;--strip-h:82px;
   --display:"Archivo VF",Arial,Helvetica,sans-serif;--mono:"Fragment Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 :root[data-local-font-fallback="1"]{--display:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}

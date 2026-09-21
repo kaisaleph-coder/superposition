@@ -21,7 +21,7 @@
   color-scheme:dark;
   --ground:#090b10;--ground2:#10151d;--ink:#f2f4f6;--muted:#8f99a6;--rule:rgba(220,230,240,.18);
   --accent:#86d6ff;--accent2:#b59cff;--panel:rgba(7,9,13,.76);
-  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:38px;--strip-h:82px;
+  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:0px;--strip-h:82px;
   --display:"Archivo VF",Arial,Helvetica,sans-serif;--mono:"Fragment Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 :root[data-local-font-fallback="1"]{--display:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
@@ -147,7 +147,7 @@ body[data-state="dossier"] #field{filter:saturate(.9) brightness(.82)}
   .domain-strip a b{font-size:8.5px}.index-list{column-gap:30px}.index-list a i{display:none}
 }
 @media(max-width:720px){
-  :root{--gutter:18px;--header-h:58px;--footer-h:30px;--strip-h:62px}
+  :root{--gutter:18px;--header-h:58px;--footer-h:0px;--strip-h:62px}
   #atmosphere{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 98%,transparent) 0 29%,color-mix(in srgb,var(--ground) 61%,transparent) 47%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--ground) 90%,transparent) 0 18%,transparent 75%)}
   #legibility{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 99%,transparent) 0 35%,color-mix(in srgb,var(--ground) 82%,transparent) 51%,transparent 73%)}
   .site-head{left:18px;right:18px}.brand-system{display:none}.utilities{gap:12px}.utilities button,.utilities a{font-size:7px}.utilities [data-ui="contact"]{display:none}
@@ -189,6 +189,10 @@ body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[da
   #view-record,#view-record[hidden]{display:block!important;opacity:1!important;transform:none!important}
   #view-record .record-list li{display:grid!important}
 }
+
+
+/* RC2 minimal chrome: footer/status/shortcut surface intentionally removed. */
+.site-foot{display:none!important}
 /*BAKE:css END*/
 </style>
 <link rel="stylesheet" href="css/print.css" media="print">
@@ -216,7 +220,7 @@ main#content{height:auto!important;overflow:visible!important;padding:20px var(-
 
 <header class="site-head">
 <!--BAKE:header BEGIN-->
-<a class="brand" href="#/" aria-label="Home"><span class="brand-name">[NAME]</span><span class="brand-system">SUPERPOSITION <b>2.0</b></span></a>
+<a class="brand" href="#/" aria-label="Home"><span class="brand-name">[NAME]</span></a>
 <nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="#/record">Résumé</a><button type="button" data-ui="contact" aria-expanded="false" aria-controls="contactPanel">Contact</button><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>
 <!--BAKE:header END-->
 </header>
@@ -226,11 +230,8 @@ main#content{height:auto!important;overflow:visible!important;padding:20px var(-
 <main id="content">
 <section class="view home-view" id="view-home" data-view="home">
 <!--BAKE:view-home BEGIN-->
-<div class="home-kicker">MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS</div>
 <h1>[NAME]</h1>
 <p class="positioning">[One-line positioning — 90 characters of exactly what this person is.]</p>
-<div class="home-statement" aria-label="Superposition concept"><span>ONE FIELD</span><span>EIGHT LAWS</span><span>ONE IDENTITY</span></div>
-<p class="home-hint">Choose a domain below or open the index. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> résumé.</p>
 <!--BAKE:view-home END-->
 </section>
 <section class="view facet-view" id="view-columns" data-view="facet">
@@ -323,7 +324,7 @@ main#content{height:auto!important;overflow:visible!important;padding:20px var(-
 
 <footer class="site-foot">
 <!--BAKE:footer BEGIN-->
-<span id="footerState">SUPERPOSITION</span><span>EIGHT DOMAINS / PROCEDURAL FIELD</span><span class="footer-shortcuts">1–8 / ESC / R / .</span>
+
 <!--BAKE:footer END-->
 </footer>
 
