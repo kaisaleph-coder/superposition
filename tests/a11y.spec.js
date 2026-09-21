@@ -6,11 +6,11 @@ const critical=(r)=>r.violations.filter(v=>v.impact==="critical");
 const serious=(r)=>r.violations.filter(v=>v.impact==="serious");
 
 test.describe("a11y",()=>{
-  for(const route of ["/?seed=1","/?seed=1#/columns","/?seed=1#/clusters","/?seed=1#/record"]){
+  for(const route of ["/?seed=1&force=static","/?seed=1&force=static#/columns","/?seed=1&force=static#/clusters","/?seed=1&force=static#/record"]){
     test(`axe: zero critical on ${route}`,async({page})=>{await page.goto(route);await expect(page.locator('.view.on').first()).toBeVisible();const r=await scan(page);expect(critical(r).map(v=>v.id)).toEqual([]);if(serious(r).length)console.log('serious:',serious(r).map(v=>v.id).join(','));});
   }
   test("axe: zero critical with dossier and Index",async({page})=>{
-    await page.goto("/?seed=1#/columns");await page.locator('#view-columns .dossier > button').first().click();let r=await scan(page);expect(critical(r).map(v=>v.id)).toEqual([]);
+    await page.goto("/?seed=1&force=static#/columns");await page.locator('#view-columns .dossier > button').first().click();let r=await scan(page);expect(critical(r).map(v=>v.id)).toEqual([]);
     await page.keyboard.press('Escape');await page.locator('[data-ui="index"]').click();r=await scan(page);expect(critical(r).map(v=>v.id)).toEqual([]);
   });
   test("keyboard reaches skip, brand and utility navigation",async({page},testInfo)=>{
