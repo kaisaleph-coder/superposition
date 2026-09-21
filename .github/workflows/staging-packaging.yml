@@ -25,6 +25,7 @@ jobs:
             if(c.preview_urls !== true) throw new Error('preview_urls must remain true');
             if(c.route || c.routes) throw new Error('staging config must not bind any route');
             if(c.name !== 'superposition-rc1-staging') throw new Error('unexpected Worker name');
+            if(c.assets?.directory !== './.staging-dist') throw new Error('unexpected staging asset directory');
             console.log('staging isolation ok');
           "
 
@@ -35,6 +36,9 @@ jobs:
         run: |
           node tools/bake.mjs
           git diff --exit-code -- index.html
+
+      - name: Prepare exact RC public payload
+        run: npm run stage:prepare
 
       - name: Cloudflare package dry run
         run: npx wrangler deploy --dry-run --outdir /tmp/superposition-cf-dry-run

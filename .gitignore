@@ -4,6 +4,7 @@ package-lock.json
 test-results/
 playwright-report/
 .lighthouseci/
+.staging-dist/
 *.log
 .env
 secrets/

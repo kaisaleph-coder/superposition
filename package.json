@@ -5,7 +5,8 @@
   "description": "Dev tooling only (budget script, Playwright). The site itself has no build step and no runtime dependencies.",
   "scripts": {
     "budget": "node tools/budget.mjs",
-    "test": "playwright test"
+    "test": "playwright test",
+    "stage:prepare": "node tools/stage-assets.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
