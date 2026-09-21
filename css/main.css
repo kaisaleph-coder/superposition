@@ -13,7 +13,7 @@
 *{box-sizing:border-box}
 /* Critical semantic/focus rules live in the first CSS chunk so a later optional
    visual rule can never suppress the accessibility/no-JS/print floors. */
-.domain-strip a:focus::before,.domain-strip a:focus-visible::before{transform:scaleX(1)!important}
+.domain-strip a:focus::before,.domain-strip a:focus-visible::before,.domain-strip a[data-focus-ring]::before{transform:scaleX(1)!important}
 :root:not(.js) .view{display:block!important;opacity:1!important;transform:none!important}
 @media print{
   .js .view:not(#view-record){display:none!important}
