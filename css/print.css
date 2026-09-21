@@ -12,3 +12,6 @@ main#content{height:auto!important;overflow:visible!important;padding:0!importan
 .record-list li{grid-template-columns:26mm 1fr!important;gap:6mm!important;padding:4pt 0!important;border-bottom:.5pt solid #ddd!important;break-inside:avoid}
 .record-list time{font:8pt monospace!important;color:#444!important}.record-list b{font-size:9.5pt!important}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#555}
+
+#view-record{display:block!important;opacity:1!important;transform:none!important;visibility:visible!important}
+#view-record .record-list,#view-record .record-list li{visibility:visible!important;opacity:1!important}
