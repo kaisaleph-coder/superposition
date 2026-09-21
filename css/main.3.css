@@ -26,6 +26,13 @@
 :root:not(.js) .view{max-width:72ch;min-height:auto;padding:38px 0;border-bottom:1px solid var(--rule)}
 :root:not(.js) .home-view h1,:root:not(.js) .facet-view h2,:root:not(.js) .record-view h2{font-size:56px;line-height:.88}
 
-/* explicit HTML hit-testing floor: graphics/atmosphere never steal UI input */
-.site-head,.utilities,.utilities *,main#content,.view,.dossier,.dossier>button,.domain-strip,.domain-strip a,.index-overlay,.index-overlay *,.system-panel,.system-panel *,.contact-panel,.contact-panel *{pointer-events:auto}
+/* explicit HTML hit-testing floor: graphics/atmosphere never steal UI input.
+   Hidden overlays must remain fully inert; only their open state may accept input. */
+.site-head,.utilities,.utilities *,main#content,.view,.dossier,.dossier>button,.domain-strip,.domain-strip a{pointer-events:auto}
+.index-overlay[aria-hidden="true"],.index-overlay[aria-hidden="true"] *,
+.contact-panel[aria-hidden="true"],.contact-panel[aria-hidden="true"] *,
+.system-panel[aria-hidden="true"],.system-panel[aria-hidden="true"] *{pointer-events:none!important}
+.index-overlay[aria-hidden="false"],.index-overlay[aria-hidden="false"] *,
+.contact-panel[aria-hidden="false"],.contact-panel[aria-hidden="false"] *,
+.system-panel[aria-hidden="false"],.system-panel[aria-hidden="false"] *{pointer-events:auto}
 body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[data-index="open"] .site-foot,body[data-index="open"] .state-axis,body[data-index="open"] main{pointer-events:none}
