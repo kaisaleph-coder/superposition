@@ -11,6 +11,16 @@
 :root[data-local-font-fallback="1"]{--display:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
 :root:not(.js){--display:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
 *{box-sizing:border-box}
+/* Critical semantic/focus rules live in the first CSS chunk so a later optional
+   visual rule can never suppress the accessibility/no-JS/print floors. */
+.domain-strip a:focus::before,.domain-strip a:focus-visible::before{transform:scaleX(1)!important}
+:root:not(.js) .view{display:block!important;opacity:1!important;transform:none!important}
+@media print{
+  .js .view:not(#view-record){display:none!important}
+  .js #view-record{display:block!important;opacity:1!important;transform:none!important;visibility:visible!important}
+  .js #view-record .record-list,.js #view-record .record-list li{display:block!important;opacity:1!important;visibility:visible!important}
+  .js #view-record .record-list li{display:grid!important}
+}
 html{margin:0;background:var(--ground);color:var(--ink);font-family:var(--display);scroll-behavior:smooth}
 body{margin:0;min-height:100vh;background:var(--ground);color:var(--ink);overflow-x:hidden;transition:background-color .7s ease,color .45s ease}
 a{color:inherit}
