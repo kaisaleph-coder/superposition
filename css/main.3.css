@@ -1,0 +1,27 @@
+  :root{--strip-h:72px}.view{max-width:min(54vw,650px)}.home-view{max-width:58vw}.facet-view{max-width:56vw}.record-view{max-width:75vw}
+  .domain-strip a b{font-size:8.5px}.index-list{column-gap:30px}.index-list a i{display:none}
+}
+@media(max-width:720px){
+  :root{--gutter:18px;--header-h:58px;--footer-h:30px;--strip-h:62px}
+  #atmosphere{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 98%,transparent) 0 29%,color-mix(in srgb,var(--ground) 61%,transparent) 47%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--ground) 90%,transparent) 0 18%,transparent 75%)}
+  #legibility{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 99%,transparent) 0 35%,color-mix(in srgb,var(--ground) 82%,transparent) 51%,transparent 73%)}
+  .site-head{left:18px;right:18px}.brand-system{display:none}.utilities{gap:12px}.utilities button,.utilities a{font-size:7px}.utilities [data-ui="contact"]{display:none}
+  .state-axis{display:none}
+  main#content{padding:calc(var(--header-h) + 31px) 18px calc(var(--strip-h) + var(--footer-h) + 60px)}
+  .view,.home-view,.facet-view,.record-view{max-width:none;min-height:auto}
+  .home-view{padding-top:0}.home-view h1{font-size:clamp(57px,18vw,88px);line-height:.78;max-width:6.6ch}.positioning{font-size:15px;max-width:29ch;margin-top:18px}.home-statement{gap:4px}.home-statement span{font-size:6.5px;padding-right:16px}
+  .facet-kicker{margin-bottom:12px}.facet-view h2,.record-view h2{font-size:clamp(49px,14vw,75px);max-width:8ch;margin-bottom:24px}.manifest{margin-bottom:24px}.manifest li{font-size:12.5px}.dossier>button{grid-template-columns:minmax(0,1fr) auto 18px;gap:8px}.dossier>button small{font-size:6.5px}.dossier-body{padding-left:28px}
+  .record-list li{grid-template-columns:72px 1fr;gap:14px}.record-view{padding-top:0}
+  .domain-strip{left:0;right:0;bottom:var(--footer-h);padding-left:12px;padding-right:12px;grid-template-columns:repeat(8,minmax(42px,1fr));overflow-x:auto;scrollbar-width:none}.domain-strip::-webkit-scrollbar{display:none}.domain-strip a{min-width:48px;padding:9px 5px 8px}.domain-strip a b{display:none}.domain-strip a span{font-size:7px}
+  .site-foot{left:18px;right:18px;gap:10px;font-size:6px}.site-foot span:nth-child(2),.footer-shortcuts{display:none}.site-foot #footerState{margin-left:auto}
+  .index-overlay{padding:17px 18px 25px;overflow:auto}.index-head{height:40px}.index-list{grid-template-columns:1fr;padding-top:10px}.index-list a{min-height:61px;grid-template-columns:28px 1fr;padding:8px 0}.index-list a b{font-size:29px}.index-list a i{display:block;font-size:5.5px;max-width:16ch}
+  .system-panel{right:10px;left:10px;bottom:calc(var(--strip-h) + var(--footer-h) + 10px);width:auto}.contact-panel{right:18px;left:18px;width:auto}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+@media print{#field,#atmosphere,#legibility,.spectral-edge,.site-head,.state-axis,.domain-strip,.site-foot,.index-overlay,.contact-panel,.system-panel{display:none!important}html,body{background:#fff!important;color:#000!important}main#content{height:auto!important;overflow:visible!important;padding:0!important}.view{display:none!important}.record-view{display:block!important;max-width:none!important}.record-list li{break-inside:avoid}}
+/* no-JS semantic floor: all views remain readable in one document */
+:root:not(.js) #field,:root:not(.js) #atmosphere,:root:not(.js) #legibility,:root:not(.js) .spectral-edge,:root:not(.js) .state-axis,:root:not(.js) .domain-strip,:root:not(.js) .site-foot,:root:not(.js) .index-overlay,:root:not(.js) .contact-panel,:root:not(.js) .system-panel{display:none!important}
+:root:not(.js) .site-head{position:static;height:auto;margin:0 var(--gutter);padding:22px 0;border-bottom:1px solid var(--rule)}
+:root:not(.js) main#content{padding:20px var(--gutter) 80px;height:auto;overflow:visible}
+:root:not(.js) .view{max-width:72ch;min-height:auto;padding:38px 0;border-bottom:1px solid var(--rule)}
+:root:not(.js) .home-view h1,:root:not(.js) .facet-view h2,:root:not(.js) .record-view h2{font-size:56px;line-height:.88}
