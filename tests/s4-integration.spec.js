@@ -30,6 +30,7 @@ test.describe("S4 integration",()=>{
   test("no third-party runtime URL is present in markup",async({page})=>{
     await page.goto("/?force=static");
     const urls=await page.evaluate(()=>[...document.querySelectorAll('script[src],link[href],img[src]')].map(x=>x.src||x.href).filter(Boolean));
-    expect(urls.every(u=>new URL(u).origin===location.origin)).toBeTruthy();
+    const origin=new URL(page.url()).origin;
+    expect(urls.every(u=>new URL(u).origin===origin)).toBeTruthy();
   });
 });
