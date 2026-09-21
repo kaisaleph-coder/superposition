@@ -1,0 +1,29 @@
+name: gpu-qa
+on:
+  workflow_dispatch:
+  push:
+    branches: [s5-superposition-v2-qa-20260921]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Install browser tooling
+        run: npm install --no-fund --no-audit && npx playwright install --with-deps chromium
+      - name: Run exact localhost GPU capability and renderer probe
+        continue-on-error: true
+        run: |
+          python -m http.server 8080 &
+          sleep 2
+          node tools/gpu-qa.mjs
+      - name: Upload GPU QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: superposition-gpu-qa
+          path: gpu-qa/
+          if-no-files-found: error
