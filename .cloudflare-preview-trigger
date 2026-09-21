@@ -1,3 +1,3 @@
 SUPERPOSITION_RC1_PREVIEW_TRIGGER=3a4a891f45ec6d2093374ecadbf417b4528ccbdd
 This file is deployment metadata only and is excluded from .staging-dist.
-TRIGGER_2026_09_21=cloudflare-authorized
+TRIGGER_2026_09_21=preview-urls-enabled
