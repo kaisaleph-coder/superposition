@@ -1,0 +1,13 @@
+*
+!index.html
+!404.html
+!assets/
+!assets/**
+!content/
+!content/**
+!css/
+!css/**
+!js/
+!js/**
+!vendor/
+!vendor/**

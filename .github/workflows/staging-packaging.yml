@@ -1,0 +1,40 @@
+name: staging-package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [rc1-cloudflare-staging]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Install pinned staging tooling
+        run: npm install --no-fund --no-audit
+
+      - name: Confirm staging isolation
+        run: |
+          node -e "
+            const fs=require('fs');
+            const c=JSON.parse(fs.readFileSync('wrangler.jsonc','utf8'));
+            if(c.workers_dev !== false) throw new Error('workers_dev must remain false');
+            if(c.preview_urls !== true) throw new Error('preview_urls must remain true');
+            if(c.route || c.routes) throw new Error('staging config must not bind any route');
+            if(c.name !== 'superposition-rc1-staging') throw new Error('unexpected Worker name');
+            console.log('staging isolation ok');
+          "
+
+      - name: Reconfirm RC budget
+        run: node tools/budget.mjs
+
+      - name: Reconfirm bake parity
+        run: |
+          node tools/bake.mjs
+          git diff --exit-code -- index.html
+
+      - name: Cloudflare package dry run
+        run: npx wrangler deploy --dry-run --outdir /tmp/superposition-cf-dry-run
