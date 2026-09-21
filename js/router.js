@@ -13,7 +13,7 @@ export function createRouter(doc, { onState } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const idFromHash = () => {
-    const h = (location.hash || "").replace(/^#\\/?/, "");
+    const h = (location.hash || "").replace(/^#\/?/, "");
     return VIEWS.includes(h) ? h : "home";
   };
 
