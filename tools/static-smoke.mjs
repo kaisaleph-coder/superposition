@@ -37,7 +37,8 @@ await np.goto("http://localhost:8080/",{waitUntil:"load"});
 const nojsState=await np.evaluate(()=>{
   const el=document.querySelector("#view-columns .manifest li"),v=document.getElementById("view-columns");
   const cs=getComputedStyle(el),vs=getComputedStyle(v);
-  return {htmlClass:document.documentElement.className,el:{display:cs.display,visibility:cs.visibility,opacity:cs.opacity,rect:el.getBoundingClientRect().toJSON?.()||{}},view:{display:vs.display,visibility:vs.visibility,opacity:vs.opacity,hidden:v.hidden,aria:v.getAttribute("aria-hidden")}};
+  const snap=n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect();return {tag:n.tagName,id:n.id,cls:n.className,display:c.display,position:c.position,visibility:c.visibility,opacity:c.opacity,width:c.width,height:c.height,rect:{x:r.x,y:r.y,width:r.width,height:r.height}}};
+  return {htmlClass:document.documentElement.className,chain:[el,el.parentElement,v,v.parentElement,document.body,document.documentElement].map(snap)};
 });
 await nojs.close();
 const pc=await browser.newContext({viewport:{width:1440,height:900}});
@@ -46,7 +47,8 @@ await pp.goto("http://localhost:8080/?force=static",{waitUntil:"load"});
 await pp.emulateMedia({media:"print"});
 const printState=await pp.evaluate(()=>{
   const v=document.getElementById("view-record"),li=v.querySelector(".record-list li"),vs=getComputedStyle(v),ls=getComputedStyle(li);
-  return {view:{display:vs.display,visibility:vs.visibility,opacity:vs.opacity,hidden:v.hidden,aria:v.getAttribute("aria-hidden")},li:{display:ls.display,visibility:ls.visibility,opacity:ls.opacity,rect:li.getBoundingClientRect().toJSON?.()||{}}};
+  const snap=n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect();return {tag:n.tagName,id:n.id,cls:n.className,display:c.display,position:c.position,visibility:c.visibility,opacity:c.opacity,width:c.width,height:c.height,rect:{x:r.x,y:r.y,width:r.width,height:r.height},hidden:n.hidden||false,aria:n.getAttribute?.("aria-hidden")||null}};
+  return {chain:[li,li.parentElement,v,v.parentElement,document.body,document.documentElement].map(snap)};
 });
 await pc.close();
 
