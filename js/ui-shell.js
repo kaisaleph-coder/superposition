@@ -23,6 +23,11 @@ export function createUIShell(doc,{getEngine}={}){
   closeContact?.addEventListener('click',()=>closeAll());
   closeSystem?.addEventListener('click',()=>closeAll());
 
+  for(const a of doc.querySelectorAll('.domain-strip a')){
+    a.addEventListener('focus',()=>a.setAttribute('data-focus-ring',''));
+    a.addEventListener('blur',()=>a.removeAttribute('data-focus-ring'));
+  }
+
   for(const a of doc.querySelectorAll('.index-list a[data-preview]')){
     const preview=()=>getEngine?.()?.previewState?.(a.dataset.preview);
     const clear=()=>getEngine?.()?.clearPreview?.();
