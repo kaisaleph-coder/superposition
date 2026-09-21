@@ -13,9 +13,13 @@ export const TIERS = {
 
 export function detectTier({ force } = {}) {
   if (force === "static") return 0;
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
   const mobile = matchMedia("(pointer: coarse)").matches;
-  const webgpu = force === "webgl" ? false : "gpu" in navigator;
+  // Explicit QA/developer override: let FieldEngine attempt WebGL directly and
+  // fall back to T0 on initialization failure. Capability probes can under-report
+  // WebGL2 even when Three's WebGPURenderer can create its WebGL backend.
+  if (force === "webgl") return mobile ? 4 : 3;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  const webgpu = "gpu" in navigator;
   if (webgpu) return mobile ? 2 : 1;
   const gl = document.createElement("canvas").getContext("webgl2");
   if (!gl) return 0;
