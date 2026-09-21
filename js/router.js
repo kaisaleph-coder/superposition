@@ -61,12 +61,10 @@ export function createRouter(doc, { onState } = {}) {
       for (const v of VIEWS) {
         const el = doc.getElementById(`view-${v}`);
         el.removeAttribute("hidden");
-        el.setAttribute("aria-hidden", String(v !== id));
         el.classList.toggle("on", false);
       }
       requestAnimationFrame(() => requestAnimationFrame(() => {
         toEl.classList.add("on");
-        toEl.setAttribute("aria-hidden", "false");
       }));
       doc.querySelector("main").scrollTop = 0;
     };
