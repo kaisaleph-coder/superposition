@@ -101,7 +101,11 @@ async function launchProbe(name, args = [], { headless = true, plain = false } =
       if (["error", "warning"].includes(m.type())) entry.console.push(m.type() + ": " + m.text());
     });
     await page.goto(origin + "/?force=static&seed=271828", { waitUntil: "load" });
-    entry.capabilities = await caps(page);
+    // The required plain/default preflight proves Chromium can launch and reach the
+    // exact artifact origin. Capability contexts belong only to specialized probes:
+    // creating throwaway WebGL contexts here makes Chromium emit context-loss cleanup
+    // warnings that say nothing about the application's renderer paths.
+    entry.capabilities = plain ? { preflightOnly: true } : await caps(page);
     await page.close();
   } catch (e) {
     entry.launchError = String(e);
