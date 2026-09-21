@@ -210,16 +210,12 @@ async function rendererRun(kind, launch) {
       }
     }
 
-    // Drain submitted work while the WebGPU instance is still alive. Chromium maps
-    // pending popErrorScope callbacks cancelled by deliberate instance destruction to
-    // "OperationError: Instance dropped in popErrorScope"; those teardown-only events
-    // are evidence about shutdown, not active renderer faults.
+    // Keep an explicit observation window after the final rendered state. Do not use
+    // queue.onSubmittedWorkDone() here: software WebGPU implementations can leave that
+    // promise pending despite presented frames, which would turn a renderer gate into
+    // an unbounded synchronization test. Runtime page errors and device.lost remain live.
     if (kind === "webgpu") {
-      await page.evaluate(async () => {
-        const device = window.__engineDebug?._debug?.renderer?.backend?.device;
-        if (device?.queue?.onSubmittedWorkDone) await device.queue.onSubmittedWorkDone();
-      });
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(2000);
       run.deviceLost = await page.evaluate(() => window.__spGpuDeviceLost || null);
     }
 
