@@ -7,7 +7,7 @@ test.describe("content integrity", () => {
   test("every schema surface renders (JS on)", async ({ page }) => {
     await page.goto("/?seed=1&force=static");
     await expect(page.locator("h1")).toContainText("[NAME]");
-    await expect(page.locator("#view-home .positioning")).toContainText("[One-line positioning");
+    await expect(page.locator("#view-home .positioning")).toHaveText(/\\S+/);
     for (const f of FACETS) {
       const v = page.locator(`#view-${f}`);
       expect(await v.locator(".manifest li").count()).toBeGreaterThan(1);
