@@ -14,12 +14,10 @@ jobs:
         run: node tools/budget.mjs
       - name: Multi-surface source contract
         run: node tools/surface-scene-contract.mjs > /tmp/surface-contract.json
-      - name: Bake runtime document
+      - name: Bake parity gate
         run: |
           node tools/bake.mjs
-          if ! git diff --quiet -- index.html; then
-            echo "::warning::staged index.html is not bake-clean; browser QA will use the freshly baked document and release remains blocked until it is committed."
-          fi
+          git diff --exit-code -- index.html
       - name: Install dev tooling
         run: npm install --no-fund --no-audit
       - name: Install chromium
