@@ -4,7 +4,7 @@
    Owner instruction (v1.2): links arrays stay EMPTY — no public links. */
 window.__RESUME__ = {
   identity: {
-    name: "[NAME]",
+    name: "KAIS ABU-HUSSEIN",
     positioning: "Multidisciplinary executive. 15+ years experience. CFO, restaurant/construction executive, investor/trader/FO principal, entrepreneur and consultant, systems hobbyist, music/gaming/outdoors/fitness/philosophy/cosmology enthusiast.",
     location: "[LOCATION — owner-chosen granularity]",
     links: []

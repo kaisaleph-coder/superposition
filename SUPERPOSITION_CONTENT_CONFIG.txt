@@ -10,6 +10,7 @@ HOW TO USE
 4. Do not add quotation marks unless you want quotation marks to appear.
 5. Save as plain UTF-8 text and upload this file back to ChatGPT.
 6. I will compile it into the site, validate it, and generate the next preview.
+7. Role entries render as: Role, Company (italic), X yrs. Keep title/org/span fields separate here.
 
 This worksheet is developer input only. It is intentionally excluded from the
 public Cloudflare asset bundle.
@@ -30,7 +31,7 @@ og_title=
 og_description=
 
 [IDENTITY]
-name=
+name=KAIS ABU-HUSSEIN
 positioning=Multidisciplinary executive. 15+ years experience. CFO, restaurant/construction executive, investor/trader/FO principal, entrepreneur and consultant, systems hobbyist, music/gaming/outdoors/fitness/philosophy/cosmology enthusiast.
 location=
 

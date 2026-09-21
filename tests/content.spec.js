@@ -6,7 +6,7 @@ const FACETS = ["columns","tables","frame","surface","vector","lattice","cluster
 test.describe("content integrity", () => {
   test("every schema surface renders (JS on)", async ({ page }) => {
     await page.goto("/?seed=1&force=static");
-    await expect(page.locator("h1")).toContainText("[NAME]");
+    await expect(page.locator("h1")).toContainText("KAIS ABU-HUSSEIN");
     await expect(page.locator("#view-home .positioning")).toHaveText(/\S+/);
     for (const f of FACETS) {
       const v = page.locator(`#view-${f}`);
@@ -14,10 +14,19 @@ test.describe("content integrity", () => {
       expect(await v.locator(".dossier").count()).toBeGreaterThan(0);
     }
     expect(await page.locator("#view-record .record-list li").count()).toBeGreaterThan(0);
-    await expect(page.locator("header.site-head .brand-name")).toContainText("[NAME]");
+    await expect(page.locator("header.site-head .brand-name")).toContainText("KAIS ABU-HUSSEIN");
     await expect(page.locator('header.site-head .utilities a[href="#/record"]')).toBeVisible();
     expect(await page.locator(".domain-strip a").count()).toBe(8);
     expect(await page.locator(".index-list a").count()).toBe(8);
+  });
+
+  test("role rows keep role, italic company and duration on the primary text line", async ({ page }) => {
+    await page.goto("/?seed=1&force=static#/columns");
+    const row = page.locator("#view-columns .dossier > button.role-row").first();
+    await expect(row).toContainText("Chief Financial Officer, Goodman Group McDonald's, 3 yrs");
+    await expect(row.locator("em")).toHaveText("Goodman Group McDonald's");
+    await expect(row.locator(".dossier-duration")).toHaveText("3 yrs");
+    await expect(row.locator("small")).toHaveCount(0);
   });
 
   test("minimal chrome removes redundant snippet surfaces", async ({ page }) => {
@@ -40,7 +49,7 @@ test.describe("content integrity", () => {
     const ctx = await browser.newContext({ javaScriptEnabled: false });
     const page = await ctx.newPage();
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("[NAME]");
+    await expect(page.locator("h1")).toContainText("KAIS ABU-HUSSEIN");
     for (const f of FACETS) await expect(page.locator(`#view-${f} .manifest li`).first()).toBeVisible();
     await expect(page.locator("#view-record .record-list li").first()).toBeVisible();
     await expect(page.locator("body")).toHaveAttribute("data-tier", "0");

@@ -23,8 +23,10 @@ const linksHTML=(links)=>links?.length?`<p class="dlinks">${links.map(l=>`<a hre
 
 function dossierHTML(facetId,d,i){
   const bid=`db-${facetId}-${i}`,rid=`d-${facetId}-${i}`;
+  const company=d.org?`, <em>${esc(d.org)}</em>`:'';
+  const duration=d.span?`, <span class="dossier-duration">${esc(d.span)}</span>`:'';
   return `<article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span>${esc(d.title)}</span><small>${esc(d.org)}${d.org&&d.span?' · ':''}${esc(d.span)}</small><i aria-hidden="true">+</i></button>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span class="dossier-line"><b>${esc(d.title)}</b>${company}${duration}</span><i aria-hidden="true">+</i></button>
 <div class="dossier-body" id="${rid}" role="region" aria-labelledby="${bid}">${(d.lines||[]).map(x=>`<p>${esc(x)}</p>`).join('')}${linksHTML(d.links)}${metricsHTML(d.metrics)}</div>
 </article>`;
 }
