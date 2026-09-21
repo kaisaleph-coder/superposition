@@ -32,5 +32,8 @@ jobs:
       - name: Prepare inert anchor payload
         run: npm run stage:prepare
 
+      - name: Validate live-acceptance harness syntax
+        run: node --check tools/staging-live-acceptance.mjs
+
       - name: Cloudflare anchor dry run
         run: npx wrangler deploy --dry-run --outdir /tmp/superposition-cf-anchor-dry-run
