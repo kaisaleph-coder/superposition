@@ -14,8 +14,7 @@ jobs:
         with: { python-version: "3.12" }
       - name: Install browser tooling
         run: npm install --no-fund --no-audit && npx playwright install --with-deps chromium
-      - name: Run exact localhost GPU capability and renderer probe
-        continue-on-error: true
+      - name: Run strict localhost GPU renderer gate
         run: |
           python -m http.server 8080 &
           sleep 2

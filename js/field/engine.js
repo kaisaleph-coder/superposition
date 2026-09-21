@@ -33,8 +33,23 @@ export const FieldEngine = {
     await renderer.init();
     const backend = renderer.backend.isWebGPUBackend ? "webgpu" : "webgl";
     if (backend === "webgl" && (tier === 1 || tier === 2)) tier = tier === 1 ? 3 : 4;
-    const N = TIERS[tier].particles;
+
+    // Software WebGPU adapters can expose a materially smaller practical mapped-buffer
+    // ceiling than hardware adapters. GitHub's Dawn/SwiftShader path rejected the
+    // 1 MiB N*vec4 bootstrap buffers at 65,536 particles, so cap only that detected
+    // portable profile at 32,768 (512 KiB for the same buffer shape).
+    let portableWebGPU = false;
+    if (backend === "webgpu" && navigator.gpu) {
+      try {
+        const adapter = await navigator.gpu.requestAdapter();
+        portableWebGPU = /swiftshader/i.test(String(adapter?.info?.architecture || ""));
+      } catch {}
+    }
+    const N = portableWebGPU ? Math.min(TIERS[tier].particles, 32768) : TIERS[tier].particles;
     const mobile = tier === 2 || tier === 4;
+    body.dataset.particles = String(N);
+    if (portableWebGPU) body.dataset.gpuProfile = "portable-swiftshader";
+    else delete body.dataset.gpuProfile;
 
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
     renderer.setSize(innerWidth, innerHeight, false);
