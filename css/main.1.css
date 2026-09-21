@@ -41,4 +41,4 @@
 .domain-strip{position:fixed;z-index:18;left:var(--gutter);right:var(--gutter);bottom:var(--footer-h);height:var(--strip-h);display:grid;grid-template-columns:repeat(8,1fr);border-top:1px solid var(--rule);background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 24%,transparent),color-mix(in srgb,var(--ground) 88%,transparent) 42%,var(--ground));backdrop-filter:blur(8px)}
 .domain-strip a{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:14px 9px 12px;text-decoration:none;border-right:1px solid var(--rule);color:var(--muted);overflow:hidden}
 .domain-strip a:first-child{border-left:1px solid var(--rule)}
-.domain-strip a::before{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transform-origin:left;transition:transform .24s ease}
+.domain-strip a::before{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(.06);transform-origin:left;transition:transform .24s ease}
