@@ -12,13 +12,17 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - name: Install browser tooling
-        run: npm install --no-fund --no-audit && npx playwright install --with-deps chromium
+      - name: Install browser and Vulkan software-GPU tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers xvfb xauth
+          npm install --no-fund --no-audit
+          npx playwright install --with-deps chromium
       - name: Run strict localhost GPU renderer gate
         run: |
           python -m http.server 8080 &
           sleep 2
-          node tools/gpu-qa.mjs
+          xvfb-run -a -s "-screen 0 1440x900x24" node tools/gpu-qa.mjs
       - name: Upload GPU QA evidence
         if: always()
         uses: actions/upload-artifact@v4

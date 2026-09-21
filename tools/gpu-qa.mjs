@@ -86,11 +86,13 @@ async function caps(page) {
   });
 }
 
-async function launchProbe(name, args = []) {
-  const entry = { name, args, plain: name === "plain-default", errors: [], console: [] };
+async function launchProbe(name, args = [], { headless = true, plain = false } = {}) {
+  const entry = { name, args, headless, plain, errors: [], console: [] };
   let browser;
   try {
-    browser = await chromium.launch({ headless: true, args });
+    // User-required preflight stays literally plain/default; specialized GPU launch
+    // settings are only introduced after this launch succeeds.
+    browser = plain ? await chromium.launch() : await chromium.launch({ headless, args });
     entry.browserVersion = browser.version();
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (e) => entry.errors.push(String(e)));
@@ -113,17 +115,36 @@ async function launchProbe(name, args = []) {
   return entry;
 }
 
-await launchProbe("plain-default", []);
+await launchProbe("plain-default", [], { plain: true });
 
 const sets = [
-  ["swiftshader-webgl", ["--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader"]],
-  ["vulkan-dawn", ["--enable-unsafe-webgpu", "--enable-features=Vulkan,UseSkiaRenderer", "--use-angle=vulkan", "--disable-vulkan-surface", "--enable-dawn-features=allow_unsafe_apis"]],
-  ["swiftshader-dawn", ["--enable-unsafe-webgpu", "--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader", "--enable-dawn-features=allow_unsafe_apis"]],
+  [
+    "swiftshader-webgl",
+    ["--enable-unsafe-swiftshader", "--use-gl=angle", "--use-angle=swiftshader"],
+    { headless: true },
+  ],
+  [
+    "swiftshader-vulkan-webgpu",
+    [
+      "--enable-unsafe-webgpu",
+      "--enable-unsafe-swiftshader",
+      "--ignore-gpu-blocklist",
+      "--enable-gpu",
+      "--enable-features=Vulkan",
+      "--use-angle=vulkan",
+      "--use-vulkan=swiftshader",
+      "--use-webgpu-adapter=swiftshader",
+      "--disable-vulkan-surface",
+      "--ozone-platform=x11",
+      "--window-size=1440,900",
+    ],
+    { headless: false },
+  ],
 ];
-for (const [name, args] of sets) await launchProbe(name, args);
+for (const [name, args, options] of sets) await launchProbe(name, args, options);
 
-const bestWebgl = report.launches.find((x) => x.capabilities?.webgl2 || x.capabilities?.webgl) || report.launches[0];
-const bestWebgpu = report.launches.find((x) => x.capabilities?.webgpuAdapter);
+const bestWebgl = report.launches.find((x) => x.name === "swiftshader-webgl" && (x.capabilities?.webgl2 || x.capabilities?.webgl)) || report.launches[0];
+const bestWebgpu = report.launches.find((x) => x.name === "swiftshader-vulkan-webgpu" && x.capabilities?.webgpuAdapter);
 
 async function rendererRun(kind, launch) {
   if (!launch) return { kind, available: false, states: [], errors: [], console: [], consoleExpected: [], consoleUnexpected: [], gpuErrors: [] };
@@ -134,7 +155,7 @@ async function rendererRun(kind, launch) {
   let browser;
   let capturingRuntime = true;
   try {
-    browser = await chromium.launch({ headless: true, args: launch.args });
+    browser = await chromium.launch({ headless: launch.headless, args: launch.args });
     run.browserVersion = browser.version();
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (e) => {
