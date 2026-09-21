@@ -3,7 +3,7 @@
   "name": "superposition-rc1-staging",
   "compatibility_date": "2026-09-21",
   "workers_dev": false,
-  "preview_urls": true,
+  "preview_urls": false,
   "assets": {
     "directory": "./.staging-dist",
     "not_found_handling": "404-page"
