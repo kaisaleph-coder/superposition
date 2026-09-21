@@ -19,19 +19,21 @@ const np=await nojs.newPage();await np.goto("http://localhost:8080/",{waitUntil:
 const nojsState=await np.evaluate(()=>{
   const v=document.querySelector("#view-columns"),li=v?.querySelector(".manifest li");
   const sv=v?getComputedStyle(v):null,sl=li?getComputedStyle(li):null;
+  const chain=[];let n=li;while(n&&chain.length<7){const cs=getComputedStyle(n),r=n.getBoundingClientRect();chain.push({tag:n.tagName,id:n.id,cls:n.className,display:cs.display,position:cs.position,visibility:cs.visibility,opacity:cs.opacity,fontSize:cs.fontSize,lineHeight:cs.lineHeight,height:r.height,width:r.width,overflow:cs.overflow,overflowY:cs.overflowY});n=n.parentElement}
   return {htmlClass:document.documentElement.className,noscript:document.querySelectorAll("noscript").length,
-    view:{hidden:v?.hasAttribute("hidden"),display:sv?.display,visibility:sv?.visibility,opacity:sv?.opacity,height:v?.getBoundingClientRect().height},
-    li:{display:sl?.display,visibility:sl?.visibility,opacity:sl?.opacity,height:li?.getBoundingClientRect().height},
-    mainTextLen:(document.querySelector("main")?.innerText||"").length};
+    view:{hidden:v?.hasAttribute("hidden"),display:sv?.display,visibility:sv?.visibility,opacity:sv?.opacity,fontSize:sv?.fontSize,lineHeight:sv?.lineHeight,height:v?.getBoundingClientRect().height,width:v?.getBoundingClientRect().width,scrollHeight:v?.scrollHeight},
+    li:{display:sl?.display,visibility:sl?.visibility,opacity:sl?.opacity,fontSize:sl?.fontSize,lineHeight:sl?.lineHeight,height:li?.getBoundingClientRect().height,width:li?.getBoundingClientRect().width,scrollHeight:li?.scrollHeight},
+    chain,mainTextLen:(document.querySelector("main")?.innerText||"").length};
 });
 
 await page.emulateMedia({media:"print"});
 const printState=await page.evaluate(()=>{
   const v=document.querySelector("#view-record"),li=v?.querySelector(".record-list li"),main=document.querySelector("main");
   const sv=v?getComputedStyle(v):null,sl=li?getComputedStyle(li):null,sm=main?getComputedStyle(main):null;
-  return {view:{hidden:v?.hasAttribute("hidden"),display:sv?.display,visibility:sv?.visibility,opacity:sv?.opacity,height:v?.getBoundingClientRect().height},
-    li:{display:sl?.display,visibility:sl?.visibility,opacity:sl?.opacity,height:li?.getBoundingClientRect().height},
-    main:{display:sm?.display,visibility:sm?.visibility,opacity:sm?.opacity}};
+  const chain=[];let n=li;while(n&&chain.length<7){const cs=getComputedStyle(n),r=n.getBoundingClientRect();chain.push({tag:n.tagName,id:n.id,cls:n.className,display:cs.display,position:cs.position,visibility:cs.visibility,opacity:cs.opacity,fontSize:cs.fontSize,lineHeight:cs.lineHeight,height:r.height,width:r.width,overflow:cs.overflow,overflowY:cs.overflowY});n=n.parentElement}
+  return {view:{hidden:v?.hasAttribute("hidden"),display:sv?.display,visibility:sv?.visibility,opacity:sv?.opacity,fontSize:sv?.fontSize,lineHeight:sv?.lineHeight,height:v?.getBoundingClientRect().height,width:v?.getBoundingClientRect().width,scrollHeight:v?.scrollHeight},
+    li:{display:sl?.display,visibility:sl?.visibility,opacity:sl?.opacity,fontSize:sl?.fontSize,lineHeight:sl?.lineHeight,height:li?.getBoundingClientRect().height,width:li?.getBoundingClientRect().width,scrollHeight:li?.scrollHeight},
+    main:{display:sm?.display,visibility:sm?.visibility,opacity:sm?.opacity,height:main?.getBoundingClientRect().height,width:main?.getBoundingClientRect().width},chain};
 });
 
 const mobile=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
