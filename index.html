@@ -187,6 +187,12 @@ body[data-state="dossier"] #field{filter:saturate(.9) brightness(.82)}
   "three/tsl":"./vendor/three.tsl.min.js"
 }}
 </script>
+<noscript><style>
+.view{display:block!important;opacity:1!important;transform:none!important;max-width:72ch;min-height:auto;padding:38px 0;border-bottom:1px solid var(--rule)}
+#field,#atmosphere,#legibility,.spectral-edge,.state-axis,.domain-strip,.site-foot,.index-overlay,.contact-panel,.system-panel{display:none!important}
+.site-head{position:static!important;height:auto!important;margin:0 var(--gutter)!important;padding:22px 0!important;border-bottom:1px solid var(--rule)!important}
+main#content{height:auto!important;overflow:visible!important;padding:20px var(--gutter) 80px!important}
+</style></noscript>
 </head>
 <body data-state="superposition" data-view="home" data-renderer="static" data-tier="0" data-render-domain="home" data-recipe="" data-topology="" data-layers="0" data-surface-layers="0" data-cost="0" data-chromatic="">
 <a class="skip" href="#main">Skip to content</a>
@@ -308,18 +314,18 @@ body[data-state="dossier"] #field{filter:saturate(.9) brightness(.82)}
 <!--BAKE:footer END-->
 </footer>
 
-<section id="indexOverlay" class="index-overlay" aria-label="Index" aria-hidden="true">
+<section id="indexOverlay" class="index-overlay" aria-label="Index" aria-hidden="true" inert>
 <div class="index-head"><span>INDEX / EIGHT DOMAINS</span><button type="button" data-ui-close="index">Close</button></div>
 <div class="index-list"><!--BAKE:index BEGIN-->
 <a href="#/columns" data-facet="columns" data-preview="columns"><span>01</span><b>Financial executive</b><i>ALLOCATION / CONSTRAINT / EQUILIBRIUM</i></a><a href="#/tables" data-facet="tables" data-preview="tables"><span>02</span><b>Restaurant executive</b><i>CAPACITY / FLOW / RHYTHM</i></a><a href="#/frame" data-facet="frame" data-preview="frame"><span>03</span><b>Construction executive</b><i>ASSEMBLY / LOAD / TOPOLOGY</i></a><a href="#/surface" data-facet="surface" data-preview="surface"><span>04</span><b>Investor &amp; trader</b><i>UNCERTAINTY / HORIZON / OPTIONALITY</i></a><a href="#/vector" data-facet="vector" data-preview="vector"><span>05</span><b>Entrepreneur</b><i>BRANCH / RECOMBINE / EMERGF</i></a><a href="#/lattice" data-facet="lattice" data-preview="lattice"><span>06</span><b>AI &amp; computer engineering</b><i>SIGNAL / RECURSION / COMPUTATION</i></a><a href="#/clusters" data-facet="clusters" data-preview="clusters"><span>07</span><b>Skills</b><i>CLUSTER / VECTOR / BRIDGE</i></a><a href="#/orbit" data-facet="orbit" data-preview="orbit"><span>08</span><b>Hobbies</b><i>EXPLORE / ORBIT / TERRAIN</i></a>
 <!--BAKE:index END--></div>
 </section>
 
-<section id="contactPanel" class="contact-panel" aria-label="Contact" aria-hidden="true">
+<section id="contactPanel" class="contact-panel" aria-label="Contact" aria-hidden="true" inert>
 <button type="button" data-ui-close="contact">Close</button><span class="panel-label">CONTACT</span><p>[CONTACT DETAILS — PENDING REAL DATA]</p>
 </section>
 
-<section id="systemPanel" class="system-panel" aria-label="System" aria-hidden="true">
+<section id="systemPanel" class="system-panel" aria-label="System" aria-hidden="true" inert>
 <div class="system-head"><b>SUPERPOSITION / SYSTEM</b><button type="button" data-ui-close="system">Close</button></div>
 <dl><dt>Law</dt><dd id="sysLaw">—</dd><dt>Seed</dt><dd id="sysSeed">—</dd><dt>Recipe</dt><dd id="sysRecipe">—</dd><dt>Topology</dt><dd id="sysTopology">—</dd><dt>Layers</dt><dd id="sysLayers">—</dd><dt>Cost</dt><dd id="sysCost">—</dd><dt>Chromatic</dt><dd id="sysColor">—</dd><dt>Primitives</dt><dd id="sysPrims">—</dd><dt>FPS</dt><dd id="sysFps">—</dd><dt>Renderer</dt><dd id="sysRenderer">static</dd></dl>
 <div class="system-actions"><button type="button" data-system-action="next">Next recipe</button><button type="button" data-system-action="pause">Pause</button></div>
