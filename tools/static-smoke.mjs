@@ -49,6 +49,7 @@ const printState=await pp.evaluate(()=>{
   return {view:{display:vs.display,visibility:vs.visibility,opacity:vs.opacity,hidden:v.hidden,aria:v.getAttribute("aria-hidden")},li:{display:ls.display,visibility:ls.visibility,opacity:ls.opacity,rect:li.getBoundingClientRect().toJSON?.()||{}}};
 });
 await pc.close();
-\nconsole.log(JSON.stringify({state,probes,final,nojsState,printState,errors,logs},null,2));
+
+console.log(JSON.stringify({state,probes,final,nojsState,printState,errors,logs},null,2));
 await browser.close();
 if(errors.length||state.on.length!==1||state.mainTextLen<20)process.exit(1);
