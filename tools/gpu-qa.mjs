@@ -10,7 +10,7 @@ const origin="http://127.0.0.1:8080";
 const report={timestamp:new Date().toISOString(),os:{platform:os.platform(),release:os.release(),arch:os.arch()},playwright:pwVersion,executablePath:chromium.executablePath(),origin,launches:[]};
 
 async function caps(page){
-  return await page.evaluate(()=>{
+  return await page.evaluate(async()=>{
     const c=document.createElement("canvas");
     let gl=null,gl2=null;
     try{gl=c.getContext("webgl")}catch{}
@@ -20,7 +20,9 @@ async function caps(page){
       vendor:g.getParameter(g.VENDOR),
       unmaskedRenderer:(()=>{const e=g.getExtension("WEBGL_debug_renderer_info");return e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):null})()
     }:null;
-    return {webgpu:!!navigator.gpu,webgl:info(gl),webgl2:info(gl2)};
+    let webgpuAdapter=false,webgpuInfo=null;
+    if(navigator.gpu){try{const a=await navigator.gpu.requestAdapter();webgpuAdapter=!!a;webgpuInfo=a?.info?{vendor:a.info.vendor,architecture:a.info.architecture,device:a.info.device,description:a.info.description}:null}catch{}}
+    return {webgpu:!!navigator.gpu,webgpuAdapter,webgpuInfo,webgl:info(gl),webgl2:info(gl2)};
   });
 }
 async function launchProbe(name,args=[]){
@@ -47,8 +49,10 @@ const sets=[
 ];
 for(const [name,args] of sets)await launchProbe(name,args);
 
-const bestWebgl=report.launches.find(x=>x.capabilities?.webgl2);
-const bestWebgpu=report.launches.find(x=>x.capabilities?.webgpu);
+// Explicit forced-WebGL is a production path and should be attempted even when a
+// direct canvas WebGL2 probe under-reports capability. FieldEngine/Three is the authority.
+const bestWebgl=report.launches.find(x=>x.capabilities?.webgl2||x.capabilities?.webgl)||report.launches[0];
+const bestWebgpu=report.launches.find(x=>x.capabilities?.webgpuAdapter);
 const routes=[["home",""],["finance","#/columns"],["restaurant","#/tables"],["construction","#/frame"],["investor","#/surface"],["entrepreneur","#/vector"],["ai","#/lattice"],["skills","#/clusters"],["hobbies","#/orbit"]];
 
 async function rendererRun(kind,launch){
@@ -78,7 +82,8 @@ report.webgpu=await rendererRun("webgpu",bestWebgpu);
 report.verdict={
   plainLaunch:!report.launches[0].launchError,
   webglExecuted:report.webgl.available&&report.webgl.states.some(s=>s.renderer==="webgl"&&Number(s.surfaceLayers)>0),
-  webgpuExecuted:report.webgpu.available&&report.webgpu.states.some(s=>s.renderer==="webgpu"&&Number(s.surfaceLayers)>0)
+  webgpuExecuted:report.webgpu.available&&report.webgpu.states.some(s=>s.renderer==="webgpu"&&Number(s.surfaceLayers)>0),
+  webgpuAdapterAvailable:!!bestWebgpu
 };
 fs.writeFileSync(path.join(outDir,"report.json"),JSON.stringify(report,null,2));
 console.log(JSON.stringify(report,null,2));
