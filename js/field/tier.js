@@ -1,10 +1,10 @@
 /* Capability tiers (PLAN §5.4). Pure detection — no three.js import here so the
    content layer can call this before the engine is dynamically loaded.
-   T1 webgpu desktop 131072 · T2 webgpu mobile 49152 · T3 webgl desktop 65536 ·
+   T1 webgpu desktop 65536 · T2 webgpu mobile 49152 · T3 webgl desktop 65536 ·
    T4 webgl mobile 16384 · T0 static (no JS / reduced-motion / init failure). */
 
 export const TIERS = {
-  1: { renderer: "webgpu", particles: 131072 },
+  1: { renderer: "webgpu", particles: 65536 },
   2: { renderer: "webgpu", particles: 49152 },
   3: { renderer: "webgl", particles: 65536 },
   4: { renderer: "webgl", particles: 16384 },
