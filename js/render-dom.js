@@ -1,110 +1,73 @@
-/* SUPERPOSITION content renderer (PLAN §4.2, ADR-004).
-   Pure string templates — no DOM APIs — so tools/bake.mjs (Node) and the browser
-   share one implementation and the baked no-JS layer cannot drift from runtime.
-   Skills rule (§4.2, binding): three-tier typeset prose + count chips only —
-   no bars, no percentages, no clouds, no radar. */
+/* SUPERPOSITION 2.0 content renderer.
+   Pure string templates: browser runtime and tools/bake.mjs consume the same functions.
+   The graphics system remains progressive enhancement; every factual string stays DOM text. */
 
-export const FACET_ORDER = ["columns", "frame", "tables", "lattice", "surface", "clusters", "vector", "orbit"];
+export const FACET_ORDER = ['columns','tables','frame','surface','vector','lattice','clusters','orbit'];
 
-const esc = (s) =>
-  String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export const FACET_META = Object.freeze({
+  columns:{no:'01',short:'Finance',label:'Financial executive',domain:'finance',law:'allocation',law3:'ALLOCATION / CONSTRAINT / EQUILIBRIUM'},
+  tables:{no:'02',short:'Restaurant',label:'Restaurant executive',domain:'restaurant',law:'flow',law3:'CAPACITY / FLOW / RHYTHM'},
+  frame:{no:'03',short:'Construction',label:'Construction executive',domain:'construction',law:'structure',law3:'ASSEMBLY / LOAD / TOPOLOGY'},
+  surface:{no:'04',short:'Investor',label:'Investor & trader',domain:'investor',law:'uncertainty',law3:'UNCERTAINTY / HORIZON / OPTIONALITY'},
+  vector:{no:'05',short:'Entrepreneur',label:'Entrepreneur',domain:'entrepreneur',law:'emergence',law3:'BRANCH / RECOMBINE / EMERGE'},
+  lattice:{no:'06',short:'AI / Engineering',label:'AI & computer engineering',domain:'ai',law:'signal',law3:'SIGNAL / RECURSION / COMPUTATION'},
+  clusters:{no:'07',short:'Skills',label:'Skills',domain:'skills',law:'vector',law3:'CLUSTER / VECTOR / BRIDGE'},
+  orbit:{no:'08',short:'Hobbies',label:'Hobbies',domain:'hobbies',law:'terrain',law3:'EXPLORE / ORBIT / TERRAIN'},
+});
 
-const chips = (metrics) =>
-  metrics && metrics.length
-    ? `<div class="chips">${metrics.map((m) => `<span class="chip">${esc(m.k)} <b>${esc(m.v)}</b></span>`).join("")}</div>`
-    : "";
+const esc=(s)=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const byId=(data,id)=>data.facets.find(f=>f.id===id);
 
-const linksHTML = (links) =>
-  links && links.length
-    ? `<p class="dlinks">${links.map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(" · ")}</p>`
-    : "";
+const metricsHTML=(metrics)=>metrics?.length?`<div class="metrics">${metrics.map(m=>`<span>${esc(m.k)} <b>${esc(m.v)}</b></span>`).join('')}</div>`:'';
+const linksHTML=(links)=>links?.length?`<p class="dlinks">${links.map(l=>`<a href="${esc(l.href)}">${esc(l.label)}</a>`).join(' · ')}</p>`:'';
 
-export function homeHTML(identity) {
-  return `<h1>${esc(identity.name)}</h1>
+function dossierHTML(facetId,d,i){
+  const bid=`db-${facetId}-${i}`,rid=`d-${facetId}-${i}`;
+  return `<article class="dossier">
+<button type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span>${esc(d.title)}</span><small>${esc(d.org)}${d.org&&d.span?' · ':''}${esc(d.span)}</small><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="${rid}" role="region" aria-labelledby="${bid}">${(d.lines||[]).map(x=>`<p>${esc(x)}</p>`).join('')}${linksHTML(d.links)}${metricsHTML(d.metrics)}</div>
+</article>`;
+}
+function skillDossierHTML(facetId,d,i){
+  const bid=`db-${facetId}-${i}`,rid=`d-${facetId}-${i}`,t=d.tiers||{};
+  const count=(t.core||[]).length+(t.working||[]).length+(t.familiar||[]).length;
+  const run=[...(t.core||[]).map(s=>`<b>${esc(s)}</b>`),...(t.working||[]).map(s=>esc(s)),...(t.familiar||[]).map(s=>`<em>${esc(s)}</em>`)].join(', ');
+  return `<article class="dossier" data-domain="${i}">
+<button type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span>${esc(d.domain)}</span><small>${count} skills</small><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="${rid}" role="region" aria-labelledby="${bid}"><p class="skillrun">${run}</p>${metricsHTML(d.related?.length?[{k:'related',v:d.related.join(' · ')}]:[])}</div>
+</article>`;
+}
+
+export function homeHTML(identity){return `<div class="home-kicker">MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS</div>
+<h1>${esc(identity.name)}</h1>
 <p class="positioning">${esc(identity.positioning)}</p>
-<p class="hint">Choose a mark. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> full résumé.</p>`;
+<div class="home-statement" aria-label="Superposition concept"><span>ONE FIELD</span><span>EIGHT LAWS</span><span>ONE IDENTITY</span></div>
+<p class="home-hint">Choose a domain below or open the index. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> résumé.</p>`}
+
+export function headerHTML(identity){return `<a class="brand" href="#/" aria-label="Home"><span class="brand-name">${esc(identity.name)}</span><span class="brand-system">SUPERPOSITION <b>2.0</b></span></a>
+<nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="#/record">Résumé</a><button type="button" data-ui="contact" aria-expanded="false" aria-controls="contactPanel">Contact</button><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>`}
+
+export function facetHTML(facet){
+  const meta=FACET_META[facet.id]||{no:'--',label:facet.name};
+  const items=facet.id==='clusters'?(facet.domains||[]).map((d,i)=>skillDossierHTML(facet.id,d,i)):(facet.dossiers||[]).map((d,i)=>dossierHTML(facet.id,d,i));
+  return `<div class="facet-kicker">${meta.no} / ${esc(meta.label).toUpperCase()}</div>
+<h2>${esc(meta.label)}</h2>
+<ol class="manifest">${(facet.manifest||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ol>
+<div class="dossiers">${items.join('')}</div>`;
 }
 
-/* Persistent header (every view): name + always-available full résumé (I1). */
-export function headerHTML(identity) {
-  return `<a class="brand" href="#/">${esc(identity.name)}</a>
-<a class="resume-btn" href="#/record">Full résumé</a>`;
-}
+export function recordHTML(record){return `<div class="facet-kicker">FULL RECORD / PRINTABLE</div><h2>Full résumé</h2><p class="record-intro">[Complete professional record — real content swap pending.]</p><ol class="record-list">${(record.entries||[]).map(e=>`<li><time>${esc(e.span)}</time><div><b>${esc(e.line)}</b></div></li>`).join('')}</ol>`}
 
-function dossierHTML(facetId, d, i) {
-  const bid = `db-${facetId}-${i}`, rid = `d-${facetId}-${i}`;
-  return `<div class="dossier">
-<button aria-expanded="false" aria-controls="${rid}" id="${bid}">
-<span class="t">${esc(d.title)}</span><span class="m">${esc(d.org)}${d.org && d.span ? " · " : ""}${esc(d.span)}</span>
-</button>
-<div class="body" id="${rid}" role="region" aria-labelledby="${bid}"><div class="body-in">
-${(d.lines || []).map((p) => `<p>${esc(p)}</p>`).join("\n")}
-${linksHTML(d.links)}${chips(d.metrics)}
-</div></div>
-</div>`;
-}
+export function domainStripHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}"><span>${m.no}</span><b>${esc(m.short||f?.name||id)}</b></a>`}).join('')}
+export function indexHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}" data-preview="${id}"><span>${m.no}</span><b>${esc(m.label||f?.name||id)}</b><i>${esc(m.law3)}</i></a>`}).join('')}
+export function footerHTML(){return `<span id="footerState">SUPERPOSITION</span><span>EIGHT DOMAINS / PROCEDURAL FIELD</span><span class="footer-shortcuts">1–8 / ESC / R / .</span>`}
 
-function domainDossierHTML(facetId, d, i) {
-  const bid = `db-${facetId}-${i}`, rid = `d-${facetId}-${i}`;
-  const t = d.tiers || {};
-  const count = (t.core || []).length + (t.working || []).length + (t.familiar || []).length;
-  const run = [
-    ...(t.core || []).map((s) => `<span class="s1">${esc(s)}</span>`),
-    ...(t.working || []).map((s) => `<span class="s2">${esc(s)}</span>`),
-    ...(t.familiar || []).map((s) => `<span class="s3">${esc(s)}</span>`),
-  ].join(", ");
-  const rel = d.related && d.related.length ? [{ k: "related", v: d.related.join(" · ") }] : [];
-  return `<div class="dossier" data-domain="${i}">
-<button aria-expanded="false" aria-controls="${rid}" id="${bid}">
-<span class="t">${esc(d.domain)}</span><span class="m">${count} skills</span>
-</button>
-<div class="body" id="${rid}" role="region" aria-labelledby="${bid}"><div class="body-in">
-<p class="skillrun">${run}</p>
-${chips(rel)}
-</div></div>
-</div>`;
-}
-
-export function facetHTML(facet) {
-  const isClusters = facet.id === "clusters";
-  const items = isClusters
-    ? (facet.domains || []).map((d, i) => domainDossierHTML(facet.id, d, i))
-    : (facet.dossiers || []).map((d, i) => dossierHTML(facet.id, d, i));
-  const legend = isClusters
-    ? `\n<li class="legend">Type weight encodes tier — <b>core</b>, working, familiar. Open a domain to collapse its cluster in the field.</li>`
-    : "";
-  return `<p class="backrow"><a class="back" href="#/">◂ home</a></p>
-<h2 class="domain-title">${esc(facet.name)}</h2>
-<ul class="manifest">
-${(facet.manifest || []).map((l) => `<li>${esc(l)}</li>`).join("\n")}${legend}
-</ul>
-<div class="dossiers">
-${items.join("\n")}
-</div>`;
-}
-
-export function recordHTML(record) {
-  return `<p class="backrow"><a class="back" href="#/">◂ home</a></p>
-<h2 class="domain-title">Full résumé</h2>
-<ol class="record">
-${(record.entries || []).map((e) => `<li><span class="span">${esc(e.span)}</span><span class="line">${esc(e.line)}</span></li>`).join("\n")}
-</ol>`;
-}
-
-export function footerHTML(identity) {
-  return (identity.links || [])
-    .map((l) => `<a href="${esc(l.href)}">${esc(l.label)}</a>`)
-    .join("");
-}
-
-/* Browser entry: re-render every view from data (source of truth for JS visitors). */
-export function renderAll(data, doc) {
-  doc.getElementById("view-home").innerHTML = homeHTML(data.identity);
-  for (const f of data.facets) {
-    const el = doc.getElementById(`view-${f.id}`);
-    if (el) el.innerHTML = facetHTML(f);
-  }
-  doc.getElementById("view-record").innerHTML = recordHTML(data.record);
-  doc.querySelector("header.site").innerHTML = headerHTML(data.identity);
-  doc.querySelector("footer .row").innerHTML = footerHTML(data.identity);
+export function renderAll(data,doc){
+  doc.getElementById('view-home').innerHTML=homeHTML(data.identity);
+  for(const id of FACET_ORDER){const f=byId(data,id),el=doc.getElementById(`view-${id}`);if(f&&el)el.innerHTML=facetHTML(f)}
+  doc.getElementById('view-record').innerHTML=recordHTML(data.record);
+  doc.querySelector('header.site-head').innerHTML=headerHTML(data.identity);
+  doc.querySelector('.domain-strip').innerHTML=domainStripHTML(data);
+  doc.querySelector('.index-list').innerHTML=indexHTML(data);
+  doc.querySelector('footer.site-foot').innerHTML=footerHTML();
 }

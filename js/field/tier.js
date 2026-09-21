@@ -12,6 +12,7 @@ export const TIERS = {
 };
 
 export function detectTier({ force } = {}) {
+  if (force === "static") return 0;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
   const mobile = matchMedia("(pointer: coarse)").matches;
   const webgpu = force === "webgl" ? false : "gpu" in navigator;
@@ -21,7 +22,6 @@ export function detectTier({ force } = {}) {
   return mobile ? 4 : 3;
 }
 
-/* One tier down for the FPS guard (§5.4: downshift if sampled FPS < 45 for 3 s). */
 export function downshift(tier) {
   return { 1: 2, 2: 4, 3: 4, 4: 4, 0: 0 }[tier] ?? 0;
 }

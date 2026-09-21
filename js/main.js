@@ -6,6 +6,8 @@
 import { renderAll, FACET_ORDER } from "./render-dom.js";
 import { createRouter } from "./router.js";
 import { detectTier, TIERS } from "./field/tier.js";
+import { createUIShell } from "./ui-shell.js";
+import { createFallbackRecipeController } from "./field/v2/fallback-controller.js";
 
 const body = document.body;
 const q = new URLSearchParams(location.search);
@@ -14,15 +16,18 @@ const data = window.__RESUME__;
 if (data) renderAll(data, document);
 
 let engine = null;
+const fallbackController = createFallbackRecipeController(document, { seed: q.get("seed") });
+const activeController = () => engine || fallbackController;
 const router = createRouter(document, {
   onState(id, detail = {}) {
-    if (!engine) return;
-    if (detail.togglePause) { engine.togglePause(); return; }
-    engine.setState(id, detail);
+    const target = activeController();
+    if (detail.togglePause) { target.togglePause?.(); return; }
+    target.setState?.(id, detail);
   },
 });
 
-// §2.5 scroll-within-facet → engine (passive listener, native scroll untouched)
+const uiShell = createUIShell(document, { getEngine: activeController });
+
 const mainEl = document.querySelector("main");
 mainEl.addEventListener(
   "scroll",
@@ -34,9 +39,6 @@ mainEl.addEventListener(
   { passive: true }
 );
 
-// ---------- I3: domain-to-domain navigation ----------
-// step(+1/-1): home → first/last domain; domains page in order (no wrap on wheel; the
-// swipe path wraps like the arrow keys). record is excluded — it scrolls natively.
 function domainStep(dir, { wrap }) {
   const cur = body.dataset.facet;
   if (body.dataset.state === "record") return;
@@ -44,11 +46,9 @@ function domainStep(dir, { wrap }) {
   const i = FACET_ORDER.indexOf(cur) + dir;
   if (wrap) router.go(FACET_ORDER[(i + FACET_ORDER.length) % FACET_ORDER.length]);
   else if (i >= 0 && i < FACET_ORDER.length) router.go(FACET_ORDER[i]);
-  else if (i < 0) router.go("home"); // wheel up past the first domain returns home
+  else if (i < 0) router.go("home");
 }
 
-// Desktop: wheel-at-content-edge. Reading always wins — only a continued scroll past
-// the galley's top/bottom pages between domains. Cooldown stops flick-skipping.
 let wheelAcc = 0, wheelCooldownUntil = 0, wheelAccReset = 0;
 mainEl.addEventListener(
   "wheel",
@@ -59,7 +59,7 @@ mainEl.addEventListener(
     const atTop = mainEl.scrollTop <= 2;
     const dir = e.deltaY > 0 ? 1 : -1;
     if ((dir > 0 && !atBottom) || (dir < 0 && !atTop)) { wheelAcc = 0; return; }
-    if (now > wheelAccReset) wheelAcc = 0; // stale gesture
+    if (now > wheelAccReset) wheelAcc = 0;
     wheelAccReset = now + 250;
     wheelAcc += e.deltaY;
     if (Math.abs(wheelAcc) >= 120) {
@@ -71,7 +71,6 @@ mainEl.addEventListener(
   { passive: true }
 );
 
-// Mobile (and any touch): horizontal swipe anywhere pages between domains.
 let swipe = null;
 addEventListener("pointerdown", (e) => {
   if (e.pointerType === "mouse") return;
@@ -82,11 +81,10 @@ addEventListener("pointerup", (e) => {
   const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y, dt = performance.now() - swipe.t;
   swipe = null;
   if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) {
-    domainStep(dx < 0 ? 1 : -1, { wrap: true }); // swipe left → next
+    domainStep(dx < 0 ? 1 : -1, { wrap: true });
   }
 }, { passive: true });
 
-// I5: gyro parallax on coarse-pointer devices (iOS needs a user-gesture permission)
 if (matchMedia("(pointer: coarse)").matches && "DeviceOrientationEvent" in window) {
   const listen = () =>
     addEventListener("deviceorientation", (e) => {
@@ -105,12 +103,10 @@ if (matchMedia("(pointer: coarse)").matches && "DeviceOrientationEvent" in windo
   }
 }
 
-// §5.4 tier detection → DOM contract attrs
 const tier = detectTier({ force: q.get("force") });
 body.dataset.tier = String(tier);
 body.dataset.renderer = TIERS[tier].renderer;
 
-// Field engine loads after first paint, only above T0 (dynamic import per §6)
 if (tier > 0) {
   requestAnimationFrame(() => {
     requestAnimationFrame(async () => {
@@ -123,15 +119,15 @@ if (tier > 0) {
           run: q.has("run"),
           data,
         });
-        // engine may have downgraded (e.g. WebGPU init failure → WebGL)
         body.dataset.tier = String(engine.tier);
         body.dataset.renderer = engine.renderer;
-        if (q.has("seed")) window.__engineDebug = engine; // dev/test builds only
+        if (q.has("seed")) window.__engineDebug = engine;
         engine.setState(router.current, { first: true });
+        uiShell.updateSystem();
       } catch (err) {
-        // init failure → T0 static ground (§2.1); site remains fully functional
         body.dataset.tier = "0";
         body.dataset.renderer = "static";
+        fallbackController.setState(router.current, { first: true });
       }
     });
   });

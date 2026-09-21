@@ -1,6 +1,4 @@
-# Optional CI receipts (PLAN §9): budget + DOM/content/a11y QA on every push.
-# Field/visual/perf specs need a real GPU and run locally (see tools/soak.mjs);
-# CI runners get the content-layer matrix + budget gate as public green checks.
+# SUPERPOSITION QA — static/source gates plus semantic browser matrix on every push.
 name: qa
 on: [push, pull_request]
 jobs:
@@ -14,14 +12,17 @@ jobs:
         with: { python-version: "3.12" }
       - name: Budget gate
         run: node tools/budget.mjs
+      - name: Multi-surface source contract
+        run: node tools/surface-scene-contract.mjs > /tmp/surface-contract.json
+      - name: Bake parity
+        run: node tools/bake.mjs && git diff --exit-code -- index.html
       - name: Install dev tooling
         run: npm install --no-fund --no-audit
       - name: Install chromium
         run: npx playwright install --with-deps chromium
-      - name: QA (content, state machine, print, a11y)
-        # --ignore-snapshots: visual baselines are Windows-rendered; CI checks behavior
-        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js --ignore-snapshots
-      - name: Dead-link check (rendered DOM, internal)
+      - name: QA (content, state, print, a11y, S4 integration)
+        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js --ignore-snapshots
+      - name: Dead-link check
         run: |
           python -m http.server 8080 &
           sleep 2

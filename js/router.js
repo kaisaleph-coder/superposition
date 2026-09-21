@@ -2,7 +2,7 @@
    All state is mirrored to <body data-*> — the DOM contract. Deep links:
    #/columns … #/orbit, #/record; home is "" or #/. Back/forward = hashchange. */
 
-import { FACET_ORDER } from "./render-dom.js";
+import { FACET_ORDER, FACET_META } from "./render-dom.js";
 
 const VIEWS = ["home", ...FACET_ORDER, "record"];
 
@@ -13,7 +13,7 @@ export function createRouter(doc, { onState } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const idFromHash = () => {
-    const h = (location.hash || "").replace(/^#\/?/, "");
+    const h = (location.hash || "").replace(/^#/?/, "");
     return VIEWS.includes(h) ? h : "home";
   };
 
@@ -29,7 +29,6 @@ export function createRouter(doc, { onState } = {}) {
     const prev = current;
     current = id;
 
-    // §5.6 DOM contract
     if (id === "home") {
       body.dataset.state = "superposition";
       delete body.dataset.facet;
@@ -41,13 +40,19 @@ export function createRouter(doc, { onState } = {}) {
       body.dataset.facet = id;
     }
 
-    // rail current mark
-    for (const a of doc.querySelectorAll("#rail a")) {
+    body.dataset.view = id === "home" ? "home" : id === "record" ? "record" : (FACET_META[id]?.domain || id);
+
+    for (const a of doc.querySelectorAll(".domain-strip a, .index-list a")) {
       if (a.dataset.facet === id) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     }
+    const meta = FACET_META[id];
+    const axisNo = doc.getElementById("axisNo"), axisLabel = doc.getElementById("axisLabel");
+    if (axisNo) axisNo.textContent = meta?.no || (id === "record" ? "R" : "00");
+    if (axisLabel) axisLabel.textContent = meta?.label || (id === "record" ? "FULL RÉSUMÉ" : "SUPERPOSITION");
+    const footerState = doc.getElementById("footerState");
+    if (footerState) footerState.textContent = meta?.law?.toUpperCase() || (id === "record" ? "RECORD" : "SUPERPOSITION");
 
-    // view swap (240ms crossfade §3.4; instant on reduced motion / first paint)
     const toEl = doc.getElementById(`view-${id}`);
     const fromEl = prev ? doc.getElementById(`view-${prev}`) : null;
     clearTimeout(swapTimer);
@@ -76,10 +81,9 @@ export function createRouter(doc, { onState } = {}) {
     if (!VIEWS.includes(id)) id = "home";
     const target = id === "home" ? "#/" : `#/${id}`;
     if (location.hash === target || (id === "home" && !location.hash)) apply(id);
-    else location.hash = target; // triggers hashchange → apply
+    else location.hash = target;
   }
 
-  // dossier expanders (event delegation; aria-expanded + data-open + §5.6 dossier state)
   doc.querySelector("main").addEventListener("click", (e) => {
     const btn = e.target.closest(".dossier > button");
     if (!btn) return;
@@ -100,7 +104,6 @@ export function createRouter(doc, { onState } = {}) {
     });
   });
 
-  // keyboard (§2.5)
   doc.addEventListener("keydown", (e) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
     const tag = doc.activeElement && doc.activeElement.tagName;

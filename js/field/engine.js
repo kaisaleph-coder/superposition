@@ -10,19 +10,21 @@ import { FACET_IDS, buildAttractors, buildCitizenship, packTargets } from "./att
 import { createSim, MODES } from "./sim.tsl.js";
 import { createRenderMesh } from "./render.tsl.js";
 import { createPointer } from "./pointer.js";
+import { compileRecipe } from "./v2/recipe-compiler.js";
+import { domainForState } from "./v2/state-map.js";
+import { resolveSessionSeed } from "./v2/seed-manager.js";
+import { createSurfaceScene } from "./v2/surface-scene.js";
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const lerp = (a, b, t) => a + (b - a) * t;
-// SETTLE_FRAME: deterministic test-mode freeze point. 420 frames = 7 sim-seconds —
-// boot/retarget flight (≤2 s) + full spring equilibrium (pos error ≈ noise/k) so
-// fixed-seed screenshots capture settled structure, not flight blur.
 const BLEND_MS = 1150, BOOT_MS = 2000, SETTLE_FRAME = 420;
 
 export const FieldEngine = {
   async init(canvas, { tier, seed = null, force = null, data = null, run = false } = {}) {
     const body = canvas.ownerDocument.body;
     const testMode = seed !== null && seed !== undefined && seed !== "";
-    const seedNum = testMode ? (parseFloat(seed) || 1) * 17.13 : Math.random() * 1000;
+    let recipeSeedBase = resolveSessionSeed(seed);
+    const seedNum = (recipeSeedBase || 1) * 0.01713;
 
     const renderer = new THREE.WebGPURenderer({
       canvas, antialias: false, alpha: true,
@@ -30,29 +32,24 @@ export const FieldEngine = {
     });
     await renderer.init();
     const backend = renderer.backend.isWebGPUBackend ? "webgpu" : "webgl";
-    // tier follows the actual backend (webgpu request may land on webgl)
     if (backend === "webgl" && (tier === 1 || tier === 2)) tier = tier === 1 ? 3 : 4;
     const N = TIERS[tier].particles;
     const mobile = tier === 2 || tier === 4;
 
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
     renderer.setSize(innerWidth, innerHeight, false);
-    renderer.setClearColor(0x000000, 0); // paper is CSS; canvas stays transparent
+    renderer.setClearColor(0x000000, 0);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(52, innerWidth / innerHeight, 0.1, 100);
 
-    // buffers (CPU boot ≈ tens of ms at 131k; §2.2 zero-asset geometry)
     const { gens, domainOf } = buildAttractors(N, data);
     const targetsData = packTargets(N, gens);
     const citData = buildCitizenship(N, data);
     const domData = new Uint32Array(N);
     for (let i = 0; i < N; i++) domData[i] = domainOf(i);
 
-    // Eight static per-state target sets (ADR-005: no uploads or dynamic reads on the
-    // WebGL backend — everything the GPU will ever target is baked at boot):
-    // 0–6 attractors (dom id in w for CLUSTERS), 7 = citizenship home (§2.3).
-    const F = FACET_IDS.length, HOME = F; // state indices: 0..F-1 facets, F = home
+    const F = FACET_IDS.length, HOME = F;
     const CLUSTERS_IDX = FACET_IDS.indexOf("clusters");
     const stateTargets = [];
     for (let s = 0; s <= F; s++) {
@@ -68,13 +65,13 @@ export const FieldEngine = {
       stateTargets.push(arr);
     }
 
-    // I4: pale per-domain palette — one hue per home domain, applied per particle.
-    // Order matches FACET_IDS: columns, frame, tables, lattice, surface, clusters, vector, orbit.
-    const PALETTE = ["#9FBBE0", "#ADB6CE", "#DCC49A", "#B5A6E0", "#93C6C2", "#A8CBA0", "#8FB0EE", "#D3A9C5"]
-      .map((h) => new THREE.Color(h));
+    let recipeIndex = 0;
+    let committedRecipe = compileRecipe("home", recipeIndex, recipeSeedBase);
+    let activeRecipe = committedRecipe;
+    const homeColors = committedRecipe.chromatic.colors.map((c) => new THREE.Color(c.hex));
     const colorsData = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
-      const c = PALETTE[citData[i] % PALETTE.length];
+      const c = homeColors[citData[i] % homeColors.length];
       colorsData[i * 3] = c.r; colorsData[i * 3 + 1] = c.g; colorsData[i * 3 + 2] = c.b;
     }
 
@@ -88,13 +85,37 @@ export const FieldEngine = {
     const { mesh, uniforms: rUniforms } = createRenderMesh(N, sim, { mobile });
     scene.add(mesh);
 
-    // dark scheme: brighten the pastel palette slightly (§3.1: Klein charge unchanged)
-    const darkMq = matchMedia("(prefers-color-scheme: dark)");
-    const applyScheme = () => { rUniforms.uTone.value = darkMq.matches ? 1.18 : 1.0; };
-    applyScheme();
-    darkMq.addEventListener("change", applyScheme);
+    const surfaceScene = createSurfaceScene(THREE, { backend, mobile });
+    scene.add(surfaceScene.root);
 
-    // ---------- state ----------
+    const rootStyle = canvas.ownerDocument.documentElement.style;
+    function applyRecipeTheme(recipe, { preview = false } = {}) {
+      activeRecipe = recipe;
+      const c = recipe.chromatic;
+      rootStyle.setProperty("--ground", c.ground);
+      rootStyle.setProperty("--ground2", c.ground2);
+      rootStyle.setProperty("--ink", c.ink);
+      rootStyle.setProperty("--muted", c.muted);
+      rootStyle.setProperty("--rule", `${c.rule}66`);
+      rootStyle.setProperty("--accent", c.accent);
+      rootStyle.setProperty("--accent2", c.accent2);
+      rootStyle.setProperty("--panel", `${c.ground}e8`);
+      rUniforms.uTone.value = 1.0;
+      rUniforms.uStateColor.value.set(c.accent);
+      rUniforms.uLive.value.set(c.accent2);
+      const surf = surfaceScene.applyRecipe(recipe);
+      body.dataset.renderDomain = recipe.domain;
+      body.dataset.recipe = recipe.signature;
+      body.dataset.topology = recipe.topology;
+      body.dataset.layers = String(recipe.layers.length);
+      body.dataset.surfaceLayers = String(surf.layers);
+      body.dataset.cost = String(recipe.cost);
+      body.dataset.chromatic = recipe.chromatic.id;
+      body.toggleAttribute("data-preview", preview);
+      window.dispatchEvent(new CustomEvent("superposition:recipe", { detail: { recipe, preview } }));
+    }
+    applyRecipeTheme(committedRecipe);
+
     let simT = 0, wallLast = performance.now(), frame = 0;
     let stateId = "home", modeFrom = { ...MODES.home }, modeTo = { ...MODES.home };
     let blendStart = 0, blendDur = BOOT_MS / 1000, yaw = 0.6;
@@ -102,9 +123,9 @@ export const FieldEngine = {
     let rafId = 0, running = false, disposed = false, settled = false;
     let curTier = tier, drawN = N, lowStreak = 0, fpsFrames = 0, fpsClock = performance.now();
     let bootMarked = false, scrollP = 0;
-    const par = { x: 0, y: 0, tx: 0, ty: 0, gyro: false }; // I5 parallax state
+    const par = { x: 0, y: 0, tx: 0, ty: 0, gyro: false };
     const finePointer = matchMedia("(pointer: fine)").matches;
-    let castTarget = 0; // I4 domain-cast blend target
+    let castTarget = 0;
 
     const doc = canvas.ownerDocument;
     const pointer = createPointer(canvas);
@@ -115,24 +136,22 @@ export const FieldEngine = {
 
     const eased = () => easeInOut(Math.min(1, (simT - blendStart) / blendDur));
 
-    // Retarget = CPU-side kernel switch (ADR-005: no inter-kernel GPU data flow).
     let activeState = HOME, weightsMode = false;
     function dispatchRetarget(newStateIdx) {
       activeState = newStateIdx;
       weightsMode = false;
-      blendStart = simT;          // paces the CPU mode-parameter easing; the morph
-      blendDur = BLEND_MS / 1000; // itself is the spring flight (§5.3, ADR-005)
+      blendStart = simT;
+      blendDur = BLEND_MS / 1000;
     }
 
     function stateIndexOf(id) {
       const i = FACET_IDS.indexOf(id);
-      return i === -1 ? HOME : i; // HOME = citizenship blend (record keeps home targets)
+      return i === -1 ? HOME : i;
     }
 
-    // boot: seeded noise → superposition (§3.4); the 2 s assembly is the spring flight
     renderer.compute(sim.kernels.initScatter);
     if (repeatVisit || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      blendStart = -10; blendDur = 0.001; // mode params settle instantly
+      blendStart = -10; blendDur = 0.001;
     } else {
       blendStart = 0; blendDur = BOOT_MS / 1000;
     }
@@ -179,18 +198,16 @@ export const FieldEngine = {
       const slowF = sim.uniforms.slow.value;
       sim.uniforms.dt.value = dt;
       sim.uniforms.t.value = simT;
-      // §2.5 scroll: field firms up as you read deeper (facet states only)
       const scrollTighten = stateId !== "home" && stateId !== "record" ? 1 + 0.35 * scrollP : 1;
       sim.uniforms.k.value = lerp(modeFrom.k, modeTo.k, e) * scrollTighten;
       sim.uniforms.noise.value = lerp(modeFrom.noise, modeTo.noise, e);
       sim.uniforms.damp.value = lerp(modeFrom.damp, modeTo.damp, e);
 
       yaw += 0.07 * dt * slowF;
-      // I5 parallax: mouse (fine pointers) or gyro (setParallax) eases the camera a few degrees
       if (finePointer && !par.gyro) { par.tx = pointer.state.x; par.ty = pointer.state.y; }
       par.x += (par.tx - par.x) * Math.min(1, dt * 2.5);
       par.y += (par.ty - par.y) * Math.min(1, dt * 2.5);
-      const yawView = yaw + par.x * 0.06 + (scrollP * 2 - 1) * 0.1396 * (stateId !== "home" && stateId !== "record" ? 1 : 0); // ±8°
+      const yawView = yaw + par.x * 0.06 + (scrollP * 2 - 1) * 0.1396 * (stateId !== "home" && stateId !== "record" ? 1 : 0);
       const pitch = lerp(modeFrom.pitch, modeTo.pitch, e) + 0.05 * Math.sin(simT * 0.11) + par.y * 0.045;
       const el = -pitch, D = 2.7;
       camera.position.set(
@@ -204,6 +221,7 @@ export const FieldEngine = {
       sim.uniforms.pointer.value.copy(pointer.state.world);
       sim.uniforms.pointerStrength.value = frozen ? 0 : pointer.state.strength;
       rUniforms.uCast.value += (castTarget - rUniforms.uCast.value) * Math.min(1, dt * 2);
+      surfaceScene.update(simT, { x: par.x, y: par.y });
 
       if (!frozen) {
         renderer.compute(
@@ -221,7 +239,6 @@ export const FieldEngine = {
       }
       sampleFps(now);
 
-      // deterministic test mode: freeze at a fixed sim frame for pixel-stable shots
       if (testMode && !settled && frame >= SETTLE_FRAME) {
         settled = true;
         body.dataset.settled = "1";
@@ -229,8 +246,7 @@ export const FieldEngine = {
       }
     }
 
-    // ---------- courtesies (§2.5) ----------
-    hiddenPaused = doc.hidden; // page may load while hidden
+    hiddenPaused = doc.hidden;
     const onVis = () => { hiddenPaused = doc.hidden; updatePauseAttr(); };
     doc.addEventListener("visibilitychange", onVis);
     const io = new IntersectionObserver((entries) => {
@@ -245,27 +261,30 @@ export const FieldEngine = {
     };
     addEventListener("resize", onResize);
 
-    // ---------- public surface ----------
     const api = {
-      _debug: { sim, renderer, mesh }, // internal — not part of the §5.3 contract
+      _debug: { sim, renderer, mesh },
       renderer: backend,
       get tier() { return curTier; },
       get state() { return stateId; },
 
-      /* Router glue: home | facet-id | record, with dossier/domain detail. */
       setState(id, { dossier = false, domain = -1, togglePause = false } = {}) {
         if (togglePause) { api.togglePause(); return; }
         const target = id === "home" || id === "record" ? id : FACET_IDS.includes(id) ? id : "home";
         const changed = target !== stateId;
         stateId = target;
-        // I5: record no longer freezes — it drifts faintly; dossier slows less harshly
+        if (changed) {
+          recipeIndex = 0;
+          committedRecipe = compileRecipe(domainForState(target), recipeIndex, recipeSeedBase);
+          applyRecipeTheme(committedRecipe);
+        } else if (body.hasAttribute("data-preview")) {
+          applyRecipeTheme(committedRecipe);
+        }
         frozen = false;
         sim.uniforms.slow.value =
           target === "record" ? 0.3 : dossier && target !== "clusters" ? 0.6 : 1;
-        // I4: collapsed views cast the field toward the domain hue
         const fi = FACET_IDS.indexOf(target);
         castTarget = fi === -1 ? 0 : 0.65;
-        if (fi !== -1) rUniforms.uStateColor.value.copy(PALETTE[fi]);
+        if (fi !== -1) rUniforms.uStateColor.value.set(committedRecipe.chromatic.accent);
         sim.uniforms.focusDomain.value = target === "clusters" ? domain : -1;
         if (changed) {
           const e = eased();
@@ -280,9 +299,33 @@ export const FieldEngine = {
         }
       },
 
-      /* PLAN-named surface (§5.3): arbitrary attractor weights → blended target.
-         Normalizes, snapshots the current eased target, morphs to the weighted blend
-         (CPU-built per ADR-005). The state machine uses the citizenship retarget (§2.3). */
+      previewState(id) {
+        const recipe = compileRecipe(domainForState(id), 0, recipeSeedBase);
+        applyRecipeTheme(recipe, { preview: true });
+      },
+      clearPreview() { applyRecipeTheme(committedRecipe); },
+      setRecipeSeed(nextSeed) {
+        recipeSeedBase = Number(nextSeed) >>> 0 || recipeSeedBase;
+        recipeIndex = 0;
+        committedRecipe = compileRecipe(domainForState(stateId), recipeIndex, recipeSeedBase);
+        applyRecipeTheme(committedRecipe);
+      },
+      nextRecipe() {
+        recipeIndex += 1;
+        committedRecipe = compileRecipe(domainForState(stateId), recipeIndex, recipeSeedBase);
+        applyRecipeTheme(committedRecipe);
+        return committedRecipe;
+      },
+      getDebugState() {
+        return {
+          state: stateId, backend, tier: curTier, seed: recipeSeedBase, recipeIndex,
+          recipe: committedRecipe.signature, topology: committedRecipe.topology,
+          law: committedRecipe.law, layers: committedRecipe.layers.length,
+          surfaceLayers: surfaceScene.debug.layers, cost: committedRecipe.cost,
+          chromatic: committedRecipe.chromatic.id, primitives: surfaceScene.debug.primitiveCount,
+        };
+      },
+
       setWeights(w) {
         const ws = FACET_IDS.map((_, a) => Math.max(0, w?.[a] ?? 0));
         const sum = ws.reduce((s, x) => s + x, 0) || 1;
@@ -290,8 +333,6 @@ export const FieldEngine = {
           sim.weights.forEach((wu, s) => { wu.value = (ws[s] ?? 0) / sum; });
           weightsMode = true;
         } else {
-          // WebGL backend: the blend kernel exceeds its buffer budget (ADR-005) —
-          // documented approximation: morph to the dominant-weight state
           const dom = ws.indexOf(Math.max(...ws));
           activeState = dom === -1 ? 7 : dom;
           weightsMode = false;
@@ -302,19 +343,15 @@ export const FieldEngine = {
       setPointer(x, y) {
         pointer.state.x = x; pointer.state.y = y; pointer.state.active = 1;
       },
-      /* §2.5 scroll progress 0→1 within a facet (native scroll; no scroll-jacking). */
       setScroll(p) {
         scrollP = Math.max(0, Math.min(1, p));
         if (testMode) body.dataset.scroll = scrollP.toFixed(2);
       },
-      /* I5: gyro/mouse parallax target, both ∈ [-1, 1]. Gyro takes priority once seen. */
       setParallax(x, y) {
         par.gyro = true;
         par.tx = Math.max(-1, Math.min(1, x));
         par.ty = Math.max(-1, Math.min(1, y));
       },
-      /* Deterministic manual stepping (debug/QA): advance n fixed-dt frames now,
-         independent of rAF/visibility. */
       step(n = 1, dt = 1 / 60) {
         for (let i = 0; i < n; i++) stepOnce(performance.now(), dt);
       },
@@ -325,14 +362,13 @@ export const FieldEngine = {
         disposed = true; running = false; cancelAnimationFrame(rafId);
         doc.removeEventListener("visibilitychange", onVis);
         removeEventListener("resize", onResize);
-        darkMq.removeEventListener("change", applyScheme);
-        io.disconnect(); pointer.dispose(); renderer.dispose();
+        io.disconnect(); pointer.dispose(); surfaceScene.dispose(); renderer.dispose();
       },
     };
 
     body.dataset.renderer = backend;
     body.dataset.tier = String(curTier);
-    updatePauseAttr(); // starts the loop
+    updatePauseAttr();
     return api;
   },
 };
