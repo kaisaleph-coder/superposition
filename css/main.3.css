@@ -38,7 +38,7 @@
 body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[data-index="open"] .site-foot,body[data-index="open"] .state-axis,body[data-index="open"] main{pointer-events:none}
 
 /* S5 semantic fallbacks and keyboard focus hardening */
-.domain-strip a:focus::before,.domain-strip a:focus-visible::before{transform:scaleX(1)}
+.domain-strip a:focus::before,.domain-strip a:focus-visible::before{transform:none!important}
 :root:not(.js) .view{display:block!important;opacity:1!important;transform:none!important}
 @media print{
   #view-record,#view-record[hidden]{display:block!important;opacity:1!important;transform:none!important}
