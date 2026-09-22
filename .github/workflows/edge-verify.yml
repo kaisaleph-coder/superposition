@@ -61,7 +61,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "DNS:"
+          echo "DNS resolver diagnostics:"
+          for q in \
+            "kaisabuhussein.com NS" \
+            "kaisabuhussein.com SOA" \
+            "kaisabuhussein.com A" \
+            "kaisabuhussein.com AAAA" \
+            "kaisabuhussein.com DS" \
+            "www.kaisabuhussein.com A" \
+            "www.kaisabuhussein.com CNAME"; do
+            set -- $q
+            name="$1"; type="$2"
+            echo "---- $name $type via Google DNS-over-HTTPS ----"
+            curl -sS --connect-timeout 8 --max-time 20 "https://dns.google/resolve?name=$name&type=$type" \
+              | python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps({"Status":d.get("Status"),"AD":d.get("AD"),"Comment":d.get("Comment"),"Answer":d.get("Answer"),"Authority":d.get("Authority")},indent=2))'
+          done
+
+          echo "System resolver:"
           getent ahosts kaisabuhussein.com || true
           getent ahosts www.kaisabuhussein.com || true
 
