@@ -2,26 +2,34 @@
 import { test, expect } from "@playwright/test";
 
 const FACETS = ["columns","tables","frame","surface","vector","lattice","clusters","orbit"];
+const POPULATED = new Set(["columns","tables","frame","surface"]);
 
 test.describe("content integrity", () => {
-  test("every schema surface renders (JS on)", async ({ page }) => {
+  test("every schema surface renders without public placeholders", async ({ page }) => {
     await page.goto("/?seed=1&force=static");
     await expect(page.locator("h1")).toContainText("KAIS ABU-HUSSEIN");
     await expect(page.locator("#view-home .positioning")).toHaveText(/\S+/);
     for (const f of FACETS) {
       const v = page.locator(`#view-${f}`);
-      expect(await v.locator(".manifest li").count()).toBeGreaterThan(1);
-      expect(await v.locator(".dossier").count()).toBeGreaterThan(0);
+      await expect(v.locator("h2")).toBeAttached();
+      if (POPULATED.has(f)) {
+        expect(await v.locator(".manifest li").count()).toBeGreaterThan(1);
+        expect(await v.locator(".dossier").count()).toBeGreaterThan(0);
+      } else {
+        expect(await v.locator(".manifest li").count()).toBe(0);
+        expect(await v.locator(".dossier").count()).toBe(0);
+      }
     }
     expect(await page.locator("#view-record .record-list li").count()).toBeGreaterThan(0);
     await expect(page.locator("header.site-head .brand-name")).toContainText("KAIS ABU-HUSSEIN");
-    await expect(page.locator('header.site-head .utilities a[href="#/record"]')).toBeVisible();
+    await expect(page.locator('header.site-head .utilities a[href="/resume/"]')).toBeVisible();
     expect(await page.locator(".domain-strip a").count()).toBe(8);
     expect(await page.locator(".index-list a").count()).toBe(8);
+    expect(await page.locator("body").innerText()).not.toMatch(/\[[^\]\n]{3,}\]/);
   });
 
   test("role rows keep role, italic company and duration on the primary text line", async ({ page }) => {
-    await page.goto("/?seed=1&force=static#/columns");
+    await page.goto("/?seed=1&force=static#view-columns");
     const row = page.locator("#view-columns .dossier > button.role-row").first();
     await expect(row).toContainText("Chief Financial Officer, Goodman Group McDonald's, 3 yrs");
     await expect(row.locator("em")).toHaveText("Goodman Group McDonald's");
@@ -39,18 +47,12 @@ test.describe("content integrity", () => {
     await expect(page.locator("footer.site-foot")).toHaveText("");
   });
 
-  test("placeholder policy remains explicit until P6 real-content swap", async ({ page }) => {
-    await page.goto("/?seed=1&force=static");
-    const text = await page.locator("main").innerText();
-    expect(text).toContain("[");
-  });
-
-  test("no-JS: full content, all views stacked, static ground", async ({ browser }) => {
+  test("no-JS: semantic content remains available in original HTML", async ({ browser }) => {
     const ctx = await browser.newContext({ javaScriptEnabled: false });
     const page = await ctx.newPage();
     await page.goto("/");
     await expect(page.locator("h1")).toContainText("KAIS ABU-HUSSEIN");
-    for (const f of FACETS) await expect(page.locator(`#view-${f} .manifest li`).first()).toBeVisible();
+    for (const f of FACETS) await expect(page.locator(`#view-${f} h2`)).toBeVisible();
     await expect(page.locator("#view-record .record-list li").first()).toBeVisible();
     await expect(page.locator("body")).toHaveAttribute("data-tier", "0");
     await expect(page.locator("body")).toHaveAttribute("data-renderer", "static");
