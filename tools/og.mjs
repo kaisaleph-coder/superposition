@@ -43,7 +43,7 @@ for(let i=0;i<6500;i++){
   const q=Math.max(0,Math.min(1,(px-500)/700));
   let r=105+35*q,g=190-25*q,b=255-5*q;
   if(rnd()<.8){r*=.72;g*=.72;b*=.72}
-  x.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
+  x.fillStyle='rgb('+(r|0)+','+(g|0)+','+(b|0)+')';
   const rad=rnd()<.96?1:2;
   x.fillRect(px-rad,py-rad,rad*2+1,rad*2+1);
 }
