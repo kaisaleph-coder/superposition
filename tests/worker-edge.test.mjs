@@ -73,6 +73,7 @@ test("worker serves secured indexable assets on canonical apex", async () => {
   assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(response.headers.get("strict-transport-security"), "max-age=31536000; includeSubDomains");
 });
 
 test("worker adds noindex and security headers to preview assets and preview 404s", async () => {
@@ -91,6 +92,7 @@ test("worker adds noindex and security headers to preview assets and preview 404
   assert.equal(root.status, 200);
   assert.equal(root.headers.get("x-robots-tag"), "noindex");
   assert.equal(root.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(root.headers.get("strict-transport-security"), null);
 
   const missing = await worker.fetch(new Request(`https://${host}/missing`), env);
   assert.equal(missing.status, 404);
