@@ -1,0 +1,109 @@
+name: live-production-verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-live-production-verify-20260922]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify live production SEO surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://kaisabuhussein.com"
+
+          root_code="$(curl -sS -L --connect-timeout 8 --max-time 30 -o /tmp/home.html -D /tmp/home.headers -w '%{http_code}' "$BASE/")"
+          [[ "$root_code" == "200" ]]
+          if grep -Eiq '^x-robots-tag:[[:space:]]*noindex' /tmp/home.headers; then
+            echo "Production homepage must not be noindex"
+            exit 1
+          fi
+
+          grep -Fq '<title>Kais Abu-Hussein | Multidisciplinary Executive</title>' /tmp/home.html
+          grep -Fq 'rel="canonical" href="https://kaisabuhussein.com/"' /tmp/home.html
+          grep -Fq 'name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"' /tmp/home.html
+          grep -Fq 'property="og:site_name" content="Kais Abu-Hussein"' /tmp/home.html
+          grep -Fq 'property="og:url" content="https://kaisabuhussein.com/"' /tmp/home.html
+          grep -Fq 'property="og:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/home.html
+          grep -Fq 'name="twitter:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/home.html
+
+          resume_code="$(curl -sS -L --connect-timeout 8 --max-time 30 -o /tmp/resume.html -D /tmp/resume.headers -w '%{http_code}' "$BASE/resume/")"
+          [[ "$resume_code" == "200" ]]
+          if grep -Eiq '^x-robots-tag:[[:space:]]*noindex' /tmp/resume.headers; then
+            echo "Production resume must not be noindex"
+            exit 1
+          fi
+          grep -Fq '<title>Résumé | Kais Abu-Hussein</title>' /tmp/resume.html
+          grep -Fq 'rel="canonical" href="https://kaisabuhussein.com/resume/"' /tmp/resume.html
+          grep -Fq 'property="og:url" content="https://kaisabuhussein.com/resume/"' /tmp/resume.html
+          grep -Fq 'property="og:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/resume.html
+
+          python3 - <<'PY'
+          import json,re
+          PERSON="https://kaisabuhussein.com/#person"
+          WEBSITE="https://kaisabuhussein.com/#website"
+          for path in ("/tmp/home.html","/tmp/resume.html"):
+              text=open(path,encoding="utf-8").read()
+              m=re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',text,re.S)
+              assert m, path
+              obj=json.loads(m.group(1))
+              graph=obj["@graph"]
+              person=next(x for x in graph if x.get("@type")=="Person")
+              assert person["@id"]==PERSON
+              assert person["name"]=="Kais Abu-Hussein"
+              assert person["alternateName"]=="Kais Abu Hussein"
+              assert "sameAs" not in person
+              assert "image" not in person
+          home_text=open("/tmp/home.html",encoding="utf-8").read()
+          home=json.loads(re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',home_text,re.S).group(1))
+          website=next(x for x in home["@graph"] if x.get("@type")=="WebSite")
+          profile=next(x for x in home["@graph"] if x.get("@type")=="ProfilePage")
+          assert website["@id"]==WEBSITE
+          assert profile["mainEntity"]["@id"]==PERSON
+          assert profile["isPartOf"]["@id"]==WEBSITE
+          print("production_structured_data=PASS")
+          PY
+
+          image_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/og.png -D /tmp/og.headers -w '%{http_code}' "$BASE/assets/og.png")"
+          [[ "$image_code" == "200" ]]
+          grep -Eiq '^content-type:[[:space:]]*image/png' /tmp/og.headers
+          python3 - <<'PY'
+          import struct,hashlib
+          b=open("/tmp/og.png","rb").read()
+          assert b[:8]==b"\x89PNG\r\n\x1a\n"
+          assert struct.unpack(">II",b[16:24])==(1200,630)
+          h=hashlib.sha256(b).hexdigest()
+          print("production_og_sha256="+h)
+          assert h=="e269c9baa036ee3063cfd137b3701bc1113c77573cd78cc8fee9a95e3f260144"
+          PY
+
+          missing_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/missing.html -w '%{http_code}' "$BASE/seo-live-definitely-missing")"
+          [[ "$missing_code" == "404" ]]
+          grep -qi "No such state" /tmp/missing.html
+
+          robots_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/robots.txt -w '%{http_code}' "$BASE/robots.txt")"
+          [[ "$robots_code" == "200" ]]
+          grep -Fq 'Sitemap: https://kaisabuhussein.com/sitemap.xml' /tmp/robots.txt
+
+          sitemap_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/sitemap.xml -w '%{http_code}' "$BASE/sitemap.xml")"
+          [[ "$sitemap_code" == "200" ]]
+          grep -Fq '<loc>https://kaisabuhussein.com/</loc>' /tmp/sitemap.xml
+          grep -Fq '<loc>https://kaisabuhussein.com/resume/</loc>' /tmp/sitemap.xml
+
+          for input in             "https://kaisabuhussein.com/"             "http://kaisabuhussein.com/"             "https://www.kaisabuhussein.com/"             "http://www.kaisabuhussein.com/"; do
+            result="$(curl -sS -L --connect-timeout 8 --max-time 30 --max-redirs 6 -o /dev/null -w '%{url_effective}|%{http_code}' "$input")"
+            echo "$input -> $result"
+            [[ "$result" == "https://kaisabuhussein.com/|200" ]]
+          done
+
+          echo "root=$root_code"
+          echo "resume=$resume_code"
+          echo "og=$image_code"
+          echo "missing=$missing_code"
+          echo "robots=$robots_code"
+          echo "sitemap=$sitemap_code"
+          echo "Live production SEO surface: PASS"
