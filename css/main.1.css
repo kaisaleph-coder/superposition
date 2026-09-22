@@ -21,6 +21,11 @@
 .dossier>button{appearance:none;border:0;background:none;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto 20px;gap:18px;align-items:baseline;padding:15px 0;text-align:left;cursor:pointer;color:var(--ink)}
 .dossier>button span{font-size:14px;font-weight:650;letter-spacing:-.01em}
 .dossier>button small{font:7.5px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.dossier>button.role-row{grid-template-columns:minmax(0,1fr) 20px;align-items:baseline}
+.dossier>button.role-row .dossier-line{font-size:14px;font-weight:400;line-height:1.35;letter-spacing:-.01em;white-space:normal}
+.dossier>button.role-row .dossier-line b{font-weight:650}
+.dossier>button.role-row .dossier-line em{font-style:italic;font-weight:400;color:var(--ink)}
+.dossier>button.role-row .dossier-duration{font:inherit;font-weight:400;color:var(--muted);letter-spacing:inherit}
 .dossier>button i{font:18px/1 var(--mono);font-style:normal;color:var(--accent);transition:transform .2s ease}
 .dossier>button:focus-visible{outline:1px solid var(--accent);outline-offset:5px}
 .dossier[data-open] > button i{transform:rotate(45deg)}

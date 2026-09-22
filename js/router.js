@@ -1,6 +1,7 @@
-/* SUPERPOSITION state machine + hash router (PLAN §2.1, §2.5, §5.6).
-   All state is mirrored to <body data-*> — the DOM contract. Deep links:
-   #/columns … #/orbit, #/record; home is "" or #/. Back/forward = hashchange. */
+/* SUPERPOSITION state machine + same-document fragment router.
+   All state is mirrored to <body data-*> — the DOM contract. Professional-domain
+   views use real fragment targets (#view-columns … #view-orbit). The detailed
+   résumé is a standalone document at /resume/. Legacy #/facet links still resolve. */
 
 import { FACET_ORDER, FACET_META } from "./render-dom.js";
 
@@ -13,7 +14,11 @@ export function createRouter(doc, { onState } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const idFromHash = () => {
-    const h = (location.hash || "").replace(/^#\/?/, "");
+    const h = (location.hash || "").replace(/^#\/?/, "").replace(/^view-/, "");
+    if (h === "record") {
+      location.replace("/resume/");
+      return "home";
+    }
     return VIEWS.includes(h) ? h : "home";
   };
 
@@ -80,8 +85,12 @@ export function createRouter(doc, { onState } = {}) {
   }
 
   function go(id) {
+    if (id === "record") {
+      location.assign("/resume/");
+      return;
+    }
     if (!VIEWS.includes(id)) id = "home";
-    const target = id === "home" ? "#/" : `#/${id}`;
+    const target = `#view-${id}`;
     if (location.hash === target || (id === "home" && !location.hash)) apply(id);
     else location.hash = target;
   }
@@ -112,7 +121,7 @@ export function createRouter(doc, { onState } = {}) {
     if (tag === "INPUT" || tag === "TEXTAREA") return;
     if (e.key >= "1" && e.key <= String(FACET_ORDER.length)) go(FACET_ORDER[+e.key - 1]);
     else if (e.key === "Escape") go("home");
-    else if (e.key === "r") go("record");
+    else if (e.key === "r") location.assign("/resume/");
     else if (e.key === "p") { e.preventDefault(); window.print(); }
     else if (e.key === ".") onState && onState(current, { togglePause: true });
     else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {

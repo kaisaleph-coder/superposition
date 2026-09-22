@@ -23,8 +23,10 @@ const linksHTML=(links)=>links?.length?`<p class="dlinks">${links.map(l=>`<a hre
 
 function dossierHTML(facetId,d,i){
   const bid=`db-${facetId}-${i}`,rid=`d-${facetId}-${i}`;
+  const company=d.org?`, <em>${esc(d.org)}</em>`:'';
+  const duration=d.span?`, <span class="dossier-duration">${esc(d.span)}</span>`:'';
   return `<article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span>${esc(d.title)}</span><small>${esc(d.org)}${d.org&&d.span?' · ':''}${esc(d.span)}</small><i aria-hidden="true">+</i></button>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="${rid}" id="${bid}"><span class="dossier-line"><b>${esc(d.title)}</b>${company}${duration}</span><i aria-hidden="true">+</i></button>
 <div class="dossier-body" id="${rid}" role="region" aria-labelledby="${bid}">${(d.lines||[]).map(x=>`<p>${esc(x)}</p>`).join('')}${linksHTML(d.links)}${metricsHTML(d.metrics)}</div>
 </article>`;
 }
@@ -38,14 +40,11 @@ function skillDossierHTML(facetId,d,i){
 </article>`;
 }
 
-export function homeHTML(identity){return `<div class="home-kicker">MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS</div>
-<h1>${esc(identity.name)}</h1>
-<p class="positioning">${esc(identity.positioning)}</p>
-<div class="home-statement" aria-label="Superposition concept"><span>ONE FIELD</span><span>EIGHT LAWS</span><span>ONE IDENTITY</span></div>
-<p class="home-hint">Choose a domain below or open the index. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> résumé.</p>`}
+export function homeHTML(identity){return `<h1>${esc(identity.name)}</h1>
+<p class="positioning">${esc(identity.positioning)}</p>`}
 
-export function headerHTML(identity){return `<a class="brand" href="#/" aria-label="Home"><span class="brand-name">${esc(identity.name)}</span><span class="brand-system">SUPERPOSITION <b>2.0</b></span></a>
-<nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="#/record">Résumé</a><button type="button" data-ui="contact" aria-expanded="false" aria-controls="contactPanel">Contact</button><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>`}
+export function headerHTML(identity){return `<a class="brand" href="/" aria-label="Home"><span class="brand-name">${esc(identity.name)}</span></a>
+<nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="/resume/">Résumé</a><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>`}
 
 export function facetHTML(facet){
   const meta=FACET_META[facet.id]||{no:'--',label:facet.name};
@@ -56,11 +55,11 @@ export function facetHTML(facet){
 <div class="dossiers">${items.join('')}</div>`;
 }
 
-export function recordHTML(record){return `<div class="facet-kicker">FULL RECORD / PRINTABLE</div><h2>Full résumé</h2><p class="record-intro">[Complete professional record — real content swap pending.]</p><ol class="record-list">${(record.entries||[]).map(e=>`<li><time>${esc(e.span)}</time><div><b>${esc(e.line)}</b></div></li>`).join('')}</ol>`}
+export function recordHTML(record){const intro=record?.intro?`<p class="record-intro">${esc(record.intro)}</p>`:'';return `<div class="facet-kicker">SELECTED CAREER RECORD / PRINTABLE</div><h2>Résumé</h2>${intro}<ol class="record-list">${(record.entries||[]).map(e=>`<li><time>${esc(e.span)}</time><div><b>${esc(e.line)}</b></div></li>`).join('')}</ol>`}
 
-export function domainStripHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}"><span>${m.no}</span><b>${esc(m.short||f?.name||id)}</b></a>`}).join('')}
-export function indexHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#/${id}" data-facet="${id}" data-preview="${id}"><span>${m.no}</span><b>${esc(m.label||f?.name||id)}</b><i>${esc(m.law3)}</i></a>`}).join('')}
-export function footerHTML(){return `<span id="footerState">SUPERPOSITION</span><span>EIGHT DOMAINS / PROCEDURAL FIELD</span><span class="footer-shortcuts">1–8 / ESC / R / .</span>`}
+export function domainStripHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#view-${id}" data-facet="${id}"><span>${m.no}</span><b>${esc(m.short||f?.name||id)}</b></a>`}).join('')}
+export function indexHTML(data){return FACET_ORDER.map(id=>{const f=byId(data,id),m=FACET_META[id];return `<a href="#view-${id}" data-facet="${id}" data-preview="${id}"><span>${m.no}</span><b>${esc(m.label||f?.name||id)}</b><i>${esc(m.law3)}</i></a>`}).join('')}
+export function footerHTML(){return ``}
 
 export function renderAll(data,doc){
   doc.getElementById('view-home').innerHTML=homeHTML(data.identity);

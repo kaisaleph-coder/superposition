@@ -1,19 +1,56 @@
 #!/usr/bin/env node
-import { mkdirSync, rmSync, writeFileSync, readdirSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(join(fileURLToPath(import.meta.url), "..", ".."));
 const DIST = join(ROOT, ".staging-dist");
+const files = ["index.html", "404.html", "robots.txt", "sitemap.xml", "_headers"];
+const dirs = ["assets", "content", "css", "js", "vendor", "resume"];
+
+const sha256 = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
+
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
 
-const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>SUPERPOSITION staging anchor</title></head><body><p>Cloudflare staging anchor only. No application is deployed on this branch.</p></body></html>`;
-writeFileSync(join(DIST, "index.html"), html);
-writeFileSync(join(DIST, "404.html"), html);
+for (const file of files) {
+  cpSync(join(ROOT, file), join(DIST, file));
+}
+for (const dir of dirs) {
+  cpSync(join(ROOT, dir), join(DIST, dir), { recursive: true });
+}
 
-const entries = readdirSync(DIST).sort();
-if (entries.join(",") !== "404.html,index.html") throw new Error(`unexpected anchor payload: ${entries.join(",")}`);
-let bytes=0;
-for(const name of entries) bytes += statSync(join(DIST,name)).size;
-console.log(JSON.stringify({dist:".staging-dist",entries,bytes,inert:true},null,2));
+const walk = (dir) => {
+  const out = [];
+  for (const name of readdirSync(dir)) {
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) out.push(...walk(p));
+    else out.push(p);
+  }
+  return out;
+};
+
+const staged = walk(DIST).sort();
+let bytes = 0;
+for (const stagedPath of staged) {
+  const rel = relative(DIST, stagedPath).replaceAll("\\", "/");
+  const sourcePath = join(ROOT, rel);
+  const sourceHash = sha256(sourcePath);
+  const stagedHash = sha256(stagedPath);
+  if (sourceHash !== stagedHash) throw new Error(`staging copy mismatch: ${rel}`);
+  bytes += statSync(stagedPath).size;
+}
+
+const allowedTop = new Set([...files, ...dirs]);
+for (const entry of readdirSync(DIST)) {
+  if (!allowedTop.has(entry)) throw new Error(`unexpected staged entry: ${entry}`);
+}
+
+console.log(JSON.stringify({
+  dist: ".staging-dist",
+  fileCount: staged.length,
+  bytes,
+  allowedTop: [...allowedTop],
+  sourceParity: true
+}, null, 2));

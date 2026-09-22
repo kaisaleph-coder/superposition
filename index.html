@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>[NAME]</title>
-<meta name="description" content="[One-line positioning — 90 characters of exactly what this person is.]">
+<title>Kais Abu-Hussein | Multidisciplinary Executive</title>
+<meta name="description" content="Kais Abu-Hussein is a multidisciplinary executive with 15+ years of experience across finance, restaurants, construction, investing, entrepreneurship and consulting.">
 <meta name="color-scheme" content="dark light">
 <meta property="og:type" content="profile">
-<meta property="og:title" content="[NAME]">
-<meta property="og:description" content="[One-line positioning — 90 characters of exactly what this person is.]">
+<meta property="og:title" content="Kais Abu-Hussein">
+<meta property="og:description" content="Kais Abu-Hussein is a multidisciplinary executive with 15+ years of experience across finance, restaurants, construction, investing, entrepreneurship and consulting.">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://kaisabuhussein.com/">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <script>if(new URLSearchParams(location.search).get("local-font-fallback")==="1")document.documentElement.dataset.localFontFallback="1";</script>
 <style>
@@ -21,7 +22,7 @@
   color-scheme:dark;
   --ground:#090b10;--ground2:#10151d;--ink:#f2f4f6;--muted:#8f99a6;--rule:rgba(220,230,240,.18);
   --accent:#86d6ff;--accent2:#b59cff;--panel:rgba(7,9,13,.76);
-  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:38px;--strip-h:82px;
+  --gutter:clamp(18px,2.7vw,46px);--header-h:72px;--footer-h:0px;--strip-h:82px;
   --display:"Archivo VF",Arial,Helvetica,sans-serif;--mono:"Fragment Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 :root[data-local-font-fallback="1"]{--display:system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace}
@@ -94,6 +95,11 @@ main#content{position:relative;z-index:8;min-height:100vh;padding:calc(var(--hea
 .dossier>button{appearance:none;border:0;background:none;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto 20px;gap:18px;align-items:baseline;padding:15px 0;text-align:left;cursor:pointer;color:var(--ink)}
 .dossier>button span{font-size:14px;font-weight:650;letter-spacing:-.01em}
 .dossier>button small{font:7.5px var(--mono);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.dossier>button.role-row{grid-template-columns:minmax(0,1fr) 20px;align-items:baseline}
+.dossier>button.role-row .dossier-line{font-size:14px;font-weight:400;line-height:1.35;letter-spacing:-.01em;white-space:normal}
+.dossier>button.role-row .dossier-line b{font-weight:650}
+.dossier>button.role-row .dossier-line em{font-style:italic;font-weight:400;color:var(--ink)}
+.dossier>button.role-row .dossier-duration{font:inherit;font-weight:400;color:var(--muted);letter-spacing:inherit}
 .dossier>button i{font:18px/1 var(--mono);font-style:normal;color:var(--accent);transition:transform .2s ease}
 .dossier>button:focus-visible{outline:1px solid var(--accent);outline-offset:5px}
 .dossier[data-open] > button i{transform:rotate(45deg)}
@@ -147,7 +153,7 @@ body[data-state="dossier"] #field{filter:saturate(.9) brightness(.82)}
   .domain-strip a b{font-size:8.5px}.index-list{column-gap:30px}.index-list a i{display:none}
 }
 @media(max-width:720px){
-  :root{--gutter:18px;--header-h:58px;--footer-h:30px;--strip-h:62px}
+  :root{--gutter:18px;--header-h:58px;--footer-h:0px;--strip-h:62px}
   #atmosphere{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 98%,transparent) 0 29%,color-mix(in srgb,var(--ground) 61%,transparent) 47%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--ground) 90%,transparent) 0 18%,transparent 75%)}
   #legibility{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 99%,transparent) 0 35%,color-mix(in srgb,var(--ground) 82%,transparent) 51%,transparent 73%)}
   .site-head{left:18px;right:18px}.brand-system{display:none}.utilities{gap:12px}.utilities button,.utilities a{font-size:7px}.utilities [data-ui="contact"]{display:none}
@@ -189,6 +195,10 @@ body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[da
   #view-record,#view-record[hidden]{display:block!important;opacity:1!important;transform:none!important}
   #view-record .record-list li{display:grid!important}
 }
+
+
+/* RC2 minimal chrome: footer/status/shortcut surface intentionally removed. */
+.site-foot{display:none!important}
 /*BAKE:css END*/
 </style>
 <link rel="stylesheet" href="css/print.css" media="print">
@@ -216,8 +226,8 @@ main#content{height:auto!important;overflow:visible!important;padding:20px var(-
 
 <header class="site-head">
 <!--BAKE:header BEGIN-->
-<a class="brand" href="#/" aria-label="Home"><span class="brand-name">[NAME]</span><span class="brand-system">SUPERPOSITION <b>2.0</b></span></a>
-<nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="#/record">Résumé</a><button type="button" data-ui="contact" aria-expanded="false" aria-controls="contactPanel">Contact</button><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>
+<a class="brand" href="/" aria-label="Home"><span class="brand-name">KAIS ABU-HUSSEIN</span></a>
+<nav class="utilities" aria-label="Utilities"><button type="button" data-ui="index" aria-expanded="false" aria-controls="indexOverlay">Index</button><a href="/resume/">Résumé</a><button type="button" data-ui="system" aria-expanded="false" aria-controls="systemPanel">System</button></nav>
 <!--BAKE:header END-->
 </header>
 
@@ -226,116 +236,124 @@ main#content{height:auto!important;overflow:visible!important;padding:20px var(-
 <main id="content">
 <section class="view home-view" id="view-home" data-view="home">
 <!--BAKE:view-home BEGIN-->
-<div class="home-kicker">MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS</div>
-<h1>[NAME]</h1>
-<p class="positioning">[One-line positioning — 90 characters of exactly what this person is.]</p>
-<div class="home-statement" aria-label="Superposition concept"><span>ONE FIELD</span><span>EIGHT LAWS</span><span>ONE IDENTITY</span></div>
-<p class="home-hint">Choose a domain below or open the index. Keys <b>1–8</b> · <b>Esc</b> home · <b>r</b> résumé.</p>
+<h1>KAIS ABU-HUSSEIN</h1>
+<p class="positioning">Multidisciplinary executive. 15+ years experience. CFO, restaurant/construction executive, investor/trader/FO principal, entrepreneur and consultant, systems hobbyist, music/gaming/outdoors/fitness/philosophy/cosmology enthusiast.</p>
 <!--BAKE:view-home END-->
 </section>
 <section class="view facet-view" id="view-columns" data-view="facet">
 <!--BAKE:view-columns BEGIN-->
 <div class="facet-kicker">01 / FINANCIAL EXECUTIVE</div>
 <h2>Financial executive</h2>
-<ol class="manifest"><li>[Positioning line — the executive claim]</li><li>[Scope line — scale, entities, mandate]</li><li>[Signature outcome line]</li></ol>
+<ol class="manifest"><li>Since 2014. CFO, principal investor and trader, consultant.</li><li>Managed in excess of $0.5B in revenue. Founded a family office.</li><li>Avid student of markets.</li></ol>
 <div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-columns-0" id="db-columns-0"><span>[Role]</span><small>[ORG] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-columns-0" role="region" aria-labelledby="db-columns-0"><p>[Dense line — metric-led accomplishment, numbers first.]</p><p>[Dense line — second proof point.]</p><div class="metrics"><span>[scope] <b>[00 units]</b></span><span>[Δ] <b>[+00.0%]</b></span></div></div>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-columns-0" id="db-columns-0"><span class="dossier-line"><b>Chief Financial Officer</b>, <em>Goodman Group McDonald's</em>, <span class="dossier-duration">3 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-columns-0" role="region" aria-labelledby="db-columns-0"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-columns-1" id="db-columns-1"><span class="dossier-line"><b>Principal</b>, <em>Aleph Family Office</em>, <span class="dossier-duration">12 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-columns-1" role="region" aria-labelledby="db-columns-1"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-columns-2" id="db-columns-2"><span class="dossier-line"><b>Principal</b>, <em>Aleph Advisory</em>, <span class="dossier-duration">8 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-columns-2" role="region" aria-labelledby="db-columns-2"></div>
 </article></div>
 <!--BAKE:view-columns END-->
 </section>
 <section class="view facet-view" id="view-tables" data-view="facet"><!--BAKE:view-tables BEGIN-->
 <div class="facet-kicker">02 / RESTAURANT EXECUTIVE</div>
 <h2>Restaurant executive</h2>
-<ol class="manifest"><li>[Positioning line — the hospitality claim]</li><li>[Scope line — venues, covers, concepts]</li><li>[Standard line — service, margin, repeat rate]</li></ol>
+<ol class="manifest"><li>Since 2010. CFO, operator, manager, consultant, captain, bartender, server, runner.</li><li>McDonald's to fine dining, and everything between.</li><li>Consulted for the late David Bouley, Major Food Group, Nobu Group, Union Square Hospitality Group, among others.</li></ol>
 <div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-tables-0" id="db-tables-0"><span>[Venue or group]</span><small>[ORG] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-tables-0" role="region" aria-labelledby="db-tables-0"><p>[Dense line — covers, revenue, margin, ratings.]</p><div class="metrics"><span>[venues] <b>[00]</b></span><span>[covers/yr] <b>[000k]</b></span></div></div>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-tables-0" id="db-tables-0"><span class="dossier-line"><b>Chief Financial Officer</b>, <em>Goodman Group McDonald's</em>, <span class="dossier-duration">3 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-tables-0" role="region" aria-labelledby="db-tables-0"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-tables-1" id="db-tables-1"><span class="dossier-line"><b>Principal</b>, <em>Aleph Advisory</em>, <span class="dossier-duration">8 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-tables-1" role="region" aria-labelledby="db-tables-1"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-tables-2" id="db-tables-2"><span class="dossier-line"><b>Founding General Manager</b>, <em>69 Leonard St</em>, <span class="dossier-duration">2 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-tables-2" role="region" aria-labelledby="db-tables-2"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-tables-3" id="db-tables-3"><span class="dossier-line"><b>Founding General Manager</b>, <em>Ichimura</em>, <span class="dossier-duration">1 yr</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-tables-3" role="region" aria-labelledby="db-tables-3"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-tables-4" id="db-tables-4"><span class="dossier-line"><b>General Manager, Captain</b>, <em>David Bouley's Brushstroke</em>, <span class="dossier-duration">2 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-tables-4" role="region" aria-labelledby="db-tables-4"></div>
 </article></div>
 <!--BAKE:view-tables END--></section>
 <section class="view facet-view" id="view-frame" data-view="facet"><!--BAKE:view-frame BEGIN-->
 <div class="facet-kicker">03 / CONSTRUCTION EXECUTIVE</div>
 <h2>Construction executive</h2>
-<ol class="manifest"><li>[Positioning line — the build claim]</li><li>[Scope line — sites, capex, trades]</li><li>[Delivery line — on-time, on-budget proof]</li></ol>
+<ol class="manifest"><li>Since 2010. Construction management, owner representation, heavy-commercial construction, heavy-commercial carpentry, general construction.</li><li>Mixed-use, commercial, residential. Tri-state area.</li><li>400+ projects delivered. $600m in assets managed.</li></ol>
 <div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-frame-0" id="db-frame-0"><span>[Program]</span><small>[ORG] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-frame-0" role="region" aria-labelledby="db-frame-0"><p>[Dense line — sites delivered, capex managed, schedule performance.]</p><div class="metrics"><span>[sites] <b>[00]</b></span><span>[capex] <b>[$00M]</b></span></div></div>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-frame-0" id="db-frame-0"><span class="dossier-line"><b>Chief Financial Officer</b>, <em>Goodman Group McDonald's</em>, <span class="dossier-duration">3 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-frame-0" role="region" aria-labelledby="db-frame-0"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-frame-1" id="db-frame-1"><span class="dossier-line"><b>Principal</b>, <em>Aleph Advisory</em>, <span class="dossier-duration">8 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-frame-1" role="region" aria-labelledby="db-frame-1"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-frame-2" id="db-frame-2"><span class="dossier-line"><b>Project Executive, Project Manager</b>, <em>Sevan</em>, <span class="dossier-duration">2 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-frame-2" role="region" aria-labelledby="db-frame-2"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-frame-3" id="db-frame-3"><span class="dossier-line"><b>Division Manager</b>, <em>TopBuild/TruTeam</em>, <span class="dossier-duration">3 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-frame-3" role="region" aria-labelledby="db-frame-3"></div>
+</article><article class="dossier">
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-frame-4" id="db-frame-4"><span class="dossier-line"><b>Project Executive</b>, <em>Palm Construction</em>, <span class="dossier-duration">4 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-frame-4" role="region" aria-labelledby="db-frame-4"></div>
 </article></div>
 <!--BAKE:view-frame END--></section>
 <section class="view facet-view" id="view-surface" data-view="facet"><!--BAKE:view-surface BEGIN-->
 <div class="facet-kicker">04 / INVESTOR &AMP; TRADER</div>
 <h2>Investor &amp; trader</h2>
-<ol class="manifest"><li>[Positioning line — the market claim]</li><li>[Method line — instruments, horizon, edge]</li><li>[Discipline line — risk stance]</li></ol>
+<ol class="manifest"><li>Since 2011. Investing in equities, credit, commodities, derivatives and cryptocurrencies.</li><li>Notable holdings include NVDA, AMD, INTC, SOX, AAPL, TSLA, GOOG, BTC, GC.</li><li>Trading in SPX/SOX-related securities, using discretionary and systematic strategies.</li></ol>
 <div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-surface-0" id="db-surface-0"><span>[Research program]</span><small>[PERSONAL] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-surface-0" role="region" aria-labelledby="db-surface-0"><p>[Dense line — thesis, instrument, measured result.]</p><div class="metrics"><span>[horizon] <b>[EOD]</b></span></div></div>
+<button class="role-row" type="button" aria-expanded="false" aria-controls="d-surface-0" id="db-surface-0"><span class="dossier-line"><b>Principal</b>, <em>Aleph Family Office</em>, <span class="dossier-duration">12 yrs</span></span><i aria-hidden="true">+</i></button>
+<div class="dossier-body" id="d-surface-0" role="region" aria-labelledby="db-surface-0"></div>
 </article></div>
 <!--BAKE:view-surface END--></section>
 <section class="view facet-view" id="view-vector" data-view="facet"><!--BAKE:view-vector BEGIN-->
 <div class="facet-kicker">05 / ENTREPRENEUR</div>
 <h2>Entrepreneur</h2>
-<ol class="manifest"><li>[Positioning line — the zero-to-one claim]</li><li>[Trajectory line — scattered starts, one direction]</li></ol>
-<div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-vector-0" id="db-vector-0"><span>[Venture or initiative]</span><small>[FOUNDER] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-vector-0" role="region" aria-labelledby="db-vector-0"><p>[Dense line — what was built from nothing and what it did.]</p><div class="metrics"><span>[from] <b>[0]</b></span><span>[to] <b>[1]</b></span></div></div>
-</article></div>
+<ol class="manifest"></ol>
+<div class="dossiers"></div>
 <!--BAKE:view-vector END--></section>
 <section class="view facet-view" id="view-lattice" data-view="facet"><!--BAKE:view-lattice BEGIN-->
 <div class="facet-kicker">06 / AI &AMP; COMPUTER ENGINEERING</div>
 <h2>AI &amp; computer engineering</h2>
-<ol class="manifest"><li>[Positioning line — the builder claim]</li><li>[Systems line — what gets built, how]</li><li>[Depth line — the hard part]</li></ol>
-<div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-lattice-0" id="db-lattice-0"><span>[System or project]</span><small>[SOLO BUILD] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-lattice-0" role="region" aria-labelledby="db-lattice-0"><p>[Dense line — architecture, constraint, result.]</p><div class="metrics"><span>[status] <b>[shipped]</b></span></div></div>
-</article></div>
+<ol class="manifest"></ol>
+<div class="dossiers"></div>
 <!--BAKE:view-lattice END--></section>
 <section class="view facet-view skills-view" id="view-clusters" data-view="facet"><!--BAKE:view-clusters BEGIN-->
 <div class="facet-kicker">07 / SKILLS</div>
 <h2>Skills</h2>
-<ol class="manifest"><li>[Positioning line — the range claim]</li><li>[Depth line — where mastery concentrates]</li></ol>
-<div class="dossiers"><article class="dossier" data-domain="0">
-<button type="button" aria-expanded="false" aria-controls="d-clusters-0" id="db-clusters-0"><span>[Domain A]</span><small>7 skills</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-clusters-0" role="region" aria-labelledby="db-clusters-0"><p class="skillrun"><b>[Core skill]</b>, <b>[Core skill]</b>, [Working skill], [Working skill], [Working skill], <em>[Familiar]</em>, <em>[Familiar]</em></p><div class="metrics"><span>related <b>[Domain B]</b></span></div></div>
-</article><article class="dossier" data-domain="1">
-<button type="button" aria-expanded="false" aria-controls="d-clusters-1" id="db-clusters-1"><span>[Domain B]</span><small>6 skills</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-clusters-1" role="region" aria-labelledby="db-clusters-1"><p class="skillrun"><b>[Core skill]</b>, [Working skill], [Working skill], <em>[Familiar]</em>, <em>[Familiar]</em>, <em>[Familiar]</em></p><div class="metrics"><span>related <b>[Domain A]</b></span></div></div>
-</article></div>
+<ol class="manifest"></ol>
+<div class="dossiers"></div>
 <!--BAKE:view-clusters END--></section>
 <section class="view facet-view" id="view-orbit" data-view="facet"><!--BAKE:view-orbit BEGIN-->
 <div class="facet-kicker">08 / HOBBIES</div>
 <h2>Hobbies</h2>
-<ol class="manifest"><li>[Positioning line — the curiosity claim]</li><li>[Orbit line — the recurring obsessions]</li></ol>
-<div class="dossiers"><article class="dossier">
-<button type="button" aria-expanded="false" aria-controls="d-orbit-0" id="db-orbit-0"><span>[Pursuit]</span><small>[ONGOING] · [SPAN]</small><i aria-hidden="true">+</i></button>
-<div class="dossier-body" id="d-orbit-0" role="region" aria-labelledby="db-orbit-0"><p>[Dense line — depth achieved for its own sake.]</p><div class="metrics"><span>[why] <b>[joy]</b></span></div></div>
-</article></div>
+<ol class="manifest"></ol>
+<div class="dossiers"></div>
 <!--BAKE:view-orbit END--></section>
 <section class="view record-view" id="view-record" data-view="record"><!--BAKE:view-record BEGIN-->
-<div class="facet-kicker">FULL RECORD / PRINTABLE</div><h2>Full résumé</h2><p class="record-intro">[Complete professional record — real content swap pending.]</p><ol class="record-list"><li><time>[SPAN]</time><div><b>[Chronological record line.]</b></div></li></ol>
+<div class="facet-kicker">SELECTED CAREER RECORD / PRINTABLE</div><h2>Résumé</h2><ol class="record-list"><li><time>3 yrs</time><div><b>Chief Financial Officer, Goodman Group McDonald's</b></div></li><li><time>12 yrs</time><div><b>Principal, Aleph Family Office</b></div></li><li><time>8 yrs</time><div><b>Principal, Aleph Advisory</b></div></li><li><time>2 yrs</time><div><b>Founding General Manager, 69 Leonard St</b></div></li><li><time>1 yr</time><div><b>Founding General Manager, Ichimura</b></div></li><li><time>2 yrs</time><div><b>General Manager, Captain, David Bouley's Brushstroke</b></div></li><li><time>2 yrs</time><div><b>Project Executive, Project Manager, Sevan</b></div></li><li><time>3 yrs</time><div><b>Division Manager, TopBuild/TruTeam</b></div></li><li><time>4 yrs</time><div><b>Project Executive, Palm Construction</b></div></li></ol>
 <!--BAKE:view-record END--></section>
 </main>
 
 <nav class="domain-strip" aria-label="Professional domains">
 <!--BAKE:domain-strip BEGIN-->
-<a href="#/columns" data-facet="columns"><span>01</span><b>Finance</b></a><a href="#/tables" data-facet="tables"><span>02</span><b>Restaurant</b></a><a href="#/frame" data-facet="frame"><span>03</span><b>Construction</b></a><a href="#/surface" data-facet="surface"><span>04</span><b>Investor</b></a><a href="#/vector" data-facet="vector"><span>05</span><b>Entrepreneur</b></a><a href="#/lattice" data-facet="lattice"><span>06</span><b>AI / Engineering</b></a><a href="#/clusters" data-facet="clusters"><span>07</span><b>Skills</b></a><a href="#/orbit" data-facet="orbit"><span>08</span><b>Hobbies</b></a>
+<a href="#view-columns" data-facet="columns"><span>01</span><b>Finance</b></a><a href="#view-tables" data-facet="tables"><span>02</span><b>Restaurant</b></a><a href="#view-frame" data-facet="frame"><span>03</span><b>Construction</b></a><a href="#view-surface" data-facet="surface"><span>04</span><b>Investor</b></a><a href="#view-vector" data-facet="vector"><span>05</span><b>Entrepreneur</b></a><a href="#view-lattice" data-facet="lattice"><span>06</span><b>AI / Engineering</b></a><a href="#view-clusters" data-facet="clusters"><span>07</span><b>Skills</b></a><a href="#view-orbit" data-facet="orbit"><span>08</span><b>Hobbies</b></a>
 <!--BAKE:domain-strip END-->
 </nav>
 
 <footer class="site-foot">
 <!--BAKE:footer BEGIN-->
-<span id="footerState">SUPERPOSITION</span><span>EIGHT DOMAINS / PROCEDURAL FIELD</span><span class="footer-shortcuts">1–8 / ESC / R / .</span>
+
 <!--BAKE:footer END-->
 </footer>
 
 <section id="indexOverlay" class="index-overlay" aria-label="Index" aria-hidden="true" inert>
 <div class="index-head"><span>INDEX / EIGHT DOMAINS</span><button type="button" data-ui-close="index">Close</button></div>
 <div class="index-list"><!--BAKE:index BEGIN-->
-<a href="#/columns" data-facet="columns" data-preview="columns"><span>01</span><b>Financial executive</b><i>ALLOCATION / CONSTRAINT / EQUILIBRIUM</i></a><a href="#/tables" data-facet="tables" data-preview="tables"><span>02</span><b>Restaurant executive</b><i>CAPACITY / FLOW / RHYTHM</i></a><a href="#/frame" data-facet="frame" data-preview="frame"><span>03</span><b>Construction executive</b><i>ASSEMBLY / LOAD / TOPOLOGY</i></a><a href="#/surface" data-facet="surface" data-preview="surface"><span>04</span><b>Investor &amp; trader</b><i>UNCERTAINTY / HORIZON / OPTIONALITY</i></a><a href="#/vector" data-facet="vector" data-preview="vector"><span>05</span><b>Entrepreneur</b><i>BRANCH / RECOMBINE / EMERGE</i></a><a href="#/lattice" data-facet="lattice" data-preview="lattice"><span>06</span><b>AI &amp; computer engineering</b><i>SIGNAL / RECURSION / COMPUTATION</i></a><a href="#/clusters" data-facet="clusters" data-preview="clusters"><span>07</span><b>Skills</b><i>CLUSTER / VECTOR / BRIDGE</i></a><a href="#/orbit" data-facet="orbit" data-preview="orbit"><span>08</span><b>Hobbies</b><i>EXPLORE / ORBIT / TERRAIN</i></a>
+<a href="#view-columns" data-facet="columns" data-preview="columns"><span>01</span><b>Financial executive</b><i>ALLOCATION / CONSTRAINT / EQUILIBRIUM</i></a><a href="#view-tables" data-facet="tables" data-preview="tables"><span>02</span><b>Restaurant executive</b><i>CAPACITY / FLOW / RHYTHM</i></a><a href="#view-frame" data-facet="frame" data-preview="frame"><span>03</span><b>Construction executive</b><i>ASSEMBLY / LOAD / TOPOLOGY</i></a><a href="#view-surface" data-facet="surface" data-preview="surface"><span>04</span><b>Investor &amp; trader</b><i>UNCERTAINTY / HORIZON / OPTIONALITY</i></a><a href="#view-vector" data-facet="vector" data-preview="vector"><span>05</span><b>Entrepreneur</b><i>BRANCH / RECOMBINE / EMERGE</i></a><a href="#view-lattice" data-facet="lattice" data-preview="lattice"><span>06</span><b>AI &amp; computer engineering</b><i>SIGNAL / RECURSION / COMPUTATION</i></a><a href="#view-clusters" data-facet="clusters" data-preview="clusters"><span>07</span><b>Skills</b><i>CLUSTER / VECTOR / BRIDGE</i></a><a href="#view-orbit" data-facet="orbit" data-preview="orbit"><span>08</span><b>Hobbies</b><i>EXPLORE / ORBIT / TERRAIN</i></a>
 <!--BAKE:index END--></div>
-</section>
-
-<section id="contactPanel" class="contact-panel" aria-label="Contact" aria-hidden="true" inert>
-<button type="button" data-ui-close="contact">Close</button><span class="panel-label">CONTACT</span><p>[CONTACT DETAILS — PENDING REAL DATA]</p>
 </section>
 
 <section id="systemPanel" class="system-panel" aria-label="System" aria-hidden="true" inert>

@@ -5,7 +5,7 @@ const FACETS = ["columns","tables","frame","surface","vector","lattice","cluster
 const body = (page) => page.locator("body");
 
 test.describe("state machine", () => {
-  test("keys 1–8 drive owner-facing domain order; Esc returns; r opens record", async ({ page }) => {
+  test("keys 1–8 drive owner-facing domain order; Esc returns; r opens standalone resume", async ({ page }) => {
     await page.goto("/?seed=1&force=static");
     for (let i = 0; i < 8; i++) {
       await page.keyboard.press(String(i + 1));
@@ -16,9 +16,7 @@ test.describe("state machine", () => {
     await page.keyboard.press("Escape");
     await expect(body(page)).toHaveAttribute("data-state", "superposition");
     await page.keyboard.press("r");
-    await expect(body(page)).toHaveAttribute("data-state", "record");
-    await page.keyboard.press("Escape");
-    await expect(body(page)).toHaveAttribute("data-state", "superposition");
+    await expect(page).toHaveURL(/\/resume\/$/);
   });
 
   test("arrow keys cycle owner-facing order, wrapping", async ({ page }) => {
@@ -32,18 +30,18 @@ test.describe("state machine", () => {
   });
 
   test("deep link restores state; back/forward work", async ({ page }) => {
-    await page.goto("/?force=static#/lattice");
+    await page.goto("/?force=static#view-lattice");
     await expect(body(page)).toHaveAttribute("data-facet", "lattice");
-    await page.goto("/?force=static#/record");
-    await expect(body(page)).toHaveAttribute("data-state", "record");
+    await page.locator('.domain-strip a[data-facet="tables"]').click();
+    await expect(body(page)).toHaveAttribute("data-facet", "tables");
     await page.goBack();
     await expect(body(page)).toHaveAttribute("data-facet", "lattice");
     await page.goForward();
-    await expect(body(page)).toHaveAttribute("data-state", "record");
+    await expect(body(page)).toHaveAttribute("data-facet", "tables");
   });
 
   test("dossier open mirrors data-state and aria-expanded", async ({ page }) => {
-    await page.goto("/?force=static#/columns");
+    await page.goto("/?force=static#view-columns");
     const btn = page.locator("#view-columns .dossier > button").first();
     await btn.click();
     await expect(body(page)).toHaveAttribute("data-state", "dossier");
@@ -77,7 +75,7 @@ test.describe("state machine", () => {
   });
 
   test("unknown hash falls back to home", async ({ page }) => {
-    await page.goto("/?force=static#/nonsense");
+    await page.goto("/?force=static#nonsense");
     await expect(body(page)).toHaveAttribute("data-state", "superposition");
   });
 });

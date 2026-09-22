@@ -1,0 +1,46 @@
+name: production-candidate-edge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [prod-p0-20260922]
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify production candidate preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREVIEW="https://prod-p0-20260922-superposition-rc1-staging.kais-aleph.workers.dev"
+
+          ready=0
+          for i in $(seq 1 30); do
+            code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/root.html -D /tmp/root.headers -w '%{http_code}' "$PREVIEW/" || true)"
+            if [[ "$code" == "200" ]] && grep -qi "Kais Abu-Hussein" /tmp/root.html; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          [[ "$ready" == "1" ]] || { echo "Candidate preview never became ready"; cat /tmp/root.headers || true; exit 1; }
+
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/root.headers
+          grep -qi 'rel="canonical" href="https://kaisabuhussein.com/"' /tmp/root.html
+
+          resume_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/resume.html -D /tmp/resume.headers -w '%{http_code}' "$PREVIEW/resume/")"
+          [[ "$resume_code" == "200" ]]
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/resume.headers
+          grep -qi 'rel="canonical" href="https://kaisabuhussein.com/resume/"' /tmp/resume.html
+
+          missing_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/missing.html -D /tmp/missing.headers -w '%{http_code}' "$PREVIEW/seo-prod-candidate-definitely-missing")"
+          [[ "$missing_code" == "404" ]]
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/missing.headers
+          grep -qi "No such state" /tmp/missing.html
+
+          echo "candidate_root=$code"
+          echo "candidate_resume=$resume_code"
+          echo "candidate_missing=$missing_code"
+          echo "Production candidate preview: PASS"

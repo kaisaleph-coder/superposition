@@ -1,100 +1,72 @@
 /* SUPERPOSITION content — single source of truth (PLAN §4.2)
-   PLACEHOLDER BUILD: every bracketed [FIELD] is owner-replaceable data.
-   QA greps rendered DOM for "[" — placeholders can never ship silently.
-   Owner instruction (v1.2): links arrays stay EMPTY — no public links. */
+   Production rule: public surfaces contain approved factual copy only; unfinished
+   fields remain empty and are omitted rather than rendered as placeholders.
+   Owner instruction: public links remain empty until explicitly supplied. */
 window.__RESUME__ = {
   identity: {
-    name: "[NAME]",
-    positioning: "[One-line positioning — 90 characters of exactly what this person is.]",
-    location: "[LOCATION — owner-chosen granularity]",
+    name: "KAIS ABU-HUSSEIN",
+    positioning: "Multidisciplinary executive. 15+ years experience. CFO, restaurant/construction executive, investor/trader/FO principal, entrepreneur and consultant, systems hobbyist, music/gaming/outdoors/fitness/philosophy/cosmology enthusiast.",
+    location: "",
     links: []
   },
   facets: [
     { id: "columns", name: "Finance executive", attractor: "COLUMNS",
-      manifest: ["[Positioning line — the executive claim]",
-                 "[Scope line — scale, entities, mandate]",
-                 "[Signature outcome line]"],
+      manifest: ["Since 2014. CFO, principal investor and trader, consultant.",
+                 "Managed in excess of $0.5B in revenue. Founded a family office.",
+                 "Avid student of markets."],
       dossiers: [
-        { title: "[Role]", org: "[ORG]", span: "[SPAN]",
-          lines: ["[Dense line — metric-led accomplishment, numbers first.]",
-                  "[Dense line — second proof point.]"],
-          metrics: [ { k: "[scope]", v: "[00 units]" }, { k: "[Δ]", v: "[+00.0%]" } ],
-          links: [] } ] },
+        { title: "Chief Financial Officer", org: "Goodman Group McDonald's", span: "3 yrs", lines: [], metrics: [], links: [] },
+        { title: "Principal", org: "Aleph Family Office", span: "12 yrs", lines: [], metrics: [], links: [] },
+        { title: "Principal", org: "Aleph Advisory", span: "8 yrs", lines: [], metrics: [], links: [] } ] },
 
     { id: "frame", name: "Construction executive", attractor: "FRAME",
-      manifest: ["[Positioning line — the build claim]",
-                 "[Scope line — sites, capex, trades]",
-                 "[Delivery line — on-time, on-budget proof]"],
+      manifest: ["Since 2010. Construction management, owner representation, heavy-commercial construction, heavy-commercial carpentry, general construction.",
+                 "Mixed-use, commercial, residential. Tri-state area.",
+                 "400+ projects delivered. $600m in assets managed."],
       dossiers: [
-        { title: "[Program]", org: "[ORG]", span: "[SPAN]",
-          lines: ["[Dense line — sites delivered, capex managed, schedule performance.]"],
-          metrics: [ { k: "[sites]", v: "[00]" }, { k: "[capex]", v: "[$00M]" } ],
-          links: [] } ] },
+        { title: "Chief Financial Officer", org: "Goodman Group McDonald's", span: "3 yrs", lines: [], metrics: [], links: [] },
+        { title: "Principal", org: "Aleph Advisory", span: "8 yrs", lines: [], metrics: [], links: [] },
+        { title: "Project Executive, Project Manager", org: "Sevan", span: "2 yrs", lines: [], metrics: [], links: [] },
+        { title: "Division Manager", org: "TopBuild/TruTeam", span: "3 yrs", lines: [], metrics: [], links: [] },
+        { title: "Project Executive", org: "Palm Construction", span: "4 yrs", lines: [], metrics: [], links: [] } ] },
 
     { id: "tables", name: "Restaurant executive", attractor: "TABLES",
-      manifest: ["[Positioning line — the hospitality claim]",
-                 "[Scope line — venues, covers, concepts]",
-                 "[Standard line — service, margin, repeat rate]"],
+      manifest: ["Since 2010. CFO, operator, manager, consultant, captain, bartender, server, runner.",
+                 "McDonald's to fine dining, and everything between.",
+                 "Consulted for the late David Bouley, Major Food Group, Nobu Group, Union Square Hospitality Group, among others."],
       dossiers: [
-        { title: "[Venue or group]", org: "[ORG]", span: "[SPAN]",
-          lines: ["[Dense line — covers, revenue, margin, ratings.]"],
-          metrics: [ { k: "[venues]", v: "[00]" }, { k: "[covers/yr]", v: "[000k]" } ],
-          links: [] } ] },
+        { title: "Chief Financial Officer", org: "Goodman Group McDonald's", span: "3 yrs", lines: [], metrics: [], links: [] },
+        { title: "Principal", org: "Aleph Advisory", span: "8 yrs", lines: [], metrics: [], links: [] },
+        { title: "Founding General Manager", org: "69 Leonard St", span: "2 yrs", lines: [], metrics: [], links: [] },
+        { title: "Founding General Manager", org: "Ichimura", span: "1 yr", lines: [], metrics: [], links: [] },
+        { title: "General Manager, Captain", org: "David Bouley's Brushstroke", span: "2 yrs", lines: [], metrics: [], links: [] } ] },
 
-    { id: "lattice", name: "AI / technical", attractor: "LATTICE",
-      manifest: ["[Positioning line — the builder claim]",
-                 "[Systems line — what gets built, how]",
-                 "[Depth line — the hard part]"],
-      dossiers: [
-        { title: "[System or project]", org: "[SOLO BUILD]", span: "[SPAN]",
-          lines: ["[Dense line — architecture, constraint, result.]"],
-          metrics: [ { k: "[status]", v: "[shipped]" } ],
-          links: [] } ] },
+    { id: "lattice", name: "AI / technical", attractor: "LATTICE", manifest: [], dossiers: [] },
 
     { id: "surface", name: "Investing / trading", attractor: "SURFACE",
-      manifest: ["[Positioning line — the market claim]",
-                 "[Method line — instruments, horizon, edge]",
-                 "[Discipline line — risk stance]"],
+      manifest: ["Since 2011. Investing in equities, credit, commodities, derivatives and cryptocurrencies.",
+                 "Notable holdings include NVDA, AMD, INTC, SOX, AAPL, TSLA, GOOG, BTC, GC.",
+                 "Trading in SPX/SOX-related securities, using discretionary and systematic strategies."],
       dossiers: [
-        { title: "[Research program]", org: "[PERSONAL]", span: "[SPAN]",
-          lines: ["[Dense line — thesis, instrument, measured result.]"],
-          metrics: [ { k: "[horizon]", v: "[EOD]" } ],
-          links: [] } ] },
+        { title: "Principal", org: "Aleph Family Office", span: "12 yrs", lines: [], metrics: [], links: [] } ] },
 
-    { id: "clusters", name: "Skills", attractor: "CLUSTERS",
-      manifest: ["[Positioning line — the range claim]",
-                 "[Depth line — where mastery concentrates]"],
-      domains: [
-        { domain: "[Domain A]", related: ["[Domain B]"],
-          tiers: { core: ["[Core skill]", "[Core skill]"],
-                   working: ["[Working skill]", "[Working skill]", "[Working skill]"],
-                   familiar: ["[Familiar]", "[Familiar]"] } },
-        { domain: "[Domain B]", related: ["[Domain A]"],
-          tiers: { core: ["[Core skill]"],
-                   working: ["[Working skill]", "[Working skill]"],
-                   familiar: ["[Familiar]", "[Familiar]", "[Familiar]"] } }
-      ] },
-
-    { id: "vector", name: "Entrepreneur", attractor: "VECTOR",
-      manifest: ["[Positioning line — the zero-to-one claim]",
-                 "[Trajectory line — scattered starts, one direction]"],
-      dossiers: [
-        { title: "[Venture or initiative]", org: "[FOUNDER]", span: "[SPAN]",
-          lines: ["[Dense line — what was built from nothing and what it did.]"],
-          metrics: [ { k: "[from]", v: "[0]" }, { k: "[to]", v: "[1]" } ],
-          links: [] } ] },
-
-    { id: "orbit", name: "Hobbyist", attractor: "ORBIT",
-      manifest: ["[Positioning line — the curiosity claim]",
-                 "[Orbit line — the recurring obsessions]"],
-      dossiers: [
-        { title: "[Pursuit]", org: "[ONGOING]", span: "[SPAN]",
-          lines: ["[Dense line — depth achieved for its own sake.]"],
-          metrics: [ { k: "[why]", v: "[joy]" } ],
-          links: [] } ] }
+    { id: "clusters", name: "Skills", attractor: "CLUSTERS", manifest: [], domains: [] },
+    { id: "vector", name: "Entrepreneur", attractor: "VECTOR", manifest: [], dossiers: [] },
+    { id: "orbit", name: "Hobbyist", attractor: "ORBIT", manifest: [], dossiers: [] }
   ],
   record: {
-    entries: [ { span: "[SPAN]", line: "[Chronological record line.]" } ]
+    intro: "",
+    entries: [
+      { span: "3 yrs", line: "Chief Financial Officer, Goodman Group McDonald's" },
+      { span: "12 yrs", line: "Principal, Aleph Family Office" },
+      { span: "8 yrs", line: "Principal, Aleph Advisory" },
+      { span: "2 yrs", line: "Founding General Manager, 69 Leonard St" },
+      { span: "1 yr", line: "Founding General Manager, Ichimura" },
+      { span: "2 yrs", line: "General Manager, Captain, David Bouley's Brushstroke" },
+      { span: "2 yrs", line: "Project Executive, Project Manager, Sevan" },
+      { span: "3 yrs", line: "Division Manager, TopBuild/TruTeam" },
+      { span: "4 yrs", line: "Project Executive, Palm Construction" }
+    ]
   },
-  meta: { updated: "2026-07-17", schema: "1.2" }
+  meta: { updated: "2026-09-22", schema: "1.3" }
 };

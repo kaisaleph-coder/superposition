@@ -1,0 +1,219 @@
+SUPERPOSITION CONTENT CONFIG
+============================
+Version: RC2 worksheet 1.0
+
+HOW TO USE
+----------
+1. Edit only the text to the right of each "=".
+2. Keep every key and section name unchanged.
+3. Leave an optional value blank if you want it omitted.
+4. Do not add quotation marks unless you want quotation marks to appear.
+5. Save as plain UTF-8 text and upload this file back to ChatGPT.
+6. I will compile it into the site, validate it, and generate the next preview.
+7. Role entries render as: Role, Company (italic), X yrs. Keep title/org/span fields separate here.
+
+This worksheet is developer input only. It is intentionally excluded from the
+public Cloudflare asset bundle.
+
+REMOVED FROM RC2
+----------------
+- SUPERPOSITION 2.0 brand suffix
+- MULTIDISCIPLINARY EXECUTIVE / EIGHT DOMAINS kicker
+- ONE FIELD / EIGHT LAWS / ONE IDENTITY strip
+- keyboard/domain instruction sentence
+- footer state / EIGHT DOMAINS / PROCEDURAL FIELD / keyboard shortcuts
+
+
+[PAGE_METADATA]
+browser_title=
+meta_description=
+og_title=
+og_description=
+
+[IDENTITY]
+name=KAIS ABU-HUSSEIN
+positioning=Multidisciplinary executive. 15+ years experience. CFO, restaurant/construction executive, investor/trader/FO principal, entrepreneur and consultant, systems hobbyist, music/gaming/outdoors/fitness/philosophy/cosmology enthusiast.
+location=
+
+[CONTACT]
+contact_text=
+
+[FINANCE]
+page_title=Financial executive
+nav_label=Finance
+index_label=Financial executive
+manifest_1=Since 2014. CFO, principal investor and trader, consultant.
+manifest_2=Managed in excess of $0.5B in revenue. Founded a family office.
+manifest_3=Avid student of markets.
+dossier_1_title=Chief Financial Officer
+dossier_1_org=Goodman Group McDonald's
+dossier_1_span=3 yrs
+dossier_1_line_1=
+dossier_1_line_2=
+dossier_2_title=Principal
+dossier_2_org=Aleph Family Office
+dossier_2_span=12 yrs
+dossier_2_line_1=
+dossier_2_line_2=
+dossier_3_title=Principal
+dossier_3_org=Aleph Advisory
+dossier_3_span=8 yrs
+dossier_3_line_1=
+dossier_3_line_2=
+
+[RESTAURANT]
+page_title=Restaurant executive
+nav_label=Restaurant
+index_label=Restaurant executive
+manifest_1=Since 2010. CFO, operator, manager, consultant, captain, bartender, server, runner.
+manifest_2=McDonald's to fine dining, and everything between.
+manifest_3=Consulted for the late David Bouley, Major Food Group, Nobu Group, Union Square Hospitality Group, among others.
+dossier_1_title=Chief Financial Officer
+dossier_1_org=Goodman Group McDonald's
+dossier_1_span=3 yrs
+dossier_2_title=Principal
+dossier_2_org=Aleph Advisory
+dossier_2_span=8 yrs
+dossier_3_title=Founding General Manager
+dossier_3_org=69 Leonard St
+dossier_3_span=2 yrs
+dossier_4_title=Founding General Manager
+dossier_4_org=Ichimura
+dossier_4_span=1 yr
+dossier_5_title=General Manager, Captain
+dossier_5_org=David Bouley's Brushstroke
+dossier_5_span=2 yrs
+
+[CONSTRUCTION]
+page_title=Construction executive
+nav_label=Construction
+index_label=Construction executive
+manifest_1=Since 2010. Construction management, owner representation, heavy-commercial construction, heavy-commercial carpentry, general construction.
+manifest_2=Mixed-use, commercial, residential. Tri-state area.
+manifest_3=400+ projects delivered. $600m in assets managed.
+dossier_1_title=Chief Financial Officer
+dossier_1_org=Goodman Group McDonald's
+dossier_1_span=3 yrs
+dossier_2_title=Principal
+dossier_2_org=Aleph Advisory
+dossier_2_span=8 yrs
+dossier_3_title=Project Executive, Project Manager
+dossier_3_org=Sevan
+dossier_3_span=2 yrs
+dossier_4_title=Division Manager
+dossier_4_org=TopBuild/TruTeam
+dossier_4_span=3 yrs
+dossier_5_title=Project Executive
+dossier_5_org=Palm Construction
+dossier_5_span=4 yrs
+
+[INVESTING_TRADING]
+page_title=Investor & trader
+nav_label=Investor
+index_label=Investor & trader
+manifest_1=Since 2011. Investing in equities, credit, commodities, derivatives and cryptocurrencies.
+manifest_2=Notable holdings include NVDA, AMD, INTC, SOX, AAPL, TSLA, GOOG, BTC, GC.
+manifest_3=Trading in SPX/SOX-related securities, using discretionary and systematic strategies.
+dossier_1_title=Principal
+dossier_1_org=Aleph Family Office
+dossier_1_span=12 yrs
+dossier_1_line_1=
+dossier_1_line_2=
+
+[ENTREPRENEUR]
+page_title=Entrepreneur
+nav_label=Entrepreneur
+index_label=Entrepreneur
+manifest_1=
+manifest_2=
+manifest_3=
+dossier_1_title=
+dossier_1_org=
+dossier_1_span=
+dossier_1_line_1=
+dossier_1_line_2=
+dossier_1_metric_1_label=
+dossier_1_metric_1_value=
+dossier_1_metric_2_label=
+dossier_1_metric_2_value=
+
+[AI_ENGINEERING]
+page_title=AI & computer engineering
+nav_label=AI / Engineering
+index_label=AI & computer engineering
+manifest_1=
+manifest_2=
+manifest_3=
+dossier_1_title=
+dossier_1_org=
+dossier_1_span=
+dossier_1_line_1=
+dossier_1_line_2=
+dossier_1_metric_1_label=
+dossier_1_metric_1_value=
+dossier_1_metric_2_label=
+dossier_1_metric_2_value=
+
+[SKILLS]
+page_title=Skills
+nav_label=Skills
+index_label=Skills
+manifest_1=
+manifest_2=
+domain_1_name=
+domain_1_related=
+domain_1_core_1=
+domain_1_core_2=
+domain_1_working_1=
+domain_1_working_2=
+domain_1_working_3=
+domain_1_familiar_1=
+domain_1_familiar_2=
+domain_2_name=
+domain_2_related=
+domain_2_core_1=
+domain_2_core_2=
+domain_2_working_1=
+domain_2_working_2=
+domain_2_working_3=
+domain_2_familiar_1=
+domain_2_familiar_2=
+
+[HOBBIES]
+page_title=Hobbies
+nav_label=Hobbies
+index_label=Hobbies
+manifest_1=
+manifest_2=
+manifest_3=
+dossier_1_title=
+dossier_1_org=
+dossier_1_span=
+dossier_1_line_1=
+dossier_1_line_2=
+dossier_1_metric_1_label=
+dossier_1_metric_1_value=
+dossier_1_metric_2_label=
+dossier_1_metric_2_value=
+
+[RESUME]
+resume_title=Full résumé
+resume_intro=
+entry_1_span=
+entry_1_title=
+entry_1_detail=
+entry_2_span=
+entry_2_title=
+entry_2_detail=
+entry_3_span=
+entry_3_title=
+entry_3_detail=
+entry_4_span=
+entry_4_title=
+entry_4_detail=
+entry_5_span=
+entry_5_title=
+entry_5_detail=
+
+[OPTIONAL_NOTES_FOR_IMPLEMENTATION]
+notes=

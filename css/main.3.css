@@ -2,7 +2,7 @@
   .domain-strip a b{font-size:8.5px}.index-list{column-gap:30px}.index-list a i{display:none}
 }
 @media(max-width:720px){
-  :root{--gutter:18px;--header-h:58px;--footer-h:30px;--strip-h:62px}
+  :root{--gutter:18px;--header-h:58px;--footer-h:0px;--strip-h:62px}
   #atmosphere{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 98%,transparent) 0 29%,color-mix(in srgb,var(--ground) 61%,transparent) 47%,transparent 70%),linear-gradient(90deg,color-mix(in srgb,var(--ground) 90%,transparent) 0 18%,transparent 75%)}
   #legibility{background:linear-gradient(180deg,color-mix(in srgb,var(--ground) 99%,transparent) 0 35%,color-mix(in srgb,var(--ground) 82%,transparent) 51%,transparent 73%)}
   .site-head{left:18px;right:18px}.brand-system{display:none}.utilities{gap:12px}.utilities button,.utilities a{font-size:7px}.utilities [data-ui="contact"]{display:none}
@@ -44,3 +44,7 @@ body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[da
   #view-record,#view-record[hidden]{display:block!important;opacity:1!important;transform:none!important}
   #view-record .record-list li{display:grid!important}
 }
+
+
+/* RC2 minimal chrome: footer/status/shortcut surface intentionally removed. */
+.site-foot{display:none!important}
