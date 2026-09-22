@@ -1,0 +1,106 @@
+name: edge-verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-sprint1-p0-20260922]
+
+jobs:
+  edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify Cloudflare preview edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGING="https://rc2-minimal-preview-superposition-rc1-staging.kais-aleph.workers.dev"
+
+          echo "Waiting for branch preview to serve the tested content..."
+          ready=0
+          for i in $(seq 1 30); do
+            code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/staging-root.html -D /tmp/staging-root.headers -w '%{http_code}' "$STAGING/" || true)"
+            if [[ "$code" == "200" ]] && grep -qi "Kais Abu-Hussein" /tmp/staging-root.html; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          [[ "$ready" == "1" ]] || { echo "Preview never became ready"; cat /tmp/staging-root.headers || true; exit 1; }
+
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/staging-root.headers
+
+          resume_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/staging-resume.html -D /tmp/staging-resume.headers -w '%{http_code}' "$STAGING/resume/")"
+          [[ "$resume_code" == "200" ]]
+          grep -qi 'rel="canonical" href="https://kaisabuhussein.com/resume/"' /tmp/staging-resume.html
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/staging-resume.headers
+
+          missing_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/staging-404.html -D /tmp/staging-404.headers -w '%{http_code}' "$STAGING/seo-sprint1-definitely-missing")"
+          [[ "$missing_code" == "404" ]]
+          grep -qi "No such state" /tmp/staging-404.html
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/staging-404.headers
+
+          robots_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/staging-robots.txt -w '%{http_code}' "$STAGING/robots.txt")"
+          [[ "$robots_code" == "200" ]]
+          grep -Fq 'Sitemap: https://kaisabuhussein.com/sitemap.xml' /tmp/staging-robots.txt
+
+          sitemap_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/staging-sitemap.xml -w '%{http_code}' "$STAGING/sitemap.xml")"
+          [[ "$sitemap_code" == "200" ]]
+          grep -Fq '<loc>https://kaisabuhussein.com/</loc>' /tmp/staging-sitemap.xml
+          grep -Fq '<loc>https://kaisabuhussein.com/resume/</loc>' /tmp/staging-sitemap.xml
+
+          echo "preview_root=$code"
+          echo "preview_resume=$resume_code"
+          echo "preview_missing=$missing_code"
+          echo "preview_robots=$robots_code"
+          echo "preview_sitemap=$sitemap_code"
+          echo "Preview edge: PASS"
+
+      - name: Verify production DNS and redirect convergence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "DNS:"
+          getent ahosts kaisabuhussein.com || true
+          getent ahosts www.kaisabuhussein.com || true
+
+          check_final() {
+            local input="$1"
+            local expected="$2"
+            local result
+            result="$(curl -sS -L --connect-timeout 8 --max-time 30 --max-redirs 6 -o /tmp/prod-body.html -w '%{url_effective}|%{http_code}' "$input")"
+            echo "$input -> $result"
+            [[ "$result" == "$expected|200" ]]
+          }
+
+          check_final "https://kaisabuhussein.com/" "https://kaisabuhussein.com/"
+          check_final "http://kaisabuhussein.com/" "https://kaisabuhussein.com/"
+          check_final "https://www.kaisabuhussein.com/" "https://kaisabuhussein.com/"
+          check_final "http://www.kaisabuhussein.com/" "https://kaisabuhussein.com/"
+
+          curl -sS --connect-timeout 8 --max-time 30 -D /tmp/prod-root.headers -o /tmp/prod-root.html https://kaisabuhussein.com/
+          grep -qi "Kais Abu-Hussein" /tmp/prod-root.html
+          grep -qi 'rel="canonical" href="https://kaisabuhussein.com/"' /tmp/prod-root.html
+          if grep -Eiq '^x-robots-tag:[[:space:]]*noindex' /tmp/prod-root.headers; then
+            echo "Production must not be noindex"
+            exit 1
+          fi
+
+          missing_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/prod-404.html -w '%{http_code}' https://kaisabuhussein.com/seo-sprint1-definitely-missing)"
+          echo "production_missing=$missing_code"
+          [[ "$missing_code" == "404" ]]
+          grep -qi "No such state" /tmp/prod-404.html
+
+          robots_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/prod-robots.txt -w '%{http_code}' https://kaisabuhussein.com/robots.txt)"
+          echo "production_robots=$robots_code"
+          [[ "$robots_code" == "200" ]]
+          grep -Fq 'Sitemap: https://kaisabuhussein.com/sitemap.xml' /tmp/prod-robots.txt
+
+          sitemap_code="$(curl -sS --connect-timeout 8 --max-time 30 -o /tmp/prod-sitemap.xml -w '%{http_code}' https://kaisabuhussein.com/sitemap.xml)"
+          echo "production_sitemap=$sitemap_code"
+          [[ "$sitemap_code" == "200" ]]
+          grep -Fq '<loc>https://kaisabuhussein.com/</loc>' /tmp/prod-sitemap.xml
+          grep -Fq '<loc>https://kaisabuhussein.com/resume/</loc>' /tmp/prod-sitemap.xml
+
+          echo "Production edge: PASS"
