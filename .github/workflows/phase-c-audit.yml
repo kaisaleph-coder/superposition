@@ -1,0 +1,172 @@
+name: phase-c-audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-phase-c-experience-security-20260922]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Install audit tooling
+        run: |
+          npm install --no-fund --no-audit
+          npm install --no-save lighthouse@latest
+          npx playwright install --with-deps chromium
+
+      - name: Capture live response headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://kaisabuhussein.com"
+          for path in / /resume/ /js/main.js /assets/og.png /assets/fonts/archivo-vf.woff2; do
+            key="$(printf '%s' "$path" | tr '/.' '__' | sed 's/^_*//')"
+            [[ -n "$key" ]] || key=root
+            echo "===== HEADERS $path ====="
+            curl -sS --connect-timeout 8 --max-time 30 -D "/tmp/${key}.headers" -o /dev/null "$BASE$path"
+            grep -Ei '^(HTTP/|cache-control:|content-type:|content-security-policy:|permissions-policy:|referrer-policy:|x-content-type-options:|x-frame-options:|cross-origin|strict-transport-security:|etag:|last-modified:|server:|cf-cache-status:)' "/tmp/${key}.headers" || true
+          done
+
+      - name: Lighthouse mobile and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx lighthouse https://kaisabuhussein.com/             --quiet --chrome-flags="--headless --no-sandbox"             --output=json --output-path=/tmp/lh-mobile.json
+          npx lighthouse https://kaisabuhussein.com/             --quiet --preset=desktop --chrome-flags="--headless --no-sandbox"             --output=json --output-path=/tmp/lh-desktop.json
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const mode of ['mobile','desktop']){
+            const j=JSON.parse(fs.readFileSync('/tmp/lh-'+mode+'.json','utf8'));
+            const a=j.audits;
+            const c=j.categories;
+            const v=(id)=>a[id]?.numericValue ?? null;
+            const out={
+              mode,
+              lighthouseVersion:j.lighthouseVersion,
+              performance:Math.round((c.performance?.score??0)*100),
+              accessibility:Math.round((c.accessibility?.score??0)*100),
+              bestPractices:Math.round((c['best-practices']?.score??0)*100),
+              seo:Math.round((c.seo?.score??0)*100),
+              FCP_ms:v('first-contentful-paint'),
+              LCP_ms:v('largest-contentful-paint'),
+              CLS:v('cumulative-layout-shift'),
+              TBT_ms:v('total-blocking-time'),
+              speedIndex_ms:v('speed-index'),
+              interactive_ms:v('interactive')
+            };
+            console.log('LIGHTHOUSE '+JSON.stringify(out));
+          }
+          NODE
+
+      - name: Browser accessibility and interaction audit
+        shell: bash
+        run: |
+          node --input-type=module - <<'NODE'
+          import { chromium, devices } from '@playwright/test';
+          import AxeBuilder from '@axe-core/playwright';
+
+          const browser=await chromium.launch({headless:true});
+          const result={};
+
+          async function axe(page,label){
+            const r=await new AxeBuilder({page}).analyze();
+            result[label]={
+              critical:r.violations.filter(v=>v.impact==='critical').map(v=>v.id),
+              serious:r.violations.filter(v=>v.impact==='serious').map(v=>v.id),
+              moderate:r.violations.filter(v=>v.impact==='moderate').map(v=>v.id)
+            };
+          }
+
+          const reduced=await browser.newContext({
+            ...devices['Desktop Chrome'],
+            reducedMotion:'reduce'
+          });
+          const rp=await reduced.newPage();
+          await rp.goto('https://kaisabuhussein.com/?force=static',{waitUntil:'networkidle'});
+          result.reducedMotion=await rp.evaluate(()=>({
+            media:matchMedia('(prefers-reduced-motion: reduce)').matches,
+            tier:document.body.dataset.tier,
+            renderer:document.body.dataset.renderer,
+            fieldDisplay:getComputedStyle(document.querySelector('#field')).display
+          }));
+          await reduced.close();
+
+          const desktop=await browser.newContext({...devices['Desktop Chrome']});
+          const p=await desktop.newPage();
+          await p.goto('https://kaisabuhussein.com/?force=static',{waitUntil:'networkidle'});
+          await axe(p,'home');
+
+          const desktopText=await p.locator('main#content').evaluate(el=>el.textContent.replace(/\s+/g,' ').trim());
+
+          await p.locator('[data-ui="index"]').click();
+          await axe(p,'indexOpen');
+          result.indexOpenFocus=await p.evaluate(()=>document.activeElement?.getAttribute('data-ui-close')||document.activeElement?.tagName);
+          await p.keyboard.press('Escape');
+          result.indexEscapeFocus=await p.evaluate(()=>document.activeElement?.getAttribute('data-ui')||document.activeElement?.tagName);
+
+          await p.locator('[data-ui="system"]').click();
+          await axe(p,'systemOpen');
+          result.systemOpenFocus=await p.evaluate(()=>document.activeElement?.getAttribute('data-ui-close')||document.activeElement?.tagName);
+          await p.keyboard.press('Escape');
+          result.systemEscapeFocus=await p.evaluate(()=>document.activeElement?.getAttribute('data-ui')||document.activeElement?.tagName);
+
+          const latencies=[];
+          for(let i=0;i<12;i++){
+            const id=i%2===0?'columns':'tables';
+            const ms=await p.evaluate(async(id)=>{
+              const a=document.querySelector('.domain-strip a[data-facet="'+id+'"]');
+              const t=performance.now();
+              a.click();
+              await new Promise(requestAnimationFrame);
+              return performance.now()-t;
+            },id);
+            latencies.push(ms);
+          }
+          latencies.sort((a,b)=>a-b);
+          result.interactionProxy={
+            samples_ms:latencies.map(x=>Math.round(x*10)/10),
+            p75_ms:latencies[Math.floor((latencies.length-1)*0.75)]
+          };
+
+          await p.goto('https://kaisabuhussein.com/resume/',{waitUntil:'networkidle'});
+          await axe(p,'resume');
+          await desktop.close();
+
+          const mobile=await browser.newContext({...devices['Pixel 7']});
+          const mp=await mobile.newPage();
+          await mp.goto('https://kaisabuhussein.com/?force=static',{waitUntil:'networkidle'});
+          const mobileText=await mp.locator('main#content').evaluate(el=>el.textContent.replace(/\s+/g,' ').trim());
+          result.mobileParity={sameMainText:desktopText===mobileText,desktopChars:desktopText.length,mobileChars:mobileText.length};
+          await axe(mp,'mobileHome');
+          await mobile.close();
+
+          const animated=await browser.newContext({...devices['Desktop Chrome']});
+          const ap=await animated.newPage();
+          await ap.goto('https://kaisabuhussein.com/?seed=271828&run=1',{waitUntil:'domcontentloaded'});
+          await ap.waitForTimeout(2500);
+          result.pauseBefore=await ap.locator('body').getAttribute('data-paused');
+          const renderer=await ap.locator('body').getAttribute('data-renderer');
+          const tier=await ap.locator('body').getAttribute('data-tier');
+          result.animatedRenderer={renderer,tier};
+          if(renderer!=='static' && tier!=='0'){
+            await ap.keyboard.press('.');
+            await ap.waitForTimeout(100);
+            result.pauseAfterFirst=await ap.locator('body').getAttribute('data-paused');
+            await ap.keyboard.press('.');
+            await ap.waitForTimeout(100);
+            result.pauseAfterSecond=await ap.locator('body').getAttribute('data-paused');
+          }else{
+            result.pauseAfterFirst='not-applicable-static';
+            result.pauseAfterSecond='not-applicable-static';
+          }
+          await animated.close();
+
+          console.log('BROWSER_AUDIT '+JSON.stringify(result));
+          await browser.close();
+          NODE
