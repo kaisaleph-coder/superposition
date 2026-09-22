@@ -1,0 +1,248 @@
+name: phase-c-production-verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-phase-c-prod-verify-20260922]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Wait for exact Phase C production edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://kaisabuhussein.com"
+          ready=0
+          for i in $(seq 1 40); do
+            code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/home.html -D /tmp/home.headers -w '%{http_code}' "$BASE/" || true)"
+            if [[ "$code" == "200" ]]               && grep -qi "Kais Abu-Hussein | Multidisciplinary Executive" /tmp/home.html               && grep -Eiq '^strict-transport-security:[[:space:]]*max-age=31536000;[[:space:]]*includeSubDomains' /tmp/home.headers; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          [[ "$ready" == "1" ]] || { echo "Phase C production did not become ready"; cat /tmp/home.headers || true; exit 1; }
+
+      - name: Verify production security and SEO edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://kaisabuhussein.com"
+
+          check_headers() {
+            local path="$1"
+            local expected="$2"
+            local key
+            key="$(printf '%s' "$path" | tr '/.' '__' | sed 's/^_*//')"
+            [[ -n "$key" ]] || key=root
+            local code
+            code="$(curl -sS --connect-timeout 8 --max-time 30 -o "/tmp/${key}.body" -D "/tmp/${key}.headers" -w '%{http_code}' "$BASE$path")"
+            [[ "$code" == "$expected" ]]
+            ! grep -Eiq '^x-robots-tag:[[:space:]]*noindex' "/tmp/${key}.headers"
+            grep -Eiq '^x-content-type-options:[[:space:]]*nosniff' "/tmp/${key}.headers"
+            grep -Eiq '^x-frame-options:[[:space:]]*DENY' "/tmp/${key}.headers"
+            grep -Eiq '^referrer-policy:[[:space:]]*strict-origin-when-cross-origin' "/tmp/${key}.headers"
+            grep -Eiq '^permissions-policy:' "/tmp/${key}.headers"
+            grep -Eiq '^strict-transport-security:[[:space:]]*max-age=31536000;[[:space:]]*includeSubDomains' "/tmp/${key}.headers"
+            grep -Eiq "^content-security-policy:.*script-src 'self'.*script-src-attr 'none'.*frame-ancestors 'none'.*upgrade-insecure-requests" "/tmp/${key}.headers"
+          }
+
+          check_headers "/" 200
+          check_headers "/resume/" 200
+          check_headers "/seo-phase-c-prod-definitely-missing" 404
+
+          grep -Fq 'rel="canonical" href="https://kaisabuhussein.com/"' /tmp/root.body
+          grep -Fq 'property="og:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/root.body
+          grep -Fq 'rel="canonical" href="https://kaisabuhussein.com/resume/"' /tmp/resume_.body
+
+          for input in             "https://kaisabuhussein.com/"             "http://kaisabuhussein.com/"             "https://www.kaisabuhussein.com/"             "http://www.kaisabuhussein.com/"; do
+            result="$(curl -sS -L --connect-timeout 8 --max-time 30 --max-redirs 6 -o /dev/null -w '%{url_effective}|%{http_code}' "$input")"
+            echo "$input -> $result"
+            [[ "$result" == "https://kaisabuhussein.com/|200" ]]
+          done
+
+          robots="$(curl -sS --connect-timeout 8 --max-time 30 "$BASE/robots.txt")"
+          grep -Fq 'Sitemap: https://kaisabuhussein.com/sitemap.xml' <<<"$robots"
+
+          sitemap="$(curl -sS --connect-timeout 8 --max-time 30 "$BASE/sitemap.xml")"
+          grep -Fq '<loc>https://kaisabuhussein.com/</loc>' <<<"$sitemap"
+          grep -Fq '<loc>https://kaisabuhussein.com/resume/</loc>' <<<"$sitemap"
+
+          curl -sS --connect-timeout 8 --max-time 30 -o /tmp/og.png "$BASE/assets/og.png"
+          python3 - <<'PY'
+          import hashlib,struct
+          b=open('/tmp/og.png','rb').read()
+          assert b[:8]==b'\x89PNG\r\n\x1a\n'
+          assert struct.unpack('>II',b[16:24])==(1200,630)
+          h=hashlib.sha256(b).hexdigest()
+          assert h=='e269c9baa036ee3063cfd137b3701bc1113c77573cd78cc8fee9a95e3f260144'
+          print('production_og_sha256='+h)
+          PY
+
+          python3 - <<'PY'
+          import json,re
+          PERSON='https://kaisabuhussein.com/#person'
+          WEBSITE='https://kaisabuhussein.com/#website'
+          for path in ('/tmp/root.body','/tmp/resume_.body'):
+              text=open(path,encoding='utf-8').read()
+              m=re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',text,re.S)
+              assert m, path
+              graph=json.loads(m.group(1))['@graph']
+              person=next(x for x in graph if x.get('@type')=='Person')
+              assert person['@id']==PERSON
+              assert person['name']=='Kais Abu-Hussein'
+              assert person['alternateName']=='Kais Abu Hussein'
+              assert 'sameAs' not in person
+              assert 'image' not in person
+          home=open('/tmp/root.body',encoding='utf-8').read()
+          graph=json.loads(re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',home,re.S).group(1))['@graph']
+          website=next(x for x in graph if x.get('@type')=='WebSite')
+          profile=next(x for x in graph if x.get('@type')=='ProfilePage')
+          assert website['@id']==WEBSITE
+          assert profile['mainEntity']['@id']==PERSON
+          print('production_structured_data=PASS')
+          PY
+
+          echo "production_edge=PASS"
+
+      - name: Install browser and Lighthouse tooling
+        run: |
+          npm install --no-fund --no-audit
+          npm install --no-save lighthouse@latest
+          npx playwright install --with-deps chromium
+
+      - name: Verify live browser behavior
+        shell: bash
+        run: |
+          node --input-type=module - <<'NODE'
+          import { chromium, devices } from '@playwright/test';
+          import AxeBuilder from '@axe-core/playwright';
+          const BASE='https://kaisabuhussein.com';
+          const browser=await chromium.launch({headless:true});
+
+          const desktop=await browser.newContext({...devices['Desktop Chrome']});
+          const page=await desktop.newPage();
+          const consoleErrors=[],pageErrors=[],failed=[],csp=[];
+          page.on('console',m=>{
+            if(m.type()==='error') consoleErrors.push(m.text());
+            if(/content security policy|refused to/i.test(m.text())) csp.push(m.text());
+          });
+          page.on('pageerror',e=>pageErrors.push(String(e)));
+          page.on('requestfailed',r=>failed.push({url:r.url(),failure:r.failure()}));
+
+          await page.goto(BASE+'/',{waitUntil:'networkidle'});
+          await page.waitForTimeout(2500);
+          const runtime=await page.evaluate(()=>({
+            tier:document.body.dataset.tier,
+            renderer:document.body.dataset.renderer,
+            fallback:document.body.dataset.performanceFallback||null,
+            importMaps:document.querySelectorAll('script[type="importmap"]').length,
+            headScript:document.querySelectorAll('script[src="/js/head.js"]').length
+          }));
+          if(runtime.tier!=='0'||runtime.renderer!=='static') throw new Error('headless path did not reach static fallback: '+JSON.stringify(runtime));
+          if(runtime.importMaps!==0||runtime.headScript!==1) throw new Error('CSP-ready bootstrap mismatch');
+
+          const axeHome=await new AxeBuilder({page}).analyze();
+          const badHome=axeHome.violations.filter(v=>['critical','serious','moderate'].includes(v.impact));
+          if(badHome.length) throw new Error('home axe: '+badHome.map(v=>v.id).join(','));
+
+          const index=page.locator('[data-ui="index"]');
+          await index.focus(); await index.click(); await page.locator('[data-ui-close="index"]').click();
+          if(!(await index.evaluate(el=>el===document.activeElement))) throw new Error('Index focus not restored');
+
+          const system=page.locator('[data-ui="system"]');
+          await system.focus(); await system.click(); await page.keyboard.press('Escape');
+          if(!(await system.evaluate(el=>el===document.activeElement))) throw new Error('System focus not restored');
+
+          const latencies=[];
+          for(let i=0;i<12;i++){
+            const id=i%2===0?'columns':'tables';
+            latencies.push(await page.evaluate(async id=>{
+              const a=document.querySelector('.domain-strip a[data-facet="'+id+'"]');
+              const t=performance.now(); a.click(); await new Promise(requestAnimationFrame); return performance.now()-t;
+            },id));
+          }
+          latencies.sort((a,b)=>a-b);
+          const p75=latencies[Math.floor((latencies.length-1)*0.75)];
+          if(p75>=200) throw new Error('interaction p75 gate failed: '+p75);
+
+          const desktopText=await page.locator('main#content').evaluate(el=>el.textContent.replace(/\s+/g,' ').trim());
+
+          await page.goto(BASE+'/resume/',{waitUntil:'networkidle'});
+          const axeResume=await new AxeBuilder({page}).analyze();
+          const badResume=axeResume.violations.filter(v=>['critical','serious','moderate'].includes(v.impact));
+          if(badResume.length) throw new Error('resume axe: '+badResume.map(v=>v.id).join(','));
+          await desktop.close();
+
+          const reduced=await browser.newContext({...devices['Desktop Chrome'],reducedMotion:'reduce'});
+          const rp=await reduced.newPage();
+          await rp.goto(BASE+'/',{waitUntil:'networkidle'});
+          const reducedState=await rp.evaluate(()=>({
+            media:matchMedia('(prefers-reduced-motion: reduce)').matches,
+            tier:document.body.dataset.tier,
+            renderer:document.body.dataset.renderer,
+            fieldDisplay:getComputedStyle(document.querySelector('#field')).display
+          }));
+          if(!reducedState.media||reducedState.tier!=='0'||reducedState.renderer!=='static'||reducedState.fieldDisplay!=='none') throw new Error('reduced-motion gate failed: '+JSON.stringify(reducedState));
+          await reduced.close();
+
+          const mobile=await browser.newContext({...devices['Pixel 7']});
+          const mp=await mobile.newPage();
+          await mp.goto(BASE+'/?force=static',{waitUntil:'networkidle'});
+          const mobileText=await mp.locator('main#content').evaluate(el=>el.textContent.replace(/\s+/g,' ').trim());
+          if(mobileText!==desktopText) throw new Error('mobile/desktop substantive text mismatch');
+          await mobile.close();
+
+          if(csp.length) throw new Error('CSP violations: '+JSON.stringify(csp));
+          if(consoleErrors.length) throw new Error('console errors: '+JSON.stringify(consoleErrors));
+          if(pageErrors.length) throw new Error('page errors: '+JSON.stringify(pageErrors));
+          if(failed.length) throw new Error('failed requests: '+JSON.stringify(failed));
+
+          console.log('PRODUCTION_BROWSER '+JSON.stringify({
+            runtime,reducedState,
+            interactionP75_ms:Math.round(p75*10)/10,
+            axeHome:badHome.length,axeResume:badResume.length,
+            cspViolations:csp.length,consoleErrors:consoleErrors.length,pageErrors:pageErrors.length,failedRequests:failed.length
+          }));
+          await browser.close();
+          NODE
+
+      - name: Lighthouse live production mobile and desktop
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx lighthouse https://kaisabuhussein.com/ --quiet --chrome-flags="--headless --no-sandbox" --output=json --output-path=/tmp/lh-mobile.json
+          npx lighthouse https://kaisabuhussein.com/ --quiet --preset=desktop --chrome-flags="--headless --no-sandbox" --output=json --output-path=/tmp/lh-desktop.json
+          node - <<'NODE'
+          const fs=require('fs');
+          for(const mode of ['mobile','desktop']){
+            const j=JSON.parse(fs.readFileSync('/tmp/lh-'+mode+'.json','utf8'));
+            const a=j.audits,c=j.categories,v=id=>a[id]?.numericValue??null;
+            const out={
+              mode,
+              performance:Math.round((c.performance?.score??0)*100),
+              accessibility:Math.round((c.accessibility?.score??0)*100),
+              bestPractices:Math.round((c['best-practices']?.score??0)*100),
+              seo:Math.round((c.seo?.score??0)*100),
+              FCP_ms:v('first-contentful-paint'),
+              LCP_ms:v('largest-contentful-paint'),
+              CLS:v('cumulative-layout-shift'),
+              TBT_ms:v('total-blocking-time'),
+              speedIndex_ms:v('speed-index'),
+              interactive_ms:v('interactive')
+            };
+            console.log('PRODUCTION_LIGHTHOUSE '+JSON.stringify(out));
+            if(out.performance<90) throw new Error(mode+' performance score regression: '+out.performance);
+            if(out.accessibility!==100||out.bestPractices!==100||out.seo!==100) throw new Error(mode+' category regression');
+            if(out.LCP_ms>2500) throw new Error(mode+' LCP gate failed: '+out.LCP_ms);
+            if(out.CLS>=0.1) throw new Error(mode+' CLS gate failed: '+out.CLS);
+            if(out.TBT_ms>300) throw new Error(mode+' TBT gate failed: '+out.TBT_ms);
+          }
+          NODE
