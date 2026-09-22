@@ -12,7 +12,7 @@ test.describe("SEO P0",()=>{
     const source=await response.text();
     expect(source).toContain("KAIS ABU-HUSSEIN");
     expect(source).toContain("Financial executive");
-    expect(source).toContain("Goodman Group McDonald&#39;s");
+    expect(source).toContain("Goodman Group McDonald's");
     await page.goto("/?force=static");
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href","https://kaisabuhussein.com/");
     expect(await page.locator("body").innerText()).not.toMatch(/\[[^\]\n]{3,}\]/);
