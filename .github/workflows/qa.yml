@@ -28,7 +28,7 @@ jobs:
           sleep 2
           node tools/static-smoke.mjs
       - name: QA (content, state, print, a11y, S4 integration)
-        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js seo-p0.spec.js --ignore-snapshots
+        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js seo-p0.spec.js browser-runtime-evidence.spec.js --ignore-snapshots
       - name: Dead-link check
         run: |
           node -e "
@@ -39,3 +39,13 @@ jobs:
             }
             console.log('links ok');
           "
+      - name: Upload browser runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-runtime-evidence-${{ github.sha }}
+          path: |
+            test-results/**/runtime-*.png
+            test-results/**/runtime-evidence-*.json
+          if-no-files-found: warn
+          retention-days: 14
