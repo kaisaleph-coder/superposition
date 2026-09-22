@@ -1,0 +1,61 @@
+name: phase-d-edge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-phase-d-sameas-ready-20260922]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify gated sameAs preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREVIEW="https://seo-phase-d-sameas-ready-20260922-superposition-rc1-staging.kais-aleph.workers.dev"
+          PROD="https://kaisabuhussein.com"
+
+          ready=0
+          for i in $(seq 1 40); do
+            code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/home.html -D /tmp/home.headers -w '%{http_code}' "$PREVIEW/" || true)"
+            if [[ "$code" == "200" ]] && grep -Fq 'https://www.linkedin.com/in/kaisabuhussein/' /tmp/home.html; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          [[ "$ready" == "1" ]] || { echo "Phase D preview never became ready"; exit 1; }
+
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/home.headers
+          curl -sS --connect-timeout 5 --max-time 15 -o /tmp/resume.html -D /tmp/resume.headers "$PREVIEW/resume/"
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/resume.headers
+
+          python3 - <<'PY'
+          import json,re
+          expected=[
+            "https://www.linkedin.com/in/kaisabuhussein/",
+            "https://github.com/kaisaleph-coder",
+          ]
+          for path in ("/tmp/home.html","/tmp/resume.html"):
+              text=open(path,encoding="utf-8").read()
+              m=re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',text,re.S)
+              assert m, path
+              graph=json.loads(m.group(1))["@graph"]
+              person=next(x for x in graph if x.get("@type")=="Person")
+              assert person["@id"]=="https://kaisabuhussein.com/#person"
+              assert person["sameAs"]==expected, (path,person.get("sameAs"))
+          print("phase_d_preview_sameAs=PASS")
+          PY
+
+          curl -sS --connect-timeout 8 --max-time 30 -o /tmp/prod.html "$PROD/"
+          python3 - <<'PY'
+          import json,re
+          text=open("/tmp/prod.html",encoding="utf-8").read()
+          m=re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',text,re.S)
+          assert m
+          person=next(x for x in json.loads(m.group(1))["@graph"] if x.get("@type")=="Person")
+          assert "sameAs" not in person
+          print("production_sameAs_gate=HELD")
+          PY
