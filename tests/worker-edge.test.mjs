@@ -61,7 +61,7 @@ test("security headers are attached to redirects", () => {
 test("worker serves secured indexable assets on canonical apex", async () => {
   const env = {
     ASSETS: {
-      fetch: async () => new Response("asset", { status: 200, headers: { "content-type": "text/plain" } }),
+      fetch: async () => new Response("asset", { status: 200, headers: { "content-type": "text/html; charset=UTF-8", "cache-control": "public, max-age=0, must-revalidate" } }),
     },
   };
   const response = await worker.fetch(new Request("https://kaisabuhussein.com/"), env);
@@ -74,6 +74,33 @@ test("worker serves secured indexable assets on canonical apex", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.equal(response.headers.get("strict-transport-security"), "max-age=31536000; includeSubDomains");
+  assert.equal(response.headers.get("cache-control"), "public, max-age=0, must-revalidate, no-transform");
+});
+
+test("no-transform is added only to HTML responses", () => {
+  const html = withSecurityHeaders(new Response("<!doctype html>", {
+    headers: {
+      "content-type": "text/html; charset=UTF-8",
+      "cache-control": "public, max-age=0, must-revalidate",
+    },
+  }));
+  assert.equal(html.headers.get("cache-control"), "public, max-age=0, must-revalidate, no-transform");
+
+  const existing = withSecurityHeaders(new Response("<!doctype html>", {
+    headers: {
+      "content-type": "text/html",
+      "cache-control": "public, no-transform",
+    },
+  }));
+  assert.equal(existing.headers.get("cache-control"), "public, no-transform");
+
+  const png = withSecurityHeaders(new Response("png", {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=0, must-revalidate",
+    },
+  }));
+  assert.equal(png.headers.get("cache-control"), "public, max-age=0, must-revalidate");
 });
 
 test("worker adds noindex and security headers to preview assets and preview 404s", async () => {
