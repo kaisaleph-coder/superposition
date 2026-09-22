@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(join(fileURLToPath(import.meta.url), "..", ".."));
 const DIST = join(ROOT, ".staging-dist");
-const files = ["index.html", "404.html"];
-const dirs = ["assets", "content", "css", "js", "vendor"];
+const files = ["index.html", "404.html", "robots.txt", "sitemap.xml", "_headers"];
+const dirs = ["assets", "content", "css", "js", "vendor", "resume"];
 
 const sha256 = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
 
