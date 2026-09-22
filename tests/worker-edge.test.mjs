@@ -76,6 +76,43 @@ test("worker serves secured indexable assets on canonical apex", async () => {
   assert.equal(response.headers.get("strict-transport-security"), "max-age=31536000; includeSubDomains");
 });
 
+test("production HTML is marked no-transform to prevent Cloudflare analytics injection", async () => {
+  const env = {
+    ASSETS: {
+      fetch: async () => new Response("<!doctype html><title>x</title>", {
+        status: 200,
+        headers: {
+          "content-type": "text/html; charset=UTF-8",
+          "cache-control": "public, max-age=0, must-revalidate",
+        },
+      }),
+    },
+  };
+  const response = await worker.fetch(new Request("https://kaisabuhussein.com/"), env);
+  assert.equal(
+    response.headers.get("cache-control"),
+    "public, max-age=0, must-revalidate, no-transform"
+  );
+});
+
+test("preview HTML does not receive production no-transform policy", async () => {
+  const env = {
+    ASSETS: {
+      fetch: async () => new Response("<!doctype html><title>x</title>", {
+        status: 200,
+        headers: {
+          "content-type": "text/html; charset=UTF-8",
+          "cache-control": "public, max-age=0, must-revalidate",
+        },
+      }),
+    },
+  };
+  const host = "seo-phase-c-remediation-20260922-superposition-rc1-staging.kais-aleph.workers.dev";
+  const response = await worker.fetch(new Request(`https://${host}/`), env);
+  assert.equal(response.headers.get("cache-control"), "public, max-age=0, must-revalidate");
+  assert.equal(response.headers.get("x-robots-tag"), "noindex");
+});
+
 test("worker adds noindex and security headers to preview assets and preview 404s", async () => {
   const env = {
     ASSETS: {

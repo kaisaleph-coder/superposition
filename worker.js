@@ -28,8 +28,17 @@ function canonicalRedirect(request, url) {
 function withSecurityHeaders(response, { preview = false } = {}) {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
-  if (preview) headers.set("X-Robots-Tag", "noindex");
-  else headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  if (preview) {
+    headers.set("X-Robots-Tag", "noindex");
+  } else {
+    headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    if (/^text\/html(?:;|$)/i.test(headers.get("content-type") || "")) {
+      const cacheControl = headers.get("cache-control") || "public, max-age=0, must-revalidate";
+      if (!/(?:^|,)\s*no-transform\s*(?:,|$)/i.test(cacheControl)) {
+        headers.set("Cache-Control", cacheControl + ", no-transform");
+      }
+    }
+  }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
