@@ -28,11 +28,11 @@ jobs:
           sleep 2
           node tools/static-smoke.mjs
       - name: QA (content, state, print, a11y, S4 integration)
-        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js --ignore-snapshots
+        run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js seo-p0.spec.js --ignore-snapshots
       - name: Dead-link check
         run: |
           node -e "
-            const urls=['/','/404.html'];
+            const urls=['/','/resume/','/404.html','/robots.txt','/sitemap.xml'];
             for (const u of urls) {
               const r = await fetch('http://localhost:8080'+u);
               if (!r.ok) { console.error(u, r.status); process.exit(1); }
