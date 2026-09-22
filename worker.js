@@ -28,6 +28,19 @@ function canonicalRedirect(request, url) {
 function withSecurityHeaders(response, { preview = false } = {}) {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
+
+  // The site intentionally has zero analytics and zero third-party runtime requests.
+  // Cloudflare Web Analytics automatic setup modifies valid HTML unless the response
+  // is marked no-transform. Preserve any existing cache directives and add only the
+  // transformation prohibition for HTML documents.
+  const contentType = headers.get("content-type") || "";
+  if (/^text\/html\b/i.test(contentType)) {
+    const cacheControl = headers.get("cache-control") || "public, max-age=0, must-revalidate";
+    if (!/(?:^|,)\s*no-transform\s*(?:,|$)/i.test(cacheControl)) {
+      headers.set("Cache-Control", `${cacheControl}, no-transform`);
+    }
+  }
+
   if (preview) headers.set("X-Robots-Tag", "noindex");
   else headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   return new Response(response.body, {
