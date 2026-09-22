@@ -27,6 +27,9 @@ jobs:
           python -m http.server 8080 &
           sleep 2
           node tools/static-smoke.mjs
+
+      - name: Edge worker unit tests
+        run: node --test tests/worker-edge.test.mjs
       - name: QA (content, state, print, a11y, S4 integration)
         run: npx playwright test --config tests/playwright.config.js content.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js seo-p0.spec.js browser-runtime-evidence.spec.js --ignore-snapshots
       - name: Dead-link check
