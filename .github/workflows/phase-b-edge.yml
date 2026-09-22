@@ -1,0 +1,81 @@
+name: phase-b-edge
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [seo-phase-b-metadata-20260922]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify live Phase B preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://seo-phase-b-metadata-20260922-superposition-rc1-staging.kais-aleph.workers.dev"
+
+          ready=0
+          for i in $(seq 1 30); do
+            code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/home.html -D /tmp/home.headers -w '%{http_code}' "$BASE/" || true)"
+            if [[ "$code" == "200" ]] && grep -q "Kais Abu-Hussein | Multidisciplinary Executive" /tmp/home.html; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          [[ "$ready" == "1" ]]
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/home.headers
+          grep -Fq 'property="og:site_name" content="Kais Abu-Hussein"' /tmp/home.html
+          grep -Fq 'property="og:url" content="https://kaisabuhussein.com/"' /tmp/home.html
+          grep -Fq 'property="og:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/home.html
+          grep -Fq 'name="twitter:image" content="https://kaisabuhussein.com/assets/og.png"' /tmp/home.html
+
+          curl -sS --connect-timeout 5 --max-time 15 -o /tmp/resume.html -D /tmp/resume.headers "$BASE/resume/"
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/resume.headers
+          grep -Fq '<title>Résumé | Kais Abu-Hussein</title>' /tmp/resume.html
+          grep -Fq 'property="og:url" content="https://kaisabuhussein.com/resume/"' /tmp/resume.html
+
+          python3 - <<'PY'
+          import json,re
+          for path in ("/tmp/home.html","/tmp/resume.html"):
+              text=open(path,encoding="utf-8").read()
+              m=re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',text,re.S)
+              assert m, path
+              obj=json.loads(m.group(1))
+              graph=obj["@graph"]
+              person=next(x for x in graph if x.get("@type")=="Person")
+              assert person["@id"]=="https://kaisabuhussein.com/#person"
+              assert person["name"]=="Kais Abu-Hussein"
+              assert person["alternateName"]=="Kais Abu Hussein"
+              assert "sameAs" not in person
+              assert "image" not in person
+          home=json.loads(re.search(r'<script type="application/ld\+json">\s*(\{.*?\})\s*</script>',open("/tmp/home.html",encoding="utf-8").read(),re.S).group(1))
+          profile=next(x for x in home["@graph"] if x.get("@type")=="ProfilePage")
+          assert profile["mainEntity"]["@id"]=="https://kaisabuhussein.com/#person"
+          print("structured_data=PASS")
+          PY
+
+          image_code="$(curl -sS --connect-timeout 5 --max-time 15 -o /tmp/og.png -D /tmp/og.headers -w '%{http_code}' "$BASE/assets/og.png")"
+          [[ "$image_code" == "200" ]]
+          grep -Eiq '^content-type:[[:space:]]*image/png' /tmp/og.headers
+          grep -Eiq '^x-robots-tag:[[:space:]]*noindex([[:space:]]|$)' /tmp/og.headers
+          python3 - <<'PY'
+          import struct,hashlib
+          b=open("/tmp/og.png","rb").read()
+          assert b[:8]==b"\x89PNG\r\n\x1a\n"
+          assert struct.unpack(">II",b[16:24])==(1200,630)
+          h=hashlib.sha256(b).hexdigest()
+          print("og_sha256="+h)
+          assert h=="e269c9baa036ee3063cfd137b3701bc1113c77573cd78cc8fee9a95e3f260144"
+          PY
+
+          if grep -Eq '\[(NAME|One-line positioning|Positioning line|SPAN|ORG|Role)\]' /tmp/home.html /tmp/resume.html; then
+            echo "Placeholder leaked into live preview"
+            exit 1
+          fi
+
+          echo "home=$code"
+          echo "og=$image_code"
+          echo "Phase B live preview: PASS"
