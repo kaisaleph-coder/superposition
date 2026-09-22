@@ -15,7 +15,7 @@ test.describe("a11y",()=>{
     await page.keyboard.press('Escape');await page.locator('[data-ui="index"]').click();r=await scan(page);expect(critical(r).map(v=>v.id)).toEqual([]);
   });
   test("keyboard reaches skip, brand and utility navigation",async({page},testInfo)=>{
-    test.skip(testInfo.project.name==='mobile','hardware-keyboard flow');await page.goto("/?force=static#view-columns");
+    test.skip(testInfo.project.name==='mobile','hardware-keyboard flow');await page.goto("/?force=static");
     await page.keyboard.press('Tab');await expect(page.locator('.skip')).toBeFocused();
     await page.keyboard.press('Tab');await expect(page.locator('.brand')).toBeFocused();
     await page.keyboard.press('Tab');await expect(page.locator('[data-ui="index"]')).toBeFocused();
