@@ -5,6 +5,10 @@ const WEBSITE_ID="https://kaisabuhussein.com/#website";
 const HOME="https://kaisabuhussein.com/";
 const RESUME="https://kaisabuhussein.com/resume/";
 const OG="https://kaisabuhussein.com/assets/og.png";
+const SAME_AS=[
+  "https://www.linkedin.com/in/kaisabuhussein/",
+  "https://github.com/kaisaleph-coder",
+];
 
 const graphFrom = async page => {
   const raw=await page.locator('script[type="application/ld+json"]').textContent();
@@ -47,7 +51,7 @@ test.describe("Phase B metadata and entity graph",()=>{
     expect(person.alternateName).toBe("Kais Abu Hussein");
     expect(person.url).toBe(HOME);
     expect(person.description).toContain("15+ years");
-    expect(person.sameAs).toBeUndefined();
+    expect(person.sameAs).toEqual(SAME_AS);
     expect(person.image).toBeUndefined();
   });
 
@@ -68,6 +72,7 @@ test.describe("Phase B metadata and entity graph",()=>{
     expect(webPage.about["@id"]).toBe(PERSON_ID);
     expect(webPage.isPartOf["@id"]).toBe(WEBSITE_ID);
     expect(person["@id"]).toBe(PERSON_ID);
+    expect(person.sameAs).toEqual(SAME_AS);
   });
 
   test("canonical social image is a real 1200x630 PNG",async({page})=>{
