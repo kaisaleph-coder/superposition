@@ -29,6 +29,7 @@ function withSecurityHeaders(response, { preview = false } = {}) {
   const headers = new Headers(response.headers);
   for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
   if (preview) headers.set("X-Robots-Tag", "noindex");
+  else headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
