@@ -27,6 +27,17 @@ test.describe("S4 integration",()=>{
     await expect(body).toHaveAttribute("data-tier","0");
   });
 
+  test("CSP-ready bootstrap has no executable inline script or import map",async({page})=>{
+    const response=await page.request.get("/");
+    const source=await response.text();
+    expect(source).toContain('<script src="/js/head.js"></script>');
+    expect(source).not.toContain('type="importmap"');
+    expect(source).not.toContain('document.documentElement.classList.add("js")');
+    const executableInline=[...source.matchAll(/<script(?![^>]*\bsrc=)([^>]*)>([\s\S]*?)<\/script>/gi)]
+      .filter(m=>!m[1].includes('application/ld+json'));
+    expect(executableInline).toEqual([]);
+  });
+
   test("no third-party runtime URL is present in markup",async({page})=>{
     await page.goto("/?force=static");
     const urls=await page.evaluate(()=>[...document.querySelectorAll('script[src],link[href]:not([rel="canonical"]),img[src]')].map(x=>x.src||x.href).filter(Boolean));

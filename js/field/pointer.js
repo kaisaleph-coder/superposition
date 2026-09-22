@@ -1,7 +1,7 @@
 /* Pointer → world-space projection (PLAN §5.3/§2.5). Projects the cursor onto the
    camera-facing plane through the origin; touch drags behave like the pointer. */
 
-import * as THREE from "three/webgpu";
+import * as THREE from "../../vendor/three.webgpu.min.js";
 
 export function createPointer(canvasHost) {
   const state = { x: 0, y: 0, active: 0, strength: 0, world: new THREE.Vector3() };

@@ -3,8 +3,8 @@
    velocity/focus still charge toward one deeper accent. The field stays lighter than
    the text so copy always reads first. */
 
-import * as THREE from "three/webgpu";
-import { float, uniform, vec3, vec4, mix, clamp, length } from "three/tsl";
+import * as THREE from "../../vendor/three.webgpu.min.js";
+import { float, uniform, vec3, vec4, mix, clamp, length } from "../../vendor/three.tsl.min.js";
 
 export function createRenderMesh(N, sim, { mobile }) {
   const uLive = uniform(new THREE.Color("#2743FF"));

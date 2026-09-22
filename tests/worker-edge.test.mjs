@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { canonicalRedirect, isPreviewHost } from "../worker.js";
+import worker, {
+  SECURITY_HEADERS,
+  canonicalRedirect,
+  isPreviewHost,
+  withSecurityHeaders,
+} from "../worker.js";
 
 test("preview host detection is limited to workers.dev", () => {
   assert.equal(isPreviewHost("abc-superposition.kais-aleph.workers.dev"), true);
@@ -29,7 +34,31 @@ test("canonical HTTPS apex passes through unchanged", () => {
   assert.equal(canonicalRedirect(req, new URL(req.url)), null);
 });
 
-test("worker serves assets on canonical apex", async () => {
+test("security policy blocks executable inline script and framing", () => {
+  const csp = SECURITY_HEADERS["Content-Security-Policy"];
+  assert.match(csp, /script-src 'self'/);
+  assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
+  assert.match(csp, /script-src-attr 'none'/);
+  assert.match(csp, /object-src 'none'/);
+  assert.match(csp, /frame-ancestors 'none'/);
+  assert.match(csp, /base-uri 'none'/);
+  assert.match(csp, /upgrade-insecure-requests/);
+});
+
+test("security headers are attached to redirects", () => {
+  const redirect = canonicalRedirect(
+    new Request("https://www.kaisabuhussein.com/"),
+    new URL("https://www.kaisabuhussein.com/")
+  );
+  const response = withSecurityHeaders(redirect);
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  assert.equal(response.headers.get("content-security-policy"), SECURITY_HEADERS["Content-Security-Policy"]);
+});
+
+test("worker serves secured indexable assets on canonical apex", async () => {
   const env = {
     ASSETS: {
       fetch: async () => new Response("asset", { status: 200, headers: { "content-type": "text/plain" } }),
@@ -39,9 +68,14 @@ test("worker serves assets on canonical apex", async () => {
   assert.equal(response.status, 200);
   assert.equal(await response.text(), "asset");
   assert.equal(response.headers.get("x-robots-tag"), null);
+  assert.equal(response.headers.get("content-security-policy"), SECURITY_HEADERS["Content-Security-Policy"]);
+  assert.equal(response.headers.get("permissions-policy"), SECURITY_HEADERS["Permissions-Policy"]);
+  assert.equal(response.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
 });
 
-test("worker adds noindex to preview assets and preview 404s", async () => {
+test("worker adds noindex and security headers to preview assets and preview 404s", async () => {
   const env = {
     ASSETS: {
       fetch: async request => {
@@ -52,12 +86,14 @@ test("worker adds noindex to preview assets and preview 404s", async () => {
       },
     },
   };
-  const host = "prod-p0-20260922-superposition-rc1-staging.kais-aleph.workers.dev";
+  const host = "seo-phase-c-remediation-20260922-superposition-rc1-staging.kais-aleph.workers.dev";
   const root = await worker.fetch(new Request(`https://${host}/`), env);
   assert.equal(root.status, 200);
   assert.equal(root.headers.get("x-robots-tag"), "noindex");
+  assert.equal(root.headers.get("x-content-type-options"), "nosniff");
 
   const missing = await worker.fetch(new Request(`https://${host}/missing`), env);
   assert.equal(missing.status, 404);
   assert.equal(missing.headers.get("x-robots-tag"), "noindex");
+  assert.equal(missing.headers.get("x-frame-options"), "DENY");
 });

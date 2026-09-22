@@ -22,6 +22,24 @@ test.describe("a11y",()=>{
     await page.keyboard.press('Tab');await expect(page.locator('.utilities a[href="/resume/"]')).toBeFocused();
     await page.keyboard.press('Tab');await expect(page.locator('[data-ui="system"]')).toBeFocused();
   });
+  test("panel close restores focus to the trigger that opened it",async({page},testInfo)=>{
+    test.skip(testInfo.project.name==='mobile','hardware-keyboard focus restoration');
+    await page.goto("/?force=static");
+
+    const indexButton=page.locator('[data-ui="index"]');
+    await indexButton.focus();
+    await indexButton.click();
+    await expect(page.locator('[data-ui-close="index"]')).toBeFocused();
+    await page.locator('[data-ui-close="index"]').click();
+    await expect(indexButton).toBeFocused();
+
+    const systemButton=page.locator('[data-ui="system"]');
+    await systemButton.focus();
+    await systemButton.click();
+    await expect(page.locator('[data-ui-close="system"]')).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(systemButton).toBeFocused();
+  });
   test("domain strip links have visible keyboard focus style",async({page})=>{
     await page.goto("/?force=static");const link=page.locator('.domain-strip a[data-facet="columns"]');await link.focus();
     const state=await link.evaluate(el=>({color:getComputedStyle(el).color,before:getComputedStyle(el,'::before').transform}));

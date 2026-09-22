@@ -61,7 +61,7 @@
   ]
 }
 </script>
-<script>if(new URLSearchParams(location.search).get("local-font-fallback")==="1")document.documentElement.dataset.localFontFallback="1";</script>
+<script src="/js/head.js"></script>
 <style>
 /*BAKE:css BEGIN*/
 /* SUPERPOSITION 2.0 production UI — S3 design integrated with S2 chromatic state. */
@@ -251,14 +251,6 @@ body[data-index="open"] .site-head,body[data-index="open"] .domain-strip,body[da
 /*BAKE:css END*/
 </style>
 <link rel="stylesheet" href="css/print.css" media="print">
-<script>document.documentElement.classList.add("js");</script>
-<script type="importmap">
-{"imports":{
-  "three":"./vendor/three.webgpu.min.js",
-  "three/webgpu":"./vendor/three.webgpu.min.js",
-  "three/tsl":"./vendor/three.tsl.min.js"
-}}
-</script>
 <noscript><style>
 .view{display:block!important;opacity:1!important;transform:none!important;max-width:72ch;min-height:auto;padding:38px 0;border-bottom:1px solid var(--rule)}
 #field,#atmosphere,#legibility,.spectral-edge,.state-axis,.domain-strip,.site-foot,.index-overlay,.contact-panel,.system-panel{display:none!important}

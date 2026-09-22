@@ -4,8 +4,8 @@
    mirrored to <body data-*> (§5.6): data-renderer, data-tier, data-paused,
    data-fps (test mode), data-settled (test mode), data-field-boot-ms. */
 
-import * as THREE from "three/webgpu";
-import { TIERS, downshift } from "./tier.js";
+import * as THREE from "../../vendor/three.webgpu.min.js";
+import { TIERS, adaptTier } from "./tier.js";
 import { FACET_IDS, buildAttractors, buildCitizenship, packTargets } from "./attractors.js";
 import { createSim, MODES } from "./sim.tsl.js";
 import { createRenderMesh } from "./render.tsl.js";
@@ -34,18 +34,23 @@ export const FieldEngine = {
     const backend = renderer.backend.isWebGPUBackend ? "webgpu" : "webgl";
     if (backend === "webgl" && (tier === 1 || tier === 2)) tier = tier === 1 ? 3 : 4;
 
-    // Software WebGPU adapters can expose a materially smaller practical mapped-buffer
-    // ceiling than hardware adapters. GitHub's Dawn/SwiftShader path rejected the
-    // 1 MiB N*vec4 bootstrap buffers at 65,536 particles, so cap only that detected
-    // portable profile at 32,768 (512 KiB for the same buffer shape).
+    // Software GPU adapters turn the visual enhancement into sustained main-thread
+    // blocking work. They are not a useful rendering tier for this site: preserve the
+    // semantic/static experience instead and let real hardware keep the live field.
     let portableWebGPU = false;
     if (backend === "webgpu" && navigator.gpu) {
       try {
         const adapter = await navigator.gpu.requestAdapter();
-        portableWebGPU = /swiftshader/i.test(String(adapter?.info?.architecture || ""));
+        const info = String(adapter?.info?.architecture || "") + " " + String(adapter?.info?.description || "");
+        portableWebGPU = /swiftshader|software|lavapipe|llvmpipe/i.test(info);
       } catch {}
     }
-    const N = portableWebGPU ? Math.min(TIERS[tier].particles, 32768) : TIERS[tier].particles;
+    if (portableWebGPU) {
+      body.dataset.performanceFallback = "software-webgpu";
+      renderer.dispose();
+      throw new Error("software WebGPU adapter: static fallback");
+    }
+    const N = TIERS[tier].particles;
     const mobile = tier === 2 || tier === 4;
     body.dataset.particles = String(N);
     if (portableWebGPU) body.dataset.gpuProfile = "portable-swiftshader";
@@ -135,7 +140,7 @@ export const FieldEngine = {
     let stateId = "home", modeFrom = { ...MODES.home }, modeTo = { ...MODES.home };
     let blendStart = 0, blendDur = BOOT_MS / 1000, yaw = 0.6;
     let userPaused = false, hiddenPaused = false, offscreenPaused = false, frozen = false;
-    let rafId = 0, running = false, disposed = false, settled = false;
+    let rafId = 0, running = false, disposed = false, settled = false, performanceStatic = false;
     let curTier = tier, drawN = N, lowStreak = 0, fpsFrames = 0, fpsClock = performance.now();
     let bootMarked = false, scrollP = 0;
     const par = { x: 0, y: 0, tx: 0, ty: 0, gyro: false };
@@ -179,21 +184,38 @@ export const FieldEngine = {
       if (paused && running) { running = false; cancelAnimationFrame(rafId); }
     }
 
+    function enterPerformanceStaticFallback(fps) {
+      if (performanceStatic) return;
+      performanceStatic = true;
+      curTier = 0;
+      drawN = 0;
+      mesh.count = 0;
+      body.dataset.tier = "0";
+      body.dataset.renderer = "static";
+      body.dataset.performanceFallback = "low-fps";
+      body.dataset.fps = fps.toFixed(0);
+      userPaused = true;
+      updatePauseAttr();
+    }
+
     function sampleFps(now) {
       fpsFrames++;
       if (now - fpsClock >= 1000) {
         const fps = (fpsFrames * 1000) / (now - fpsClock);
         fpsFrames = 0; fpsClock = now;
         body.dataset.fps = fps.toFixed(0);
-        if (fps < 45) {
-          if (++lowStreak >= 3 && curTier !== downshift(curTier)) {
-            curTier = downshift(curTier);
-            drawN = Math.min(drawN, TIERS[curTier].particles);
-            mesh.count = drawN;
-            body.dataset.tier = String(curTier);
-            lowStreak = 0;
-          }
-        } else lowStreak = 0;
+        const decision = adaptTier({ tier: curTier, fps, lowStreak });
+        lowStreak = decision.lowStreak;
+        if (decision.staticFallback) {
+          enterPerformanceStaticFallback(fps);
+          return;
+        }
+        if (decision.tier !== curTier) {
+          curTier = decision.tier;
+          drawN = Math.min(drawN, TIERS[curTier].particles);
+          mesh.count = drawN;
+          body.dataset.tier = String(curTier);
+        }
       }
     }
 
@@ -278,7 +300,7 @@ export const FieldEngine = {
 
     const api = {
       _debug: { sim, renderer, mesh },
-      renderer: backend,
+      get renderer() { return performanceStatic ? "static" : backend; },
       get tier() { return curTier; },
       get state() { return stateId; },
 
@@ -333,7 +355,7 @@ export const FieldEngine = {
       },
       getDebugState() {
         return {
-          state: stateId, backend, tier: curTier, seed: recipeSeedBase, recipeIndex,
+          state: stateId, backend: performanceStatic ? "static" : backend, tier: curTier, seed: recipeSeedBase, recipeIndex,
           recipe: committedRecipe.signature, topology: committedRecipe.topology,
           law: committedRecipe.law, layers: committedRecipe.layers.length,
           surfaceLayers: surfaceScene.debug.layers, cost: committedRecipe.cost,

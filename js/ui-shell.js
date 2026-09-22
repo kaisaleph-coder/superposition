@@ -12,16 +12,30 @@ export function createUIShell(doc,{getEngine}={}){
   const closeContact=doc.querySelector('[data-ui-close="contact"]');
   const closeSystem=doc.querySelector('[data-ui-close="system"]');
 
+  let returnFocus=null;
   function setPanel(panel,btn,open){if(!panel)return;panel.setAttribute('aria-hidden',String(!open));panel.inert=!open;btn?.setAttribute('aria-expanded',String(open))}
-  function closeAll({clearPreview=true}={}){setPanel(index,indexBtn,false);setPanel(contact,contactBtn,false);setPanel(system,systemBtn,false);delete body.dataset.index;if(clearPreview)getEngine?.()?.clearPreview?.()}
-  function toggle(panel,btn,name){const open=panel?.getAttribute('aria-hidden')!=='false';closeAll();setPanel(panel,btn,open);if(name==='index'&&open)body.dataset.index='open';if(open)panel?.querySelector('a,button')?.focus?.()}
+  function closeAll({clearPreview=true,restoreFocus=false}={}){
+    const target=restoreFocus?returnFocus:null;
+    setPanel(index,indexBtn,false);setPanel(contact,contactBtn,false);setPanel(system,systemBtn,false);
+    delete body.dataset.index;
+    if(clearPreview)getEngine?.()?.clearPreview?.();
+    returnFocus=null;
+    target?.focus?.();
+  }
+  function toggle(panel,btn,name){
+    const open=panel?.getAttribute('aria-hidden')!=='false';
+    if(!open){closeAll({restoreFocus:true});return}
+    closeAll();returnFocus=btn;setPanel(panel,btn,true);
+    if(name==='index')body.dataset.index='open';
+    panel?.querySelector('a,button')?.focus?.();
+  }
   setPanel(index,indexBtn,false);setPanel(contact,contactBtn,false);setPanel(system,systemBtn,false);
   indexBtn?.addEventListener('click',()=>toggle(index,indexBtn,'index'));
   contactBtn?.addEventListener('click',()=>toggle(contact,contactBtn,'contact'));
   systemBtn?.addEventListener('click',()=>toggle(system,systemBtn,'system'));
-  closeIndex?.addEventListener('click',()=>closeAll());
-  closeContact?.addEventListener('click',()=>closeAll());
-  closeSystem?.addEventListener('click',()=>closeAll());
+  closeIndex?.addEventListener('click',()=>closeAll({restoreFocus:true}));
+  closeContact?.addEventListener('click',()=>closeAll({restoreFocus:true}));
+  closeSystem?.addEventListener('click',()=>closeAll({restoreFocus:true}));
 
   for(const a of doc.querySelectorAll('.domain-strip a')){
     a.addEventListener('focus',()=>a.setAttribute('data-focus-ring',''));
@@ -41,7 +55,7 @@ export function createUIShell(doc,{getEngine}={}){
   doc.addEventListener('keydown',e=>{
     if(e.key!=='Escape')return;
     if(index?.getAttribute('aria-hidden')==='false'||contact?.getAttribute('aria-hidden')==='false'||system?.getAttribute('aria-hidden')==='false'){
-      e.preventDefault();e.stopImmediatePropagation();closeAll();indexBtn?.focus();
+      e.preventDefault();e.stopImmediatePropagation();closeAll({restoreFocus:true});
     }
   },true);
   addEventListener('hashchange',()=>closeAll());

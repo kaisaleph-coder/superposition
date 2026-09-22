@@ -1,6 +1,14 @@
 const CANONICAL_HOST = "kaisabuhussein.com";
 const WWW_HOST = "www.kaisabuhussein.com";
 
+const SECURITY_HEADERS = Object.freeze({
+  "Content-Security-Policy": "default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-src 'none'; frame-ancestors 'none'; form-action 'none'; worker-src 'none'; media-src 'none'; manifest-src 'self'; upgrade-insecure-requests",
+  "Permissions-Policy": "accelerometer=(self), camera=(), geolocation=(), gyroscope=(self), magnetometer=(), microphone=(), payment=(), usb=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+});
+
 function isPreviewHost(hostname) {
   return hostname.endsWith(".workers.dev");
 }
@@ -17,6 +25,17 @@ function canonicalRedirect(request, url) {
   return null;
 }
 
+function withSecurityHeaders(response, { preview = false } = {}) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(SECURITY_HEADERS)) headers.set(name, value);
+  if (preview) headers.set("X-Robots-Tag", "noindex");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -24,21 +43,12 @@ export default {
 
     if (!preview) {
       const redirect = canonicalRedirect(request, url);
-      if (redirect) return redirect;
+      if (redirect) return withSecurityHeaders(redirect);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
-
-    if (!preview) return assetResponse;
-
-    const headers = new Headers(assetResponse.headers);
-    headers.set("X-Robots-Tag", "noindex");
-    return new Response(assetResponse.body, {
-      status: assetResponse.status,
-      statusText: assetResponse.statusText,
-      headers,
-    });
+    return withSecurityHeaders(assetResponse, { preview });
   },
 };
 
-export { CANONICAL_HOST, WWW_HOST, isPreviewHost, canonicalRedirect };
+export { CANONICAL_HOST, WWW_HOST, SECURITY_HEADERS, isPreviewHost, canonicalRedirect, withSecurityHeaders };

@@ -22,7 +22,7 @@
 import {
   Fn, If, instancedArray, uniform, instanceIndex,
   float, vec3, vec4, cos, sqrt, abs,
-} from "three/tsl";
+} from "../../vendor/three.tsl.min.js";
 
 export function createSim(N, { stateTargets, stateIds, colorsData, seed, webgpu }) {
   const positions = instancedArray(N, "vec4"); // xyz pos, w render charge (§2.4)
