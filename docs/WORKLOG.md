@@ -76,3 +76,4 @@ Owner order, verbatim: "Raise the gate cap as rec, proceed with rec on all, time
 - NOT built, though recommended: the dial that tunes the plate, the visible plate. NOT approved and not built: tenure as quantity, path memory, sound.
 - Echoes reflect off the screen edges only, not off text blocks as proposed.
 - Tilt was exercised only by synthetic deviceorientation events in Chrome's phone emulation. No real phone.
+- Later in the same 30 minutes the tuning dial was built as well (its own commit). The visible plate remains unbuilt. The dial does not snap to a notch per domain, as proposed.

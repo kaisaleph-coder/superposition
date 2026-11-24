@@ -145,3 +145,6 @@ phones the relief and shadow strengths are zero.
 `g.w` strike power. `h` = overtone amount, gravity x, gravity y, strike lifetime (s).
 
 - Tilt: sand that reaches the low edge is returned to the plate at a hashed position, in the air, so the plate never empties. Tilt only starts after the first touch, when js/main.js asks for motion permission.
+
+### The dial (added last in round 2)
+A slider at the right edge (`#sand-dial`, created by the engine, hidden on phones and in print) tunes the plate. Its value scales the coordinates every mode is sampled at, about the focal point (`u.i.x`, from 0.55 to 2.2, 1.0 at rest), so a higher pitch draws a finer figure. Drag it, scroll over it or use the arrow keys; Home or a double click returns it to rest. The setting persists across page changes. It does not snap to a notch per domain.

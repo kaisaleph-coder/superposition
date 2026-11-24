@@ -9,7 +9,7 @@ const COPY = ".positioning,.manifest,.dossiers,.record-list,.index-overlay,.syst
 const DRIFT = 0.012, KICK = 0.02, FLOOR = 0.0011, GAIN = 0.06, TRAIL = 0.11, MARK_LIFE = 30, EXPOSURE = 1.5;
 
 const COMMON = /* wgsl */ `
-struct U { a: vec4f, b: vec4f, c: vec4f, d: vec4f, e: vec4f, f: vec4f, g: vec4f, h: vec4f }
+struct U { a: vec4f, b: vec4f, c: vec4f, d: vec4f, e: vec4f, f: vec4f, g: vec4f, h: vec4f, i: vec4f }
 fn hash(n: u32) -> u32 { var x = n; x = x ^ (x >> 16u); x = x * 0x7feb352du; x = x ^ (x >> 15u); x = x * 0x846ca68bu; x = x ^ (x >> 16u); return x; }
 `;
 
@@ -48,14 +48,15 @@ return v;
 fn uvOf(p: vec2f) -> vec2f { return p / (2.0 * u.a.zw) + vec2f(0.5); }
 fn page(p: vec2f) -> vec4f { return textureSampleLevel(maskT, maskS, uvOf(p), 0.0); }
 fn mark(p: vec2f) -> f32 { return textureSampleLevel(markT, maskS, uvOf(p), 0.0).r; }
-fn plate(p: vec2f) -> f32 {
+fn plate(q: vec2f) -> f32 {
+let c0 = vec2f(0.30 * u.a.z, 0.0);
+let p = c0 + (q - c0) * u.i.x;
 let k = u.c.z;
 var f = 0.0;
 if (k <= 0.001) { f = fld(i32(u.c.x), p); }
 else if (k >= 0.999) { f = fld(i32(u.c.y), p); }
 else { f = mix(fld(i32(u.c.x), p), fld(i32(u.c.y), p), k); }
 if (u.h.x > 0.01) {
-let c0 = vec2f(0.30 * u.a.z, 0.0);
 f = mix(f, fld(i32(u.c.y), c0 + (p - c0) * 1.9), u.h.x);
 }
 return f;
@@ -267,7 +268,7 @@ export const Resonance = {
     }
     pBuf.unmap();
 
-    const U = new Float32Array(32), PAL = new Float32Array(40), V = new Float32Array(8);
+    const U = new Float32Array(36), PAL = new Float32Array(40), V = new Float32Array(8);
     const ubo = (a) => device.createBuffer({ size: a.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const uBuf = ubo(U), palBuf = ubo(PAL), glowBuf = ubo(PAL), vBuf = ubo(V);
     const sampler = device.createSampler({ magFilter: "linear", minFilter: "linear" });
@@ -395,6 +396,7 @@ export const Resonance = {
     let strikeX = 0, strikeY = 0, strikeAge = 9, strikePow = 0, strikeLife = 1, over = 0, joltT = 9, joltAmp = 0;
     let down = false, touch = false, downT = 0, travel = 0, lastX = 0, lastY = 0, gx = 0, gy = 0, gxs = 0, gys = 0;
     let rx = 0, ry = 0, nx = 0, ny = 0, tilted = false;
+    let pitch = 1, pitchS = 1;
     let frames = 0, clock = 0, low = 0, born = 0;
     const retarget = (id, amp) => { idA = mixV > 0.5 ? idB : idA; idB = id; mixV = 0; mixT = 1; shakeT = 0; shakeAmp = amp; };
     // Live superposition: pointing at another domain blends its mode half-way into the current one.
@@ -426,7 +428,7 @@ export const Resonance = {
       lastX = e.clientX; lastY = e.clientY;
     };
     const onDown = (e) => {
-      if (e.button > 0 || e.target.closest?.(COPY)) return;
+      if (e.button > 0 || e.target.closest?.(COPY + ",#sand-dial")) return;
       down = true; touch = e.pointerType === "touch"; downT = t; travel = 0; lastX = e.clientX; lastY = e.clientY;
       [ptrX, ptrY] = toPlate(e.clientX, e.clientY);
     };
@@ -481,6 +483,7 @@ export const Resonance = {
       if (dt > 0 && moved < 0.08 && prevX < 8) { pvx += ((ptrX - prevX) / dt - pvx) * 0.35; pvy += ((ptrY - prevY) / dt - pvy) * 0.35; } else { pvx *= 0.8; pvy *= 0.8; }
       prevX = ptrX; prevY = ptrY;
       over *= Math.exp(-dt / 0.45);
+      pitchS += (pitch - pitchS) * Math.min(1, dt * 5);
       if (tilted) {
         nx += (rx - nx) * Math.min(1, dt / 6); ny += (ry - ny) * Math.min(1, dt / 6);
         const dz = (a) => (Math.abs(a) < 0.12 ? 0 : a - Math.sign(a) * 0.12);
@@ -495,7 +498,7 @@ export const Resonance = {
         + 0.08 * joltAmp * Math.sin(Math.PI * Math.min(1, joltT / 0.5));
       if (!revealed && t > 1.0) { revealed = true; root.classList.remove("sand-pending"); }
       U.set([W, H, ax, ay, t, dt, fr, count, idA, idB, mixV, shake, ptrX, ptrY, pvx, pvy, strikeX, strikeY, strikeAge, t * 0.045,
-        DRIFT, KICK, FLOOR, S, tilt, mobile ? 1.2 : 3.0, 2.4 * S, strikePow, over < 0.01 ? 0 : over, gxs, gys, strikeLife]);
+        DRIFT, KICK, FLOOR, S, tilt, mobile ? 1.2 : 3.0, 2.4 * S, strikePow, over < 0.01 ? 0 : over, gxs, gys, strikeLife, pitchS, 0, 0, 0]);
       device.queue.writeBuffer(uBuf, 0, U);
 
       const k = Math.min(1, dt * 3.2), decay = Math.exp(-Math.max(dt, 1 / 240) / TRAIL);
@@ -551,7 +554,7 @@ export const Resonance = {
       win.removeEventListener("pointerup", onUp); win.removeEventListener("pointercancel", onCancel);
       doc.removeEventListener("mousedown", noSelect);
       win.removeEventListener("resize", onResize); doc.removeEventListener("visibilitychange", sync);
-      root.classList.remove("sand", "sand-pending"); canvas.remove();
+      root.classList.remove("sand", "sand-pending"); canvas.remove(); doc.getElementById("sand-dial")?.remove();
       try { device.destroy(); } catch {}
     }
     function fail(reason) { if (dead) return; dispose(); onFail?.(reason); }
@@ -588,6 +591,38 @@ export const Resonance = {
       togglePause() { userPaused = !userPaused; sync(); },
       dispose,
     };
+
+    // The dial tunes the plate: a higher pitch draws a finer figure. Drag it, scroll over
+    // it, or use the arrow keys; Home or a double click returns it to the domain's pitch.
+    const dial = doc.createElement("div");
+    dial.id = "sand-dial";
+    dial.tabIndex = 0;
+    dial.setAttribute("role", "slider");
+    dial.setAttribute("aria-label", "Pitch of the plate");
+    dial.setAttribute("aria-orientation", "vertical");
+    dial.setAttribute("aria-valuemin", "0");
+    dial.setAttribute("aria-valuemax", "100");
+    dial.appendChild(doc.createElement("i"));
+    const REST = Math.log(1 / 0.55) / Math.log(4);
+    let dialV = REST;
+    const setDial = (v) => {
+      dialV = clamp(v, 0, 1);
+      pitch = 0.55 * Math.pow(4, dialV);
+      dial.style.setProperty("--v", ((1 - dialV) * 100).toFixed(1) + "%");
+      dial.setAttribute("aria-valuenow", String(Math.round(dialV * 100)));
+    };
+    const dialAt = (e) => { const r = dial.getBoundingClientRect(); setDial(1 - (e.clientY - r.top) / r.height); };
+    dial.addEventListener("pointerdown", (e) => { dial.setPointerCapture(e.pointerId); dialAt(e); });
+    dial.addEventListener("pointermove", (e) => { if (dial.hasPointerCapture(e.pointerId)) dialAt(e); });
+    dial.addEventListener("dblclick", () => setDial(REST));
+    dial.addEventListener("wheel", (e) => { e.preventDefault(); setDial(dialV - Math.sign(e.deltaY) * 0.03); }, { passive: false });
+    dial.addEventListener("keydown", (e) => {
+      const step = { ArrowUp: 0.03, ArrowDown: -0.03, PageUp: 0.12, PageDown: -0.12 }[e.key];
+      if (step) { e.preventDefault(); e.stopPropagation(); setDial(dialV + step); }
+      else if (e.key === "Home") { e.preventDefault(); setDial(REST); }
+    });
+    setDial(REST);
+    doc.body.appendChild(dial);
 
     doc.getElementById("field").before(canvas);
     root.classList.add("sand");

@@ -25,3 +25,9 @@ html.sand{transition:--accent .9s ease,--accent2 .9s ease,--ink .7s ease,--muted
 :is(.manifest li,.dossier):nth-child(5){--n:4}
 @media print{#sand{display:none!important}.sand .view h1,.sand .view h2{color:#000!important;-webkit-text-stroke:0}}
 .sand .view h1,.sand .view h2{user-select:none;-webkit-user-select:none}
+#sand-dial{position:fixed;z-index:19;right:8px;top:calc(var(--header-h) + 44px);bottom:calc(var(--strip-h) + 44px);width:24px;cursor:ns-resize;touch-action:none;transition:opacity .9s ease}
+#sand-dial::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--rule) 12%,var(--rule) 88%,transparent)}
+#sand-dial i{position:absolute;left:6px;top:var(--v,50%);width:11px;height:11px;margin-top:-6px;border:1px solid var(--accent);border-radius:50%;background:var(--ground);box-sizing:border-box}
+#sand-dial:focus-visible{outline:1px solid var(--accent);outline-offset:3px}
+.sand-pending #sand-dial{opacity:0}
+@media(max-width:720px),print{#sand-dial{display:none}}
