@@ -67,3 +67,12 @@ Owner-directed, from a worktree at E:/ai_project_v1/_worktrees/resume-resonance,
 - No real phone, no Safari, no Firefox, no integrated GPU. The frame-rate governor and its static hand-over never triggered here, so they are untested.
 - The Playwright suite was not run (no node_modules here). No test renders this engine; CI has no GPU.
 - Not pushed. Not deployed.
+
+## 2026-11-24, late - RESONANCE round 2 (same branch, NOT pushed)
+
+Owner order, verbatim: "Raise the gate cap as rec, proceed with rec on all, time is 30 minutes starting now, go".
+- tools/budget.mjs app-code cap raised from 60 KB to 80 KB on that order. PLAN.md section 6 still says 60; it was not edited.
+- Built, all in js/field/resonance.js (rewritten): the two restrictions (title untouchable by pointer and boom; no text selection from the plate), long exposure, marks that last 30 s, hold to gather, charged boom with edge echoes and an overtone flash, relief and light on desktop, tilt on phones. Notes: docs/RESONANCE.md, Round 2.
+- NOT built, though recommended: the dial that tunes the plate, the visible plate. NOT approved and not built: tenure as quantity, path memory, sound.
+- Echoes reflect off the screen edges only, not off text blocks as proposed.
+- Tilt was exercised only by synthetic deviceorientation events in Chrome's phone emulation. No real phone.

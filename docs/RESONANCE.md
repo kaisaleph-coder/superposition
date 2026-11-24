@@ -93,3 +93,55 @@ sequence starts the plate tipped back by about 58 degrees and swings it up in 2.
 `?seed=`, `?force=webgl` and `?force=static` never load this engine, so the repo's
 existing browser tests exercise the legacy paths only. Nothing in CI renders this engine:
 CI has no GPU.
+
+## Round 2 (2026-11-24): memory, manipulation, the boom, relief
+
+### Restrictions
+- Sand resting in the heading's glyphs answers to nothing but the page: the pointer's drag,
+  the strike and tilt are all multiplied by `1 - m.r` in the simulation.
+- A press that starts on the plate never starts a text selection (`mousedown` is
+  prevented unless the target is copy or a control), and headings are not selectable.
+  A press that starts on copy still selects, and never strikes the plate.
+- Sand in the air is not drawn over the copy or over the heading's clearing: the draw
+  shader samples the page mask at the grain's plate position and multiplies by
+  `1 - g * (1 - r)`.
+
+### Memory
+- Long exposure. Grains are drawn additively into an `rgba16float` texture that is
+  multiplied by `exp(-dt / TRAIL)` each frame (a full-screen pass with a constant blend
+  factor), and grain intensity is scaled by one minus that factor, so sand at rest looks
+  the same and sand in motion leaves a streak. `TRAIL` is 0.11 s.
+- Marks. A press-and-drag records line segments (client px, width, birth time). They are
+  drawn to a second 2D canvas and uploaded as `markT`. The simulation multiplies the
+  plate's amplitude by `1 - 0.93 * mark`, so the plate is nearly still along a stroke and
+  sand collects there. A mark lives `MARK_LIFE` (30 s) and fades over its last 8 s. Marks
+  cannot move sand onto copy or into the heading's clearing. Touch input does not draw.
+
+### Manipulation
+- Hold to gather. While a press is held still, a disc that grows with the hold is drawn
+  into the mark canvas under the pointer, so sand gathers there.
+- Tilt (phones). `js/main.js` already forwards device orientation to `setParallax`. The
+  pose the phone is first held in counts as level, level follows the hand with a 6 s time
+  constant, and a 0.12 dead zone ignores a shaking hand. The result is a velocity added
+  to every grain outside the glyphs.
+
+### The boom
+- A tap strikes at power 0.35. A held press charges to 1.0 over 1.1 s and strikes on
+  release. A press that travelled 14 px or more is a drawing and does not strike.
+- Echoes. The ring is evaluated for the strike point and for its four mirror images in
+  the plate's edges, at 0.55 strength. It does not reflect off text blocks.
+- Overtone. A strike above 0.55 blends the current mode with the same mode sampled 1.9
+  times finer about the focal point; the blend decays with a 0.45 s time constant.
+- A strike above 0.9 fades every mark in 0.4 s. Every strike rocks the plate.
+
+### Relief and light (desktop only)
+The show pass reads the accumulated light as a height field. Slope against a light from
+the upper left brightens one flank of a ridge and darkens the other, adds a glint on the
+lit flank, and a four-step march toward the light darkens what a higher ridge shadows.
+Then `1 - exp(-colour * EXPOSURE)` maps it to the screen over the ground colour. On
+phones the relief and shadow strengths are zero.
+
+### Uniforms added
+`g.w` strike power. `h` = overtone amount, gravity x, gravity y, strike lifetime (s).
+
+- Tilt: sand that reaches the low edge is returned to the plate at a hashed position, in the air, so the plate never empties. Tilt only starts after the first touch, when js/main.js asks for motion permission.

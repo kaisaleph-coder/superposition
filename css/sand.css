@@ -24,3 +24,4 @@ html.sand{transition:--accent .9s ease,--accent2 .9s ease,--ink .7s ease,--muted
 :is(.manifest li,.dossier):nth-child(4){--n:3}
 :is(.manifest li,.dossier):nth-child(5){--n:4}
 @media print{#sand{display:none!important}.sand .view h1,.sand .view h2{color:#000!important;-webkit-text-stroke:0}}
+.sand .view h1,.sand .view h2{user-select:none;-webkit-user-select:none}

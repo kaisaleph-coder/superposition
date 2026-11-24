@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* SUPERPOSITION budget gate (PLAN §6) — gzip-aware byte report per site file.
    Caps (gzip): total ≤ 900 KB (hard fail 1.2 MB) · vendor ≤ 340 KB ·
-   fonts ≤ 105 KB · HTML+CSS+app-JS ≤ 60 KB.
+   fonts ≤ 105 KB · HTML+CSS+app-JS ≤ 80 KB (raised from 60 by the owner, 2026-11-24).
    Exit 1 on any breach. Run from repo root: node tools/budget.mjs */
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, extname } from "node:path";
@@ -11,7 +11,7 @@ const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "
 const KB = 1024;
 const CAPS = {
   total: 900 * KB, totalHard: 1200 * KB,
-  vendor: 340 * KB, fonts: 105 * KB, app: 60 * KB,
+  vendor: 340 * KB, fonts: 105 * KB, app: 80 * KB,
 };
 
 // Site = what a cold load could transfer. Dev-only trees excluded.
