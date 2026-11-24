@@ -107,9 +107,37 @@ const tier = detectTier({ force: q.get("force") });
 body.dataset.tier = String(tier);
 body.dataset.renderer = TIERS[tier].renderer;
 
+// The resonance engine could not hold frame rate or lost its device: land on the static ground.
+function toStatic(reason) {
+  engine = null;
+  document.documentElement.classList.remove("sand-pending");
+  body.dataset.fieldError = String(reason).slice(0, 160);
+  body.dataset.tier = "0";
+  body.dataset.renderer = "static";
+  delete body.dataset.engine;
+  fallbackController.setState(router.current, { first: true });
+}
+
 if (tier > 0) {
   requestAnimationFrame(() => {
     requestAnimationFrame(async () => {
+      // Hardware WebGPU and no QA parameter: the resonance field (js/field/resonance.js).
+      // Anything else, or any failure, continues into the legacy field below.
+      if ((tier === 1 || tier === 2) && !q.has("seed") && !q.get("force")) {
+        try {
+          const { Resonance } = await import("./field/resonance.js");
+          engine = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, state: router.current, onFail: toStatic });
+          body.dataset.renderer = "webgpu";
+          body.dataset.engine = "resonance";
+          uiShell.updateSystem();
+          return;
+        } catch (err) {
+          engine = null;
+          document.documentElement.classList.remove("sand-pending");
+          console.warn("resonance: " + (err?.message || err));
+          body.dataset.resonanceError = String(err?.message || err).slice(0, 160);
+        }
+      }
       try {
         const { FieldEngine } = await import("./field/engine.js");
         engine = await FieldEngine.init(document.getElementById("field"), {

@@ -36,3 +36,34 @@
 - P4 PASSED: inline critical CSS (FCP 1524→784 ms Fast-3G lab), dark text accents ≥7:1, print forced to ink, OG card, long-task zero, matrix 75/75 ×2, Lighthouse Ladder-C substitute (CLI spawn-blocked in sandbox).
 - P3: legibility gate caught the WebGL compute path silently broken — 5 failure modes bisected (ADR-005); engine redesigned to 8 static target buffers + 8 per-state update kernels, retarget = CPU kernel switch. All 7 silhouettes verified legible. Convergence 0.026–0.029 both backends.
 - Bite: browser pane is always `document.hidden` → rAF throttled; perf via awaited-loop throughput or Playwright. renderAsync deprecated in r185. WebGPU pads vec3 storage to stride 4 on readback; WebGL keeps stride 3. Lighthouse CLI exits 1 on Windows tmp cleanup AFTER writing reports. Never string-edit UTF-8 files with PS 5.1 Get-Content/-replace (mojibake). three r185 WebGL backend: ≤4 buffers/kernel, instanceIndex-only reads, no re-uploads, float uniforms only, no cross-kernel storage flow (ADR-005). Uniform-valued test buffers can't catch indexing bugs — use per-block sentinels.
+
+## 2026-11-24 - RESONANCE: a new field engine (branch resonance-20261124, NOT pushed)
+
+Owner-directed, from a worktree at E:/ai_project_v1/_worktrees/resume-resonance, branched from 10dee90 (the repair commit, which is live). Built inside a one-hour cap; the engine took 21 minutes to a frozen build.
+
+### Why
+- 10dee90 (one-line repair of the dead field) was pushed to origin/cloudflare-staging-anchor at 21:50 UTC on the owner's order and is live. cloudflare-staging-anchor is the branch Cloudflare Workers Builds deploys to production; every other branch only gets a preview version.
+- A first motion layer on the legacy field (local branch anim-overhaul-20261124, commits 53c7fef and f3d42a9) was rejected the same evening: "not an overhaul", "at best a minor improvement of the original". Kept from it: the speed. Rejected: the confluence of several shapes at home, the halo around the cursor.
+- The owner then lifted the earlier limits: the 2026-08-09 rulings "field subordinate to the text" and "slow motion only", and the same day's "legible, with bursts". The animation may lead the page. Name and record must stay real, readable text.
+
+### What
+- js/field/resonance.js: raw WebGPU, no three.js. Up to 1.4 million grains on a resonating plate settle on the nodal lines of one vibration mode per domain. Home is two modes superposed into one figure. A mask rendered from the live DOM makes the sand fill the heading's glyphs and leave the copy clear. Full notes: docs/RESONANCE.md.
+- Opening sequence on the first load of a session: js/head.js sets a curtain before first paint, the plate starts tipped back and swings up in 1.8 s, the page's chrome is released 1.0 s after the engine starts.
+- Pointing at another domain blends its mode half-way in (live superposition). A click strikes the plate. A moving pointer drags sand; there is no effect at rest.
+- js/main.js picks this engine only on tier 1 or 2 (WebGPU) with no ?seed= and no ?force=. Every other path, and any failure, runs the legacy field or the static ground unchanged.
+
+### Measured here (owner's PC, headless system Chrome, RTX 4070 SUPER)
+- 1,400,000 grains at 1440x900 and at 2560x1440: 57-60 fps. Five domain changes: 59-60 fps, worst frame 33 ms. Phone-size emulation: 360,000 grains at 60 fps.
+- Mode matrix clean (no console error, page error or failed request): default, reduced motion, ?force=webgl, ?seed=1, ?force=static, no-JS, mobile emulation, repeat visit, /resume/.
+- Budget 769.8 KB of 900; HTML+CSS+app JS 59.9 KB of 60. Node tests 17/17. Bake parity: one added line (the sand.css link). Surface contract passes.
+- To fit the 60 KB app cap the shipped shader text and resonance.js carry no comments; docs/RESONANCE.md is their documentation.
+
+### Costs
+- First load of a session: the page's text is hidden until about 1.5-2.2 s after navigation, then fades for 0.9 s (three runs: released at 2183, 1626, 1463 ms). Chrome reported no LCP candidate at all on those loads. Repeat loads in a session skip the curtain.
+- One 533 ms frame at start (pipeline compile) and, in one run, a 150 ms frame between 3 and 5 s.
+- App-code budget headroom is 0.1 KB.
+
+### NOT verified
+- No real phone, no Safari, no Firefox, no integrated GPU. The frame-rate governor and its static hand-over never triggered here, so they are untested.
+- The Playwright suite was not run (no node_modules here). No test renders this engine; CI has no GPU.
+- Not pushed. Not deployed.
