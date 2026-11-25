@@ -88,7 +88,7 @@ Owner report, verbatim: "the original website loads momentarily prior to your ch
 - Cost: when the adapter request hangs, the heading stays an empty outline for 6 s before the legacy page returns. Before this change the legacy page showed at once in that case. A solid heading would remove this cost.
 - NOT verified: a real phone, Safari, Firefox, a weak GPU. The Playwright suite was not run.
 - Known cost until the title decision below is made: with the outlined heading, a repeat load shows an empty outline for about a second, until the sand fills it. Before the fix the solid legacy heading showed there.
-- Measured, not changed: on a repeat load the engine is live at 669 to 821 ms. One frame of 333 to 383 ms in that is the GPU pipeline compile, which blocks the main thread. Parallel async pipeline creation is untried.
+- Measured, not changed: across four filmed repeat loads the engine was live at 669, 773, 821 and 1116 ms. In the two loads that were instrumented, one frame of 333 and 383 ms is the GPU pipeline compile, which blocks the main thread. Parallel async pipeline creation is untried.
 
 ## 2026-11-25 - Title treatment: options rendered, owner's pick PENDING (nothing changed in the repo)
 
