@@ -76,12 +76,22 @@ sequence starts the plate tipped back by about 58 degrees and swings it up in 2.
 
 ## Page integration
 
-- `js/head.js` sets `html.sand-pending` before first paint on the first load of a session
-  (WebGPU present, motion welcome, no QA parameter). The page's chrome waits behind that
-  curtain. The engine lifts it 1.25 s after it starts; `js/main.js` lifts it on any
-  failure; a 3.2 s timer in `head.js` lifts it if nothing else does.
-- `html.sand` is set while the engine runs. `css/sand.css` turns headings into outlines,
-  hides the legacy overlays and stops the view from sliding (the engine reads layout).
+- `js/head.js` decides before first paint whether the engine is expected (WebGPU present,
+  motion welcome, no QA parameter). If it is, `head.js` sets `html.sand` on every load, so
+  the page is in its sand form from the first frame and the legacy page never shows first.
+  Before 2026-11-25 a repeat load showed the legacy page for about a second. The class is
+  dropped again by `js/main.js` when the load will not start the engine or the engine
+  throws, by the engine's own `dispose`, and by a 6 s timer in `head.js` when the engine
+  has not reported by then (`body[data-engine]`).
+- On the first load of a session `head.js` also sets `html.sand-pending`, the opening
+  curtain. The page's chrome waits behind it. The engine lifts it 1.0 s after it starts;
+  `js/main.js` lifts it on any failure; a 3.2 s timer in `head.js` lifts it if nothing
+  else does.
+- Under `html.sand`, `css/sand.css` turns headings into outlines, hides the legacy overlays
+  and the legacy static picture of the field, and stops the view from sliding (the engine
+  reads layout).
+- A load without the opening sequence raises the exposure from zero over 0.6 s, so the
+  sand does not pop in over a page that is already showing.
 - Theme colours come from the existing recipe system through the `superposition:recipe`
   event. The fallback recipe controller remains the single owner of the CSS theme.
 - Pointing at another domain in the strip or the index blends its mode half-way in.

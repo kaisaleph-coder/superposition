@@ -509,7 +509,8 @@ export const Resonance = {
       device.queue.writeBuffer(palBuf, 0, PAL);
       PAL[36] *= mobile ? 3.5 : 7; PAL[37] *= mobile ? 0.04 : 0.085;
       device.queue.writeBuffer(glowBuf, 0, PAL);
-      V.set([groundC[0], groundC[1], groundC[2], mobile ? 0 : 1, 1 / W, 1 / H, EXPOSURE, mobile ? 0 : 1.4]);
+      // a load without the opening sequence raises the light over 0.6 s, so the sand never pops in
+      V.set([groundC[0], groundC[1], groundC[2], mobile ? 0 : 1, 1 / W, 1 / H, EXPOSURE * (intro ? 1 : Math.min(1, t / 0.6)), mobile ? 0 : 1.4]);
       device.queue.writeBuffer(vBuf, 0, V);
 
       const enc = device.createCommandEncoder();

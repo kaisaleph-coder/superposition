@@ -1,7 +1,10 @@
-/* Resonance field. Scoped to html.sand (engine running) and html.sand-pending (opening
-   curtain). Without them the page is the legacy page. Notes: docs/RESONANCE.md */
+/* Resonance field. Scoped to html.sand (set by js/head.js before first paint wherever the
+   engine is expected, and held while it runs) and html.sand-pending (opening curtain).
+   Without them the page is the legacy page. Notes: docs/RESONANCE.md */
 #sand{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
 .sand #field,.sand #atmosphere,.sand #legibility{display:none!important}
+/* the legacy static picture of the field must not show while the engine is still starting */
+.sand body[data-tier="0"]{background-image:none}
 .sand-pending .site-head,.sand-pending main,.sand-pending .domain-strip,.sand-pending .state-axis,.sand-pending .spectral-edge{opacity:0}
 .sand .site-head,.sand main,.sand .domain-strip,.sand .state-axis,.sand .spectral-edge{transition:opacity .9s ease}
 /* the engine reads glyph positions from the live layout, so the view may not slide */

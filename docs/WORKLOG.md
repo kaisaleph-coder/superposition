@@ -77,3 +77,13 @@ Owner order, verbatim: "Raise the gate cap as rec, proceed with rec on all, time
 - Echoes reflect off the screen edges only, not off text blocks as proposed.
 - Tilt was exercised only by synthetic deviceorientation events in Chrome's phone emulation. No real phone.
 - Later in the same 30 minutes the tuning dial was built as well (its own commit). The visible plate remains unbuilt. The dial does not snap to a notch per domain, as proposed.
+
+## 2026-11-25 - RESONANCE: no legacy page before the sand (same branch, NOT pushed)
+
+Owner report, verbatim: "the original website loads momentarily prior to your changes loading".
+- Reproduced by filming a load: the compositor's frames plus a state timeline sampled on every animation frame. On a repeat load in a session the legacy page showed from about 100 ms until the engine went live at 1116 ms: the solid heading for all of it, and the static picture of the field until js/main.js set the tier. The first load of a session was covered by the curtain.
+- Cause: js/head.js prepared the page only on the first load of a session, and nothing hid the legacy look while the engine started.
+- Fix: head.js sets html.sand before first paint on every load where the engine is expected. css/sand.css hides the static picture under it. js/main.js gives the legacy page back when the engine will not start or throws. A 6 s timer in head.js is the last resort. A load without the opening sequence raises the light over 0.6 s, so the sand does not pop in.
+- Verified here (owner's PC, headless system Chrome, RTX 4070 SUPER): after the fix no sampled frame of a first load or of a reload shows the legacy state, and the same instrument did report it before the fix. Five engine-start cases land correctly (control, no adapter, adapter throws, software adapter, adapter never answers). Nine load modes clean. Node tests 17/17. Bake parity. Budget 774.3 KB of 900, app code 64.4 KB of 80.
+- Cost: when the adapter request hangs, the heading stays an empty outline for 6 s before the legacy page returns. Before this change the legacy page showed at once in that case. A solid heading would remove this cost.
+- NOT verified: a real phone, Safari, Firefox, a weak GPU. The Playwright suite was not run.

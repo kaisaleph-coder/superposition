@@ -106,6 +106,10 @@ if (matchMedia("(pointer: coarse)").matches && "DeviceOrientationEvent" in windo
 const tier = detectTier({ force: q.get("force") });
 body.dataset.tier = String(tier);
 body.dataset.renderer = TIERS[tier].renderer;
+// js/head.js gave the page its sand form before first paint. If this load will not start
+// the resonance field after all, give the legacy page back at once.
+const wantSand = (tier === 1 || tier === 2) && !q.has("seed") && !q.get("force");
+if (!wantSand) document.documentElement.classList.remove("sand", "sand-pending");
 
 // The resonance engine could not hold frame rate or lost its device: land on the static ground.
 function toStatic(reason) {
@@ -123,7 +127,7 @@ if (tier > 0) {
     requestAnimationFrame(async () => {
       // Hardware WebGPU and no QA parameter: the resonance field (js/field/resonance.js).
       // Anything else, or any failure, continues into the legacy field below.
-      if ((tier === 1 || tier === 2) && !q.has("seed") && !q.get("force")) {
+      if (wantSand) {
         try {
           const { Resonance } = await import("./field/resonance.js");
           engine = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, state: router.current, onFail: toStatic });
@@ -133,7 +137,7 @@ if (tier > 0) {
           return;
         } catch (err) {
           engine = null;
-          document.documentElement.classList.remove("sand-pending");
+          document.documentElement.classList.remove("sand", "sand-pending");
           console.warn("resonance: " + (err?.message || err));
           body.dataset.resonanceError = String(err?.message || err).slice(0, 160);
         }
