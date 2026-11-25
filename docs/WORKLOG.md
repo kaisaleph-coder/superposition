@@ -112,3 +112,21 @@ Owner's pick, verbatim: "a with 2".
 - The review tooling's title lab is retired. Its launcher was renamed, because the code it patched no longer exists.
 - Found, not changed. tests/visual.spec.js-snapshots dates from 2026-07-18 and already differed from the build before this change, by 14 to 23% of pixels on the three baselines measured against a 2% limit. CI does not run that spec and passes --ignore-snapshots. On a 390 px phone the slash-joined word in the home copy runs wider than its column.
 - NOT verified: a real phone, Safari, Firefox, a weak GPU. The Playwright suite was not run (no node_modules here), so tools/static-smoke.mjs and the browser specs that CI runs are unproven for this change.
+
+## 2026-11-25 - Shipped: 9d1a0b7 is live (titles, boot fix, RESONANCE rounds 1 to 3)
+
+Owner, verbatim: "the last preview (http://127.0.0.1:8797/) is great. lock this in, commit, and push." Asked which push, the owner picked "Ship after CI passes".
+- gitleaks over 10dee90..9d1a0b7: 7 commits, no leaks.
+- resonance-20261124 pushed to origin at 02:24 UTC. GitHub QA run 45532761383 on 9d1a0b7: success, every step green, including the browser suite that could not run locally.
+- origin/cloudflare-staging-anchor fast-forwarded 10dee90..9d1a0b7 at about 02:28 UTC.
+- Verified live: index.html, css/sand.css and js/field/resonance.js fetched from kaisabuhussein.com hash identical to the 9d1a0b7 blobs (sha256 prefixes e881049084356822, 6a3c1f1029c32e63, 642a35e823c3630f).
+- Still NOT verified: a real phone, Safari, Firefox, a weak GPU.
+
+## 2026-11-25 - Sand lab: pattern and colour options (review tooling only, nothing in the site changed)
+
+Owner, verbatim: "i would like to explore more sand pattern options and differing color schemas."
+- test-results/sand-lab/server.mjs serves the worktree with js/field/resonance.js patched as served (8 patches, each must find its text exactly once): ten candidate modes as fld() cases 9 to 18, a per-frame override read from window.__sandLab, and a light-ground path in the show pass (negative exposure means the sand absorbs light from the ground). panel.js puts a pattern and colour picker at the top centre and sets the page's CSS colour variables after every recipe event.
+- Patterns: quasicrystal (fivefold), two-source and three-source interference, drum (circular plate), sunflower spirals, cells (Voronoi borders), maze (Truchet arcs), contour map (fbm), moire of two gratings, Chladni (5,11).
+- Schemes: as built, bone on graphite, gilt on black, cyanotype, ember, verdigris, duotone, white with one accent, graphite on paper (light), umber on sand (light).
+- Verified here (headless Chrome, RTX 4070 SUPER, 1440x900, home page): all 21 shots ran the resonance engine with the lab state applied and no console error. A WGSL precedence error was caught by that check on the first run and fixed. Sheets: test-results/sand-lab/sheet-patterns.png and sheet-schemes.png.
+- Not checked: domain pages under the light schemes, phone sizes, frame rate on the costlier modes (contours, cells) on a weak GPU.
