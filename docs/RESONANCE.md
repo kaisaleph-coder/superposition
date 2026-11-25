@@ -14,15 +14,14 @@ moves, so it gathers on the nodal lines of the current vibration mode and draws 
 figure. Superposition is literal: two modes blended are a single new figure, never two
 figures overlaid.
 
-The page is part of the plate. A mask rendered from the live DOM tells the simulation:
+The page is part of the plate. A mask rendered from the live DOM marks where the plate
+must stay clear: the copy block, the header, the domain strip and the active heading's
+box. There the plate shakes hard, so sand cannot rest, and deep inside it is thrown clear.
+The mask uses the green channel only.
 
-| Channel | Source | Meaning for the plate |
-|---|---|---|
-| red | the active heading's glyphs, drawn at their measured positions | the plate is still: sand that arrives stays, so the letters fill |
-| green | the copy block, the header, the domain strip, and the heading's box | the plate shakes hard: sand cannot rest, and deep inside it is thrown clear |
-| blue | the glyphs again, blurred wide | a slope that leads nearby sand into the letters |
-
-So the sand writes the heading and leaves the copy clear by physics, not by layout.
+So the sand leaves the page's text clear by physics, not by layout. Headings are ordinary
+solid type. Until 2026-11-25 the heading's glyphs were two more channels of the mask and
+the sand filled them; see Round 3.
 
 ## Uniforms (`struct U`, seven `vec4f`)
 
@@ -34,30 +33,31 @@ So the sand writes the heading and leaves the copy clear by physics, not by layo
 | `d` | pointer xy (plate units), pointer velocity xy |
 | `e` | strike xy, strike age (s), home phase |
 | `f` | drift gain, kick gain, noise floor, device px per plate unit |
-| `g` | plate tilt (rad), letter brightness boost, camera distance (px) |
+| `g` | plate tilt (rad), unused (zero), camera distance (px) |
 
 Plate units: the long side of the viewport spans -1..1, y points down like the screen.
 
 ## Simulation (compute, one invocation per grain)
 
-A grain is `vec4f(x, y, height, inLetter)`. No velocity is stored: the motion is overdamped.
+A grain is `vec4f(x, y, height, 0)`; the fourth component is unused. No velocity is stored:
+the motion is overdamped.
 
 1. `fld(id, p)` is the vibration amplitude of mode `id` at `p`. One mode per domain:
    0 home (two classic Chladni modes, slowly rotating into each other), 1 columns
    (stripes), 2 tables (rounded cells), 3 frame (grid), 4 surface (wave strata),
    5 vector (spiral), 6 lattice (honeycomb), 7 clusters (rings and petals), 8 orbit
    (ellipses). `plate(p)` blends the from and to modes.
-2. `ampm(p, m)` applies the page mask to that amplitude.
+2. `ampm(p, g, k)` applies the page mask `g` and the visitor's marks `k` to that amplitude.
 3. Drift: down the gradient of amplitude squared, by central differences two pixels apart.
    Speed is clamped. Near a nodal line this is a spring toward the line.
-4. Letter pull: up the gradient of the blue channel, switched off inside the glyphs.
+4. (Removed 2026-11-25: the pull that led sand into the heading's letters.)
 5. Pointer: a moving pointer adds its own velocity to nearby grains, so it drags sand.
    The plate then heals the trail. There is no effect at rest.
 6. Strike: a click sends one ring outward that kicks grains radially.
 7. Kick: a random step whose size grows with the local amplitude, plus a small floor so a
-   line keeps a granular width, plus the transition shake (not inside glyphs).
-8. Grains reflect at the plate edge. A grain deep inside a green zone and away from the
-   glyphs is respawned at a hashed position, airborne.
+   line keeps a granular width, plus the transition shake.
+8. Grains reflect at the plate edge. A grain deep inside a clear zone is respawned at a
+   hashed position, airborne.
 9. Height is 1 for a grain that just moved and decays otherwise.
 
 Randomness is a hash of grain index and frame number. Start positions come from a fixed
@@ -66,12 +66,11 @@ seed, so every load plays the same way.
 ## Drawing
 
 One instanced quad per grain, additive blending on an opaque canvas cleared to the
-theme's ground colour. Airborne grains are larger and fainter (defocus). Grains inside
-glyphs are brighter and whiter. A second pass redraws one grain in twelve, seven times
-wider and far fainter, as glow.
+theme's ground colour. Airborne grains are larger and fainter (defocus). A second pass
+redraws one grain in twelve, seven times wider and far fainter, as glow.
 
 The plate is a real plane seen through a lens. At rest the tilt is zero and a grain lands
-on its own pixel, which is what lets the sand register with the page's type. The opening
+on its own pixel, which is what keeps the clear zones registered with the page's text. The opening
 sequence starts the plate tipped back by about 58 degrees and swings it up in 2.1 s.
 
 ## Page integration
@@ -87,9 +86,9 @@ sequence starts the plate tipped back by about 58 degrees and swings it up in 2.
   curtain. The page's chrome waits behind it. The engine lifts it 1.0 s after it starts;
   `js/main.js` lifts it on any failure; a 3.2 s timer in `head.js` lifts it if nothing
   else does.
-- Under `html.sand`, `css/sand.css` turns headings into outlines, hides the legacy overlays
-  and the legacy static picture of the field, and stops the view from sliding (the engine
-  reads layout).
+- Under `html.sand`, `css/sand.css` hides the legacy overlays and the legacy static picture
+  of the field, and stops the view from sliding (the engine reads layout). Headings keep
+  their ordinary solid type.
 - A load without the opening sequence raises the exposure from zero over 0.6 s, so the
   sand does not pop in over a page that is already showing.
 - Theme colours come from the existing recipe system through the `superposition:recipe`
@@ -108,13 +107,13 @@ CI has no GPU.
 
 ### Restrictions
 - Sand resting in the heading's glyphs answers to nothing but the page: the pointer's drag,
-  the strike and tilt are all multiplied by `1 - m.r` in the simulation.
+  the strike and tilt are all multiplied by `1 - m.r` in the simulation. (Superseded by
+  Round 3: no sand rests in the heading any more, and the guard is gone.)
 - A press that starts on the plate never starts a text selection (`mousedown` is
   prevented unless the target is copy or a control), and headings are not selectable.
   A press that starts on copy still selects, and never strikes the plate.
 - Sand in the air is not drawn over the copy or over the heading's clearing: the draw
-  shader samples the page mask at the grain's plate position and multiplies by
-  `1 - g * (1 - r)`.
+  shader samples the page mask at the grain's plate position and multiplies by `1 - g`.
 
 ### Memory
 - Long exposure. Grains are drawn additively into an `rgba16float` texture that is
@@ -133,7 +132,7 @@ CI has no GPU.
 - Tilt (phones). `js/main.js` already forwards device orientation to `setParallax`. The
   pose the phone is first held in counts as level, level follows the hand with a 6 s time
   constant, and a 0.12 dead zone ignores a shaking hand. The result is a velocity added
-  to every grain outside the glyphs.
+  to every grain.
 
 ### The boom
 - A tap strikes at power 0.35. A held press charges to 1.0 over 1.1 s and strikes on
@@ -158,3 +157,24 @@ phones the relief and shadow strengths are zero.
 
 ### The dial (added last in round 2)
 A slider at the right edge (`#sand-dial`, created by the engine, hidden on phones and in print) tunes the plate. Its value scales the coordinates every mode is sampled at, about the focal point (`u.i.x`, from 0.55 to 2.2, 1.0 at rest), so a higher pitch draws a finer figure. Drag it, scroll over it or use the arrow keys; Home or a double click returns it to rest. The setting persists across page changes. It does not snap to a notch per domain.
+
+## Round 3 (2026-11-25): solid titles
+
+The owner rejected the sand-filled headings ("not professional") and picked solid type in
+a quieter setting. What changed:
+
+- `css/sand.css` no longer turns headings into transparent outlines. A heading is ordinary
+  text in the ink colour, in every load mode.
+- The mask no longer carries the heading's glyphs. `buildMask` draws the heading's box in
+  green like any other clear zone. The red and blue channels are gone from the shaders,
+  together with the letter pull, the `1 - m.r` guards and the letter brightness. `g.y` is
+  now zero and unread, and a grain's fourth component is zero.
+- The title's type lives in the base stylesheet (`css/main.1.css` and `css/main.3.css`,
+  baked into `index.html`), so the legacy field, the static ground and the no-JS page show
+  the same title. The name is one line (`white-space:nowrap`) and is sized in `vw`, so it
+  fits its column at every width.
+- The title is real text from the first frame. That removes the two costs recorded for the
+  boot fix: no empty outline on a repeat load, and none while a hung adapter request runs
+  out its 6 s.
+
+The sand-filled heading is in git history up to commit `6f5fd6a`.

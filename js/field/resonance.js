@@ -1,5 +1,5 @@
 /* RESONANCE: the field as a resonating plate. Sand gathers on the nodal lines of the
-   current mode, fills the heading's glyphs and leaves the copy clear. Raw WebGPU.
+   current mode and keeps clear of the page's text. Raw WebGPU.
    Read docs/RESONANCE.md before changing anything here. */
 
 const STATE_ID = { home: 0, record: 0, columns: 1, tables: 2, frame: 3, surface: 4, vector: 5, lattice: 6, clusters: 7, orbit: 8 };
@@ -46,7 +46,7 @@ v = 0.5 * (cos(a) * m1 + sin(a) * m2);
 return v;
 }
 fn uvOf(p: vec2f) -> vec2f { return p / (2.0 * u.a.zw) + vec2f(0.5); }
-fn page(p: vec2f) -> vec4f { return textureSampleLevel(maskT, maskS, uvOf(p), 0.0); }
+fn page(p: vec2f) -> f32 { return textureSampleLevel(maskT, maskS, uvOf(p), 0.0).g; }
 fn mark(p: vec2f) -> f32 { return textureSampleLevel(markT, maskS, uvOf(p), 0.0).r; }
 fn plate(q: vec2f) -> f32 {
 let c0 = vec2f(0.30 * u.a.z, 0.0);
@@ -61,8 +61,8 @@ f = mix(f, fld(i32(u.c.y), c0 + (p - c0) * 1.9), u.h.x);
 }
 return f;
 }
-fn ampm(p: vec2f, m: vec4f, k: f32) -> f32 {
-return plate(p) * (1.0 - m.r) * (1.0 - m.g) * (1.0 - 0.93 * k) + 1.4 * m.g * (1.0 - m.r) * (1.0 - 0.8 * m.b);
+fn ampm(p: vec2f, g: f32, k: f32) -> f32 {
+return plate(p) * (1.0 - g) * (1.0 - 0.93 * k) + 1.4 * g;
 }
 @compute @workgroup_size(256)
 fn sim(@builtin(global_invocation_id) gid: vec3u) {
@@ -77,23 +77,17 @@ let eps = 2.0 / u.f.w;
 let dx = vec2f(eps, 0.0);
 let dy = vec2f(0.0, eps);
 let m = page(p);
-let mE = page(p + dx);
-let mW = page(p - dx);
-let mS = page(p + dy);
-let mN = page(p - dy);
 let a0 = ampm(p, m, mark(p));
-let ex = ampm(p + dx, mE, mark(p + dx));
-let wx = ampm(p - dx, mW, mark(p - dx));
-let ey = ampm(p + dy, mS, mark(p + dy));
-let wy = ampm(p - dy, mN, mark(p - dy));
+let ex = ampm(p + dx, page(p + dx), mark(p + dx));
+let wx = ampm(p - dx, page(p - dx), mark(p - dx));
+let ey = ampm(p + dy, page(p + dy), mark(p + dy));
+let wy = ampm(p - dy, page(p - dy), mark(p - dy));
 var v = -vec2f(ex * ex - wx * wx, ey * ey - wy * wy) / (2.0 * eps) * u.f.x;
 let sp = length(v);
 if (sp > 2.5) { v = v * (2.5 / sp); }
-v = v + vec2f(mE.b - mW.b, mS.b - mN.b) / (2.0 * eps) * 0.012 * (1.0 - m.r);
-let free = 1.0 - m.r;
 let dp = p - u.d.xy;
-v = v + u.d.zw * exp(-dot(dp, dp) / 0.0016) * 0.9 * free;
-v = v + u.h.yz * 0.6 * free;
+v = v + u.d.zw * exp(-dot(dp, dp) / 0.0016) * 0.9;
+v = v + u.h.yz * 0.6;
 var ring = 0.0;
 var push = vec2f(0.0);
 if (u.e.z < u.h.w) {
@@ -113,8 +107,8 @@ ring = ring + rg;
 push = push + (sd / (sr + 0.0001)) * rg;
 }
 }
-v = v + push * 1.6 * free;
-let sig = (u.f.y * abs(a0) + u.f.z + (u.c.w * 0.03 + ring * 0.012) * free) * sqrt(dt * 60.0);
+v = v + push * 1.6;
+let sig = (u.f.y * abs(a0) + u.f.z + u.c.w * 0.03 + ring * 0.012) * sqrt(dt * 60.0);
 let ang = 6.2831853 * rnd(i * 2u + fr * 7919u);
 let rad = sqrt(rnd(i * 2u + 1u + fr * 104729u));
 let step = v * dt + vec2f(cos(ang), sin(ang)) * rad * sig;
@@ -125,7 +119,7 @@ if (p.y > lim.y) { p.y = 2.0 * lim.y - p.y; }
 if (p.y < -lim.y) { p.y = -2.0 * lim.y - p.y; }
 p = clamp(p, -lim, lim);
 var h = max(q.z * 0.88, min(1.0, length(step) * 60.0));
-if (m.g > 0.72 && m.r < 0.1 && m.b < 0.03) {
+if (m > 0.72) {
 p = vec2f((rnd(i * 2u + fr * 31337u) * 2.0 - 1.0) * lim.x, (rnd(i * 2u + 1u + fr * 49157u) * 2.0 - 1.0) * lim.y);
 h = 1.0;
 }
@@ -133,7 +127,7 @@ if (dot(u.h.yz, u.h.yz) > 0.0025 && (abs(p.x) > lim.x - 0.012 || abs(p.y) > lim.
 p = vec2f((rnd(i * 2u + fr * 32452843u) * 2.0 - 1.0) * lim.x, (rnd(i * 2u + 1u + fr * 86028121u) * 2.0 - 1.0) * lim.y);
 h = 1.0;
 }
-P[i] = vec4f(p, h, m.r);
+P[i] = vec4f(p, h, 0.0);
 }
 `;
 
@@ -163,14 +157,12 @@ let c = corners[vi];
 var o: VO;
 o.pos = vec4f((px.x * sc + c.x * rad) / (0.5 * u.a.x), -(y1 * sc + c.y * rad) / (0.5 * u.a.y), 0.0, 1.0);
 o.uv = c;
-let m = textureSampleLevel(maskT, maskS, q.xy / (2.0 * u.a.zw) + vec2f(0.5), 0.0);
-let vis = 1.0 - m.g * (1.0 - m.r);
+let vis = 1.0 - textureSampleLevel(maskT, maskS, q.xy / (2.0 * u.a.zw) + vec2f(0.5), 0.0).g;
 let f = fract(0.5 + 0.22 * q.x / u.a.z + 0.13 * q.y / u.a.w + (f32(hash(ii) & 255u) / 255.0 - 0.5) * 0.12) * 8.0;
 let i0 = u32(f);
 let tint = mix(pal[i0].rgb, pal[i0 + 1u].rgb, fract(f));
-let inLetter = q.w;
-let lit = mix(tint, vec3f(1.0, 0.97, 0.92), min(1.0, h * 0.28 + inLetter * 0.45));
-o.col = lit * (vis * pal[9].y * (1.0 + 1.6 * h + u.g.y * inLetter) / (grow * grow));
+let lit = mix(tint, vec3f(1.0, 0.97, 0.92), min(1.0, h * 0.28));
+o.col = lit * (vis * pal[9].y * (1.0 + 1.6 * h) / (grow * grow));
 return o;
 }
 @fragment
@@ -296,8 +288,9 @@ export const Resonance = {
       showBG = device.createBindGroup({ layout: showPipe.getBindGroupLayout(0), entries: [{ binding: 0, resource: { buffer: vBuf } }, { binding: 1, resource: accView }, { binding: 2, resource: sampler }] });
     }
 
-    // ---- the page as a mask (red: heading glyphs, green: copy, blue: pull toward glyphs)
-    // ---- and the visitor's marks, which the plate remembers for MARK_LIFE seconds
+    // ---- the page as a mask (green: where the plate must stay clear, which is the copy,
+    // ---- the chrome and the heading's box) and the visitor's marks, which the plate
+    // ---- remembers for MARK_LIFE seconds
     const K = 0.5;
     const mc = doc.createElement("canvas"), m2 = mc.getContext("2d");
     const kc = doc.createElement("canvas"), k2 = kc.getContext("2d");
@@ -340,30 +333,9 @@ export const Resonance = {
         else m2.fillRect(r.left - 14, r.top - 10, r.width + 28, r.height + 20);
       }
       if (x1 > x0) m2.fillRect(x0 - 16, y0 - 12, x1 - x0 + 32, Math.min(y1, cssH) - y0 + 24);
-      const h = doc.querySelector(".view.on h1, .view.on h2");
-      if (h) {
-        const cs = win.getComputedStyle(h), hr = h.getBoundingClientRect();
-        if (hr.width > 2 && hr.bottom > 0 && hr.top < cssH) m2.fillRect(hr.left - 12, hr.top - 8, hr.width + 24, hr.height + 16);
-        m2.filter = "blur(0.8px)";
-        m2.fillStyle = "#ff0000";
-        m2.textBaseline = "alphabetic";
-        m2.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-        const fmx = m2.measureText("Hg"), asc = fmx.fontBoundingBoxAscent || 1, desc = fmx.fontBoundingBoxDescent || 0;
-        const range = doc.createRange(), walker = doc.createTreeWalker(h, NodeFilter.SHOW_TEXT), glyphs = [];
-        for (let node; (node = walker.nextNode());) {
-          const text = node.nodeValue;
-          for (let i = 0; i < text.length; i++) {
-            if (!text[i].trim()) continue;
-            range.setStart(node, i); range.setEnd(node, i + 1);
-            const r = range.getBoundingClientRect();
-            if (r.width) glyphs.push([text[i], r.left, r.top + r.height * asc / (asc + desc)]);
-          }
-        }
-        for (const [ch, x, y] of glyphs) m2.fillText(ch, x, y);
-        m2.filter = "blur(9px)";
-        m2.fillStyle = "#0000ff";
-        for (const [ch, x, y] of glyphs) m2.fillText(ch, x, y);
-      }
+      // the heading is ordinary solid type: its box is one more place the sand keeps clear of
+      const hr = doc.querySelector(".view.on h1, .view.on h2")?.getBoundingClientRect();
+      if (hr && hr.width > 2 && hr.bottom > 0 && hr.top < cssH) m2.fillRect(hr.left - 12, hr.top - 8, hr.width + 24, hr.height + 16);
       m2.filter = "none";
       device.queue.copyExternalImageToTexture({ source: mc }, { texture: maskTex }, [mw, mh]);
     }
@@ -498,7 +470,7 @@ export const Resonance = {
         + 0.08 * joltAmp * Math.sin(Math.PI * Math.min(1, joltT / 0.5));
       if (!revealed && t > 1.0) { revealed = true; root.classList.remove("sand-pending"); }
       U.set([W, H, ax, ay, t, dt, fr, count, idA, idB, mixV, shake, ptrX, ptrY, pvx, pvy, strikeX, strikeY, strikeAge, t * 0.045,
-        DRIFT, KICK, FLOOR, S, tilt, mobile ? 1.2 : 3.0, 2.4 * S, strikePow, over < 0.01 ? 0 : over, gxs, gys, strikeLife, pitchS, 0, 0, 0]);
+        DRIFT, KICK, FLOOR, S, tilt, 0, 2.4 * S, strikePow, over < 0.01 ? 0 : over, gxs, gys, strikeLife, pitchS, 0, 0, 0]);
       device.queue.writeBuffer(uBuf, 0, U);
 
       const k = Math.min(1, dt * 3.2), decay = Math.exp(-Math.max(dt, 1 / 240) / TRAIL);

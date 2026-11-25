@@ -9,8 +9,8 @@
   .state-axis{display:none}
   main#content{padding:calc(var(--header-h) + 31px) 18px calc(var(--strip-h) + var(--footer-h) + 60px)}
   .view,.home-view,.facet-view,.record-view{max-width:none;min-height:auto}
-  .home-view{padding-top:0}.home-view h1{font-size:clamp(57px,18vw,88px);line-height:.78;max-width:6.6ch}.positioning{font-size:15px;max-width:29ch;margin-top:18px}.home-statement{gap:4px}.home-statement span{font-size:6.5px;padding-right:16px}
-  .facet-kicker{margin-bottom:12px}.facet-view h2,.record-view h2{font-size:clamp(49px,14vw,75px);max-width:8ch;margin-bottom:24px}.manifest{margin-bottom:24px}.manifest li{font-size:12.5px}.dossier>button{grid-template-columns:minmax(0,1fr) auto 18px;gap:8px}.dossier>button small{font-size:6.5px}.dossier-body{padding-left:28px}
+  .home-view{padding-top:0}.home-view h1{font-size:8.2vw}.positioning{font-size:15px;max-width:29ch;margin-top:18px}.home-statement{gap:4px}.home-statement span{font-size:6.5px;padding-right:16px}
+  .facet-kicker{margin-bottom:12px}.facet-view h2,.record-view h2{font-size:9.4vw;max-width:none;margin-bottom:24px}.manifest{margin-bottom:24px}.manifest li{font-size:12.5px}.dossier>button{grid-template-columns:minmax(0,1fr) auto 18px;gap:8px}.dossier>button small{font-size:6.5px}.dossier-body{padding-left:28px}
   .record-list li{grid-template-columns:72px 1fr;gap:14px}.record-view{padding-top:0}
   .domain-strip{left:0;right:0;bottom:var(--footer-h);padding-left:12px;padding-right:12px;grid-template-columns:repeat(8,minmax(42px,1fr));overflow-x:auto;scrollbar-width:none}.domain-strip::-webkit-scrollbar{display:none}.domain-strip a{min-width:48px;padding:9px 5px 8px}.domain-strip a b{display:none}.domain-strip a span{font-size:7px}
   .site-foot{left:18px;right:18px;gap:10px;font-size:6px}.site-foot span:nth-child(2),.footer-shortcuts{display:none}.site-foot #footerState{margin-left:auto}
@@ -24,7 +24,6 @@
 :root:not(.js) .site-head{position:static;height:auto;margin:0 var(--gutter);padding:22px 0;border-bottom:1px solid var(--rule)}
 :root:not(.js) main#content{padding:20px var(--gutter) 80px;height:auto;overflow:visible}
 :root:not(.js) .view{max-width:72ch;min-height:auto;padding:38px 0;border-bottom:1px solid var(--rule)}
-:root:not(.js) .home-view h1,:root:not(.js) .facet-view h2,:root:not(.js) .record-view h2{font-size:56px;line-height:.88}
 
 /* explicit HTML hit-testing floor: graphics/atmosphere never steal UI input.
    Hidden overlays must remain fully inert; only their open state may accept input. */
