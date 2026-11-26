@@ -1,4 +1,34 @@
 # Appearance release preparation — 2026-11-26
+## Superseding phone regression check
+
+After the first prepared preview, Kais reported that tapping, holding and dragging the sand did nothing, and a different pattern appeared at startup. Those reports reopen the earlier readiness statement. The old source check asserted that all touch must be ignored; it tested the wrong intent. The replacement distinguishes ordinary movement from deliberate touch and adds native Chrome/Pixel7 input. No prior numerical acceptance threshold was relaxed.
+
+Before: native input reproduced four named failures: "Approximate SVG was visible before the real sunflower", "Finger tap produced no completed GPU strike", "Hold produced no completed GPU mark upload", and "Drag produced no completed GPU mark work". Three ordinary gesture controls passed.
+
+After: native10/10 pass, with submitted/completed GPU strike and mark work, a charged hold, vertical and short horizontal drawing, normal scrolling/swiping, cancellation, and actual pinch zoom before/after ownership. Horizontal drawing is required to finish within the route swipe's600ms window. Taps strike; a stationary350ms hold claims drawing. A second finger relinquishes it. Mouse ownership, copy, controls, visibility and disposal are covered by arbitration checks. Approximate SVG is hidden throughout animated startup; only the real field is revealed. A final watchdog fallback refuses a late renderer module or initialization.
+
+VERIFIED HERE (owner PC, headless Chrome; physical phone still pending):32 Node tests/0 failed,11 source interaction checks/0 failed; full required suite88 passed/0 failed/2 existing intentional mobile keyboard skips; native10/0; hardware browser/randomization10/0; startup races3/0; all26 SIM programs and4 killed fault controls; four queue cases and stale-owner control; old/current CSS polarity red/green. Static smoke returned errors=[] and logs=[]. Existing budget caps pass:882.3KB/900 total and77.2KB/80 app. Canonical bake has no semantic diff.
+
+Independent bounded adversarial re-review: NO-OBJECTION after actual artifacts and read-only reruns. It does not certify physical phones, Safari/Firefox, weak-GPU timing or the archival GitHub Pages project subpath. No push or deploy.
+
+Raw before/after and current manual receipts are preserved outside the public preview. New persistent commands: node --test tests/touch-input.test.mjs; node tools/appearance-touch-qa.mjs; node tools/appearance-edge-qa.mjs.
+
+One tightened fixture initially failed verbatim: "Drawing fixture did not overlap the swipe time window: 601.7000000476837". The path was shortened to two moves totaling120px after a360ms hold; the >=350ms and <600ms assertion remains. Final native10/10 passes.
+
+
+| Corrected claim | Command | Fresh result |
+|---|---|---|
+| Native sand input and startup | node tools/appearance-touch-qa.mjs | VERIFIED: {"passed":10,"failed":0} |
+| Touch arbitration and runtime source | workflow Node command; node tools/appearance-interactions.mjs . | VERIFIED:32 passed/0 failed;11 passed/0 failed |
+| Required browser behavior | workflow nine-spec Playwright command | VERIFIED:88 passed (2.5m),2 skipped,0 failed |
+| Randomization/failure matrix | node tools/appearance-browser-qa.mjs http://127.0.0.1:8080 | VERIFIED: {"passed":10,"failed":0} |
+| Actual GPU pattern math | node tools/appearance-gpu-qa.mjs | VERIFIED:complete=true,modes=26,controlsKilled=4,errors=[] |
+| Final fallback races | node tools/appearance-edge-qa.mjs | VERIFIED:three PASS lines, exit0 |
+| Queue and readable polarity | node tools/appearance-transitions-qa.mjs | VERIFIED:complete=true,queueCases=4,staleControl caught,errors=[] |
+| Existing transfer caps | node tools/budget.mjs | VERIFIED:882.3KB/900 total;77.2KB/80 app, both ok |
+
+## Earlier preparation evidence (superseded above for phone input/startup)
+
 
 Unmet: nothing has been pushed or deployed; production remains on the prior release. The new randomization has not been physically tested on Kais's phone, Safari or Firefox. Kais reported the preceding v5 phone preview was better; that is qualitative feedback, not a measured phone startup time.
 

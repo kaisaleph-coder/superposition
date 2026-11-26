@@ -53,3 +53,6 @@ html.sand{transition:none}
 @media(max-width:720px){main#content{touch-action:pan-y pinch-zoom;overscroll-behavior:contain;overflow-x:hidden}#appearance-static::after{background:linear-gradient(180deg,var(--ground) 0 12%,transparent 78%),linear-gradient(90deg,var(--ground),transparent 90%)}}
 @media(prefers-reduced-motion:reduce){#sand,#appearance-static{transition:none}}
 @media print{#appearance-static{display:none!important}.view h1,.view h2,.positioning,.facet-kicker,.manifest,.dossiers,.record-list,.record-intro,.site-head{background:transparent!important;box-shadow:none!important}}
+
+/* The approximate fallback is never a stand-in for a starting animation. */
+.sand #appearance-static{opacity:0}

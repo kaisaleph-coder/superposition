@@ -90,6 +90,7 @@ addEventListener('pointerup', (e) => {
   touchPointers.delete(e.pointerId);
   swipe = null;
   if (!started || started.id !== e.pointerId || touchPointers.size) return;
+  if(body.dataset.fieldTouchOwned==='1')return;
   if (!document.getSelection()?.isCollapsed) return;
   const now = performance.now(), dx = e.clientX - started.x, dy = e.clientY - started.y;
   if (now - started.t < 600 && now - lastSwipeAt >= 700 && Math.abs(dx) > 80 && Math.abs(dx) > 2.5 * Math.abs(dy)) {
@@ -111,7 +112,8 @@ if (!wantSand) document.documentElement.classList.remove("sand", "sand-pending")
 // The resonance engine could not hold frame rate or lost its device: land on the static ground.
 function toStatic(reason) {
   engine = null;
-  document.documentElement.classList.remove("sand-pending");
+  document.documentElement.dataset.fieldStartup="fallback";
+  document.documentElement.classList.remove("sand","sand-pending");
   body.dataset.fieldError = String(reason).slice(0, 160);
   body.dataset.tier = "0";
   body.dataset.renderer = "static";
@@ -126,10 +128,15 @@ if (tier > 0) {
       if(!wantSand&&!q.has("seed")&&!q.get("force")){toStatic("animated appearance unavailable");return;}
       // Hardware WebGPU and no QA parameter: the resonance field (js/field/resonance.js).
       // Anything else, or any failure, continues into the legacy field below.
+      if(document.documentElement.dataset.fieldStartup==="fallback"){toStatic("startup watchdog");return;}
       if (wantSand) {
+        document.documentElement.dataset.fieldStartup="preparing";
         try {
           const { Resonance } = await import("./field/resonance.js");
-          engine = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, appearance, state: router.current, onFail: toStatic });
+          if(document.documentElement.dataset.fieldStartup==="fallback"){toStatic("startup watchdog");return;}
+          const initialized = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, appearance, state: router.current, onFail: toStatic });
+          if(document.documentElement.dataset.fieldStartup==="fallback"){initialized.dispose();toStatic("startup watchdog");return;}
+          engine=initialized;document.documentElement.dataset.fieldStartup="ready";
           engine.setState?.(router.current, { first: true });
           body.dataset.renderer = "webgpu";
           body.dataset.engine = "resonance"; if (q.has("timing")) document.documentElement.dataset.fieldEngineReady = String(performance.now());

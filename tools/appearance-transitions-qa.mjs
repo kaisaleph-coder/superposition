@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 const repo=resolve(process.argv[2]||fileURLToPath(new URL('..',import.meta.url))),candidate=resolve(process.argv[3]||repo),base=join(repo,'test-results/appearance-release'),sha=b=>createHash('sha256').update(b).digest('hex');
 mkdirSync(base,{recursive:true});
 const paths={engine:join(candidate,'js/field/resonance.js'),appearance:join(candidate,'js/field/appearance.js'),catalog:join(candidate,'js/field/appearance-catalog.js'),css:join(candidate,'css/sand.css')};
-const bytes=Object.fromEntries(Object.entries(paths).map(([k,p])=>[k,readFileSync(p)])),source=bytes.engine.toString('utf8').replaceAll('\r\n','\n');
+const bytes=Object.fromEntries(Object.entries(paths).map(([k,p])=>[k,readFileSync(p)])),source=bytes.engine.toString('utf8').replaceAll('\r\n','\n').replace(/^import[^\n]*\n/gm,'');
 const report={startedAt:new Date().toISOString(),sourceHashes:Object.fromEntries(Object.entries(bytes).map(([k,b])=>[k,sha(b)])),queueCases:[],contrast:[],errors:[],complete:false};let browser;
 function one(s,t){const a=s.indexOf(t);if(a<0||s.indexOf(t,a+t.length)>=0)throw Error('Expected one anchor '+t);return a;}
 const between=(s,a,b)=>s.slice(one(s,a),one(s,b));const turn=()=>new Promise(r=>setImmediate(r));

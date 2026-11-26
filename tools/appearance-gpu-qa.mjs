@@ -15,7 +15,7 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const fieldPath = join(candidate, 'js/field/resonance.js');
 const catalogPath = join(candidate, 'js/field/appearance-catalog.js');
 const fieldBytes = readFileSync(fieldPath), catalogBytes = readFileSync(catalogPath);
-const source = fieldBytes.toString('utf8').replace(/\r\n/g, '\n');
+const source = fieldBytes.toString('utf8').replace(/\r\n/g, '\n').replace(/^import[^\n]*\n/gm,'');
 const catalog = catalogBytes.toString('utf8').replace(/\r\n/g, '\n');
 const receipt = {
   startedAt: new Date().toISOString(), sourceRepo, candidate,

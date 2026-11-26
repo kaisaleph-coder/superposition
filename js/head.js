@@ -8,8 +8,8 @@
   // is the last resort if neither ever reports. See docs/RESONANCE.md.
   if (!("gpu" in navigator) || q.has("seed") || q.get("force")) return;
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  root.classList.add("sand");
-  setTimeout(() => { if (!document.body?.dataset.engine) root.classList.remove("sand", "sand-pending"); }, 6000);
+  root.classList.add("sand");root.dataset.fieldStartup="pending";
+  setTimeout(() => { if (!document.body?.dataset.engine) {root.dataset.fieldStartup="fallback";root.classList.remove("sand", "sand-pending");} }, 6000);
   // Opening curtain: the first load of a session only.
   let seen = false;
   try { seen = sessionStorage.getItem("sp-sand") === "1"; } catch {}

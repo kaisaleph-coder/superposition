@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import vm from 'node:vm';
+import {pathToFileURL} from 'node:url';
 
 const [root = process.cwd(), expected = 'pass'] = process.argv.slice(2);
+const {createTouchInput}=await import(pathToFileURL(join(root,'js/field/touch-input.js')));
 const rows = [];
 const check = (name, pass, observed) => rows.push({ name, pass, observed });
 const read = path => readFileSync(join(root, path), 'utf8');
@@ -66,25 +68,33 @@ function arrowFunction(source, name) {
   return source.slice(start, at) + ';';
 }
 function strikeHarness() {
-  const source = read('js/field/resonance.js');
-  const strikes = [];
-  const context = { down: false, touch: false, t: 1, downT: 0, travel: 0, lastX: 0, lastY: 0, ptrX: 0, ptrY: 0, markDirty: false,
-    COPY: 'copy', toPlate: (x,y) => [x,y], strike: (...args) => strikes.push(args) };
-  vm.runInNewContext(arrowFunction(source, 'onDown') + '\n' + arrowFunction(source, 'onUp') + '\nglobalThis.handlers = {onDown,onUp};', context);
-  const event = type => ({ pointerType: type, button: 0, clientX: 10, clientY: 20, target: { closest: () => null } });
-  return { strikes, down: type => context.handlers.onDown(event(type)), up: type => context.handlers.onUp(event(type)) };
+  const source=read('js/field/resonance.js'),strikes=[],body={dataset:{}};
+  const context={body,down:false,touch:false,t:1,downT:0,travel:0,lastX:0,lastY:0,ptrX:0,ptrY:0,markDirty:false,moved:0,marks:[],COPY:'copy',toPlate:(x,y)=>[x,y],strike:(...args)=>strikes.push(args)};
+  const win={performance:{now:()=>0},setTimeout:()=>1,clearTimeout(){},addEventListener(){},removeEventListener(){}};
+  context.touchInput=createTouchInput({win,body,blocked:()=>false,busy:()=>context.down&&!context.touch,begin:()=>{context.down=context.touch=true;},move(){},strike:context.strike,end:()=>{context.down=context.touch=false;}});
+  vm.runInNewContext(arrowFunction(source,'onDown')+'\n'+arrowFunction(source,'onMove')+'\n'+arrowFunction(source,'onUp')+'\nglobalThis.handlers={onDown,onMove,onUp};',context);
+  const event=(type,x=10,y=20)=>({pointerType:type,pointerId:type==='mouse'?2:1,isPrimary:true,button:0,clientX:x,clientY:y,target:{closest:()=>null}});
+  return {strikes,down:(type,x,y)=>context.handlers.onDown(event(type,x,y)),move:(type,x,y)=>context.handlers.onMove(event(type,x,y)),up:(type,x,y)=>context.handlers.onUp(event(type,x,y))};
 }
 {
-  const h = strikeHarness(); h.down('touch'); h.up('touch');
-  check('ordinary touch does not strike the sand', h.strikes.length === 0, h.strikes.length);
+ const h=strikeHarness();h.down('touch');h.move('touch',10,80);h.up('touch',10,80);
+ check('ordinary touch scrolling does not strike the sand',h.strikes.length===0,h.strikes.length);
 }
 {
-  const h = strikeHarness(); h.down('mouse'); h.down('touch'); h.up('touch');
-  check('touch release cannot finish a mouse strike', h.strikes.length === 0, h.strikes.length);
+ const h=strikeHarness();h.down('touch');h.up('touch');
+ check('deliberate finger tap reaches the renderer strike',h.strikes.length===1,h.strikes.length);
 }
 {
-  const h = strikeHarness(); h.down('mouse'); h.up('mouse');
-  check('deliberate mouse strike remains available', h.strikes.length === 1, h.strikes.length);
+ const h=strikeHarness();h.down('mouse');h.down('touch');h.up('touch');
+ check('touch release cannot finish a mouse strike',h.strikes.length===0,h.strikes.length);
+}
+{
+ const h=strikeHarness();h.down('touch');h.down('mouse');h.up('touch');h.up('mouse');
+ check('pending touch yields to a mouse press',h.strikes.length===1,h.strikes.length);
+}
+{
+ const h=strikeHarness();h.down('mouse');h.up('mouse');
+ check('deliberate mouse strike remains available',h.strikes.length===1,h.strikes.length);
 }
 
 const failures = rows.filter(row => !row.pass);

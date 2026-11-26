@@ -29,7 +29,7 @@ jobs:
           node tools/static-smoke.mjs
 
       - name: Edge worker unit tests
-        run: node --test tests/worker-edge.test.mjs tests/performance-policy.test.mjs tests/module-graph.test.mjs tests/appearance.test.mjs
+        run: node --test tests/worker-edge.test.mjs tests/performance-policy.test.mjs tests/module-graph.test.mjs tests/appearance.test.mjs tests/touch-input.test.mjs
       - name: Appearance interaction regressions
         run: node tools/appearance-interactions.mjs .
       - name: QA (content, state, print, a11y, S4 integration)

@@ -1,3 +1,4 @@
+import { createTouchInput } from "./touch-input.js";
 /* RESONANCE: the field as a resonating plate. Sand gathers on the nodal lines of the
    current mode and keeps clear of the page's text. Raw WebGPU.
    Read docs/RESONANCE.md before changing anything here. */
@@ -367,6 +368,7 @@ export const Resonance = {
     const info = adapter.info || {};
     if (adapter.isFallbackAdapter || /swiftshader|software|llvmpipe|lavapipe/i.test(`${info.vendor} ${info.architecture} ${info.description}`)) throw new Error("software WebGPU adapter");
     const device = await deadline(adapter.requestDevice(),"GPU device",value=>value?.destroy());
+    let touchInput=null;
     try {
 
     const MAX = mobile ? 360000 : 1400000, MIN = mobile ? 90000 : 220000;
@@ -586,8 +588,17 @@ export const Resonance = {
       if (power > 0.55) over = Math.max(over, power * 0.85);
       if (power > 0.9) { for (const s of marks) s.t = Math.min(s.t, t - MARK_LIFE + 0.4); markDirty = true; }
     }
+    touchInput=createTouchInput({win,body,
+      blocked:e=>e.button>0||e.target.closest?.(COPY+',#sand-dial,a,button,input,textarea,select,[contenteditable=true]')||body.dataset.index==='open',
+      busy:()=>down&&!touch,
+      begin:(x,y,elapsed)=>{down=true;touch=true;downT=t-elapsed;travel=0;lastX=x;lastY=y;[ptrX,ptrY]=toPlate(x,y);moved=0;markDirty=true;},
+      move:(x,y,distance,px,py)=>{[ptrX,ptrY]=toPlate(x,y);moved=0;travel=distance;if(travel>6){marks.push({x0:px,y0:py,x1:x,y1:y,w:7+20*Math.min(1,(t-downT)/.9),t});if(marks.length>500)marks.shift();}lastX=x;lastY=y;markDirty=true;},
+      strike,
+      end:()=>{down=false;touch=false;markDirty=true;ptrX=ptrY=prevX=prevY=9;pvx=pvy=0;moved=9;}
+    });
     const onMove = (e) => {
-      if (e.pointerType !== "mouse") return;
+      if(e.pointerType!=="mouse"){touchInput.move(e);return;}
+      if(touchInput.active)return;
       [ptrX, ptrY] = toPlate(e.clientX, e.clientY); moved = 0;
       if (!down) return;
       travel += Math.hypot(e.clientX - lastX, e.clientY - lastY);
@@ -599,18 +610,20 @@ export const Resonance = {
       lastX = e.clientX; lastY = e.clientY;
     };
     const onDown = (e) => {
-      if (e.pointerType === "touch" || e.pointerType === "pen") return;
+      if(e.pointerType!=="mouse"){touchInput.down(e);return;}
+      touchInput.cancel();
       if (e.button > 0 || e.target.closest?.(COPY + ",#sand-dial")) return;
       down = true; touch = e.pointerType === "touch"; downT = t; travel = 0; lastX = e.clientX; lastY = e.clientY;
       [ptrX, ptrY] = toPlate(e.clientX, e.clientY);
     };
     const onUp = (e) => {
-      if (e.pointerType === "touch" || e.pointerType === "pen") return;
+      if(e.pointerType!=="mouse"){touchInput.up(e);return;}
+      if(touchInput.active)return;
       if (!down) return;
       down = false; markDirty = true;
       if (travel < 14) strike(e.clientX, e.clientY, Math.min(1, 0.35 + 0.65 * Math.min(1, (t - downT) / 1.1)));
     };
-    const onCancel = () => { down = false; markDirty = true; };
+    const onCancel = (e) => {if(e.pointerType!=="mouse"){touchInput.cancel(e);return;}if(!touchInput.active){down=false;markDirty=true;}};
     // A press on the plate never starts a text selection. A press on copy still does.
     const noSelect = (e) => { if (!e.target.closest?.(COPY + ",a,button,input,textarea,select")) e.preventDefault(); };
     const onResize = () => { size(); dirty = true; };
@@ -633,7 +646,7 @@ export const Resonance = {
       }
       // a held press stills the plate under the pointer: the sand gathers there
       const held = t - downT;
-      if (down && !touch && held > 0.18) {
+      if (down && (!touch || touchInput.active) && held > 0.18) {
         const r = 8 + 26 * Math.min(1, held);
         for (const [rr, al] of [[r + 10, 0.35], [r, 1]]) { k2.fillStyle = `rgba(255,255,255,${al})`; k2.beginPath(); k2.arc(lastX, lastY, rr, 0, 6.2832); k2.fill(); }
       }
@@ -730,12 +743,14 @@ export const Resonance = {
     }
 
     function sync() {
+      if(doc.hidden)touchInput?.cancel();
       const paused = userPaused || doc.hidden;
       body.toggleAttribute("data-paused", paused);
       if (!paused && !running && !dead) { running = true; last = win.performance.now(); clock = last; frames = 0; raf = win.requestAnimationFrame(frame); }
       if (paused && running) { running = false; win.cancelAnimationFrame(raf); }
     }
     function dispose() {
+      touchInput?.dispose();
       programVersion++; pendingProgram=null; delete body.dataset.patternLoading;
       if(queuedProgram){const error=new Error("Disposed pattern request");error.name="AbortError";queuedProgram.reject(error);queuedProgram=null;}
       if (dead) return;
@@ -839,6 +854,6 @@ export const Resonance = {
     born = win.performance.now();
     sync();
     return api;
-    } catch(error) {delete body.dataset.patternLoading;root.removeAttribute("data-field-ready");doc.getElementById("sand")?.remove();device.destroy();throw error;}
+    } catch(error) {touchInput?.dispose();delete body.dataset.patternLoading;root.removeAttribute("data-field-ready");doc.getElementById("sand")?.remove();device.destroy();throw error;}
   },
 };
