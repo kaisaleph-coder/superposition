@@ -11,7 +11,7 @@ const sample=page=>page.evaluate(()=>({engine:document.body.dataset.engine,rende
 const gpuReady=page=>page.waitForSelector('body[data-engine="resonance"]',{timeout:16000});
 const settled=page=>page.waitForFunction(()=>{const b=document.body.dataset,r=document.documentElement.dataset;return !b.patternLoading&&r.fieldSubmittedModes?.split(',').includes(b.appearanceMode);},null,{timeout:10000});
 let desktop;
-await run('desktop startup, eight pages, session reload and hover cancellation',async()=>{
+await run('desktop startup, eight pages, session reload and bottom hover stability',async()=>{
  desktop=await browser.newContext({viewport:{width:1440,height:900}});const page=await desktop.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(origin+'/?timing=1');await gpuReady(page);await settled(page);assert.equal((await sample(page)).pattern,'sunflower');
  await page.waitForSelector('html[data-field-ready]');await page.screenshot({path:join(out,'home-desktop.png')});
@@ -20,7 +20,7 @@ await run('desktop startup, eight pages, session reload and hover cancellation',
  }
  const before=records.orbit;await page.reload();await gpuReady(page);await settled(page);const after=await sample(page);for(const key of ['pattern','scheme','density','framing'])assert.equal(after[key],before[key],key+' changed on reload');
  await page.evaluate(()=>location.hash='view-home');await page.waitForFunction(()=>document.body.dataset.appearancePage==='home');await settled(page);
- const link=page.locator('.domain-strip [data-facet="columns"]');await link.hover();await page.waitForFunction(()=>document.body.dataset.appearancePage==='columns');await settled(page);await page.locator('h1').hover();await page.waitForFunction(()=>document.body.dataset.appearancePage==='home');await settled(page);assert.equal((await sample(page)).pattern,'sunflower');
+ const beforeHover=await sample(page),link=page.locator('.domain-strip [data-facet="columns"]');await link.hover();await page.waitForTimeout(180);const afterHover=await sample(page);for(const key of ['page','pattern','scheme','density','framing'])assert.equal(afterHover[key],beforeHover[key],'Bottom hover changed '+key);assert.deepEqual(afterHover.views,['view-home']);await page.locator('h1').hover();assert.equal((await sample(page)).pattern,'sunflower');
  await page.evaluate(()=>{location.hash='view-columns';setTimeout(()=>location.hash='view-frame',20);setTimeout(()=>location.hash='view-orbit',40);});await page.waitForFunction(()=>document.body.dataset.appearancePage==='orbit');await settled(page);await page.waitForTimeout(400);assert.deepEqual((await sample(page)).views,['view-orbit']);
  assert.deepEqual(errors,[]);return {records,afterReload:after};
 });

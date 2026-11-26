@@ -168,3 +168,31 @@ Independent bounded adversarial re-review: NO-OBJECTION after actual artifacts a
 Raw before/after and current manual receipts are preserved outside the public preview. New persistent commands: node --test tests/touch-input.test.mjs; node tools/appearance-touch-qa.mjs; node tools/appearance-edge-qa.mjs.
 
 One tightened fixture initially failed verbatim: "Drawing fixture did not overlap the swipe time window: 601.7000000476837". The path was shortened to two120px-total moves after a360ms hold; the >=350ms and <600ms assertion remains. Final native10/10 passes.
+
+
+## 2026-11-26 20:26Z [main] — Desktop hover readiness reopened
+
+position: user reported bottom navigation hover changes the page; no publication. On d94d17f, shared desktop1440x900 reproduced home text/hash unchanged while sunflower/signal became superformula/aurora on Finance hover. Native GPU regression independently failed on the actual appearance change; explicit click/Enter positive control passed.
+decided: bottom navigation activates only on click/Enter, including pattern/palette/framing. Renderer previews inside the explicit Index remain non-committing. Removed only the strip pointerenter/pointerleave bindings and their cleanup. Earlier broad readiness claims are reopened.
+tried-failed: prior manual browser test expected the bottom hover appearance change and did not check current intent. Its expectation is corrected alongside new negative/positive GPU tests and a static CI activation test. Initial shared-browser attempt fell back with "resonance too slow on this device" and fps14; reloaded and captured the actual hover before fallback. No performance threshold changed.
+next: finish comprehensive real-renderer journeys (every domain/dossier/Index/System/pitch/history/responsive/resume), full92-spec execution, native touch/fallback and catalog checks; preserve receipts, commit correction, then refresh immutable HTTPS preview. Physical phone/Safari/Firefox remain unverified.
+
+
+## 2026-11-26 [main] — desktop hover candidate; main held
+
+position: hover corrected and reproduced green; required90 browser tests/2 existing skips,32 units,12 normal-renderer journeys,10 native phone gestures and full26-pattern/26-palette checks pass. Added desktop mouse and normal-GPU print pass. Added wheel journey failed twice (cooldown assertion, then readiness timeout16000ms); stopped and requested direction under the supplied AGENTS.md rule. Source remains uncommitted on d94d17f; no push/deploy.
+next: await Kais direction; if continue, isolate wheel readiness before another behavior run. Exact candidate, commands, failures and limitations: docs/receipts/WEBSITE-VALIDATION-2026-11-26.md. Unaffected preview preparation may proceed.
+
+
+## 2026-11-26 21:13Z [main] — RESUME isolated wheel diagnosis
+
+user decision: "Continue with isolated wheel diagnosis (Recommended)". Resume from the retained cooldown assertion and later16000ms readiness timeout. Main remains held.
+position: application wheel code is unchanged and has a900ms cooldown. Candidate explanations: previous test awaited unbounded GPU settlement before its rapid repeat; direct random-domain startup may have failed before input; or real wheel target/receipt timing differs from the fixture. Next diagnostic separates startup (DOM engine/phase/error) from native wheel receipt/route/scroll timestamps. No production fix until discriminated; no new agent beyond the spent four-agent allowance.
+next: run one isolated diagnostic with lifecycle and actual input timestamps, then repair only the demonstrated boundary and rerun affected gates. No push/deploy.
+
+
+## 2026-11-26 [main] — wheel hold resolved; local preparation
+
+position: user-authorized isolated diagnosis measured the old repeat at1083.3ms (>900). Correct native GPU repeat150.7ms is blocked, and a later gesture advances. Disabled-cooldown actual-main.js mutant caught at237.4ms by its intended duplicate-navigation assertion. Production wheel code unchanged. Control journeys now record a repeatable seed and startup failures include lifecycle DOM/cleanup.
+verified here: final15/15 real-renderer journeys,90 required browser passes/2 existing skips/0 failures,10 native phone cases,32 Node tests,11 source interaction cases, native GPU/static wheel positives and intended broken-cooldown rejection. All79 public files match the previously tested hover candidate; earlier26-pattern/palette/fault evidence remains applicable to unchanged bytes. Budget882.2KB total/77.2KB app. Fresh origin/main89eac7b remains an ancestor.
+next: commit the local hover/test correction, verify the80-file package and exact79-file HTTPS preview; no push/deploy without a new explicit instruction. Physical-phone/Safari/Firefox/weak-GPU timing/project-subpath proof remain open.

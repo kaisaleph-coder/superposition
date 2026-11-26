@@ -1,0 +1,36 @@
+import {chromium} from '@playwright/test';
+import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const repo=fileURLToPath(new URL('..',import.meta.url)),origin=process.argv.find(a=>/^https?:/.test(a))||'http://127.0.0.1:8080',old=process.argv.includes('--old-sequence'),staticMode=process.argv.includes('--static'),homeFirst=process.argv.includes('--home-first'),out=join(repo,'test-results/appearance-wheel');mkdirSync(out,{recursive:true});
+const brokenCooldown=process.argv.includes('--broken-cooldown'),bundled=process.argv.includes('--bundled');
+const phase={name:'launch'},result={createdAt:new Date().toISOString(),origin,mode:old?'old-sequence diagnostic':'bounded wheel regression',staticMode,homeFirst,sessionSeed:0,sourceHashes:Object.fromEntries(['js/main.js','js/field/resonance.js'].map(p=>[p,createHash('sha256').update(readFileSync(join(repo,p))).digest('hex')]))};
+let browser,context,page;
+async function sample(){return page.locator('body').evaluate(b=>({data:{...b.dataset},root:{...document.documentElement.dataset},hash:location.hash,views:[...document.querySelectorAll('.view.on')].map(e=>e.id),main:{top:document.querySelector('main').scrollTop,max:document.querySelector('main').scrollHeight-document.querySelector('main').clientHeight},trace:JSON.parse(b.dataset.testWheelTrace||'[]')}));}
+const to=async id=>{await page.waitForFunction(id=>location.hash==='#view-'+id&&document.getElementById('view-'+id).classList.contains('on')&&!document.body.dataset.patternLoading,id,{timeout:12000});};
+try{
+ browser=await chromium.launch({channel:bundled?undefined:'chrome',headless:true,args:['--enable-gpu','--ignore-gpu-blocklist','--enable-unsafe-webgpu','--use-angle=d3d11']});context=await browser.newContext({viewport:{width:1000,height:600}});page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));result.browserErrors=errors;
+ if(brokenCooldown){const source=readFileSync(join(repo,'js/main.js'),'utf8'),anchor='wheelCooldownUntil = now + 900;';assert.equal(source.split(anchor).length,2,'Cooldown mutation anchor');await page.route('**/js/main.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:source.replace(anchor,'wheelCooldownUntil = now;')}));}
+ await page.addInitScript(()=>{
+  sessionStorage.setItem('sp-appearance-v1',JSON.stringify({version:1,seed:0}));
+  const trace=[];const record=(kind,e)=>{const b=document.body,m=document.querySelector('main');if(!b||!m)return;trace.push({kind,received:performance.now(),stamp:e?.timeStamp,dy:e?.deltaY,inMain:!!e?.target?.closest?.('main'),target:e?.target?.tagName,top:m.scrollTop,max:m.scrollHeight-m.clientHeight,hash:location.hash,view:b.dataset.view,renderer:b.dataset.renderer,engine:b.dataset.engine});b.dataset.testWheelTrace=JSON.stringify(trace);};
+  addEventListener('wheel',e=>record('wheel',e),{capture:true,passive:true});addEventListener('hashchange',e=>record('hashchange',e));addEventListener('DOMContentLoaded',e=>record('dom',e));
+ });
+ phase.name='renderer startup';const url=new URL('/',origin);url.searchParams.set('timing','1');if(staticMode)url.searchParams.set('force','static');if(!homeFirst)url.hash='view-columns';await page.goto(url.href,{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(staticMode=>staticMode?document.body.dataset.renderer==='static':(document.body.dataset.engine==='resonance'&&document.documentElement.hasAttribute('data-field-ready')&&!document.body.dataset.patternLoading)||(document.body.dataset.renderer==='static'&&!!document.body.dataset.fieldError),staticMode,{timeout:16000});
+ result.startup=await sample();if(!staticMode)assert.equal(result.startup.data.engine,'resonance','GPU startup chose fallback: '+result.startup.data.fieldError);
+ if(homeFirst){phase.name='explicit Finance activation';await page.locator('.domain-strip [data-facet="columns"]').click();await to('columns');}
+ phase.name='copy scrolling';await page.locator('#view-columns .dossier > button').first().click();const main=page.locator('main'),max=await main.evaluate(e=>e.scrollHeight-e.clientHeight);assert.ok(max>50,'Fixture has no copy overflow');await page.mouse.move(400,420);await page.mouse.wheel(0,100);await page.waitForTimeout(250);const scrolled=await sample();assert.ok(scrolled.main.top>0,'Native wheel did not scroll copy');assert.equal(scrolled.hash,'#view-columns');result.copy={max,top:scrolled.main.top};
+ phase.name='first boundary gesture';await main.evaluate(e=>e.scrollTop=e.scrollHeight);await page.waitForTimeout(300);await page.mouse.wheel(0,140);await page.waitForFunction(()=>location.hash==='#view-tables',null,{timeout:4000});
+ phase.name=old?'old repeat after rendering':'rapid repeat before rendering';if(old)await to('tables');await page.mouse.wheel(0,300);await page.waitForTimeout(120);if(old)await page.waitForTimeout(200);
+ result.repeat=await sample();const wheels=result.repeat.trace.filter(x=>x.kind==='wheel');assert.equal(wheels.length,3,'Fixture did not deliver exactly three native wheel events');const [boundary,repeat]=wheels.slice(-2);result.receiptGapMs=repeat.received-boundary.received;result.eventGapMs=repeat.stamp-boundary.stamp;
+ if(old){result.classification=result.receiptGapMs>=900?'Repeat arrived after cooldown; previous fixture cannot prove rapid-repeat rejection':'Repeat arrived inside cooldown';if(result.receiptGapMs<900)assert.equal(result.repeat.hash,'#view-tables','Rapid native repeat navigated twice');result.pass=true;}
+ else{
+  assert.ok(result.receiptGapMs>=0&&result.receiptGapMs<900,'Fixture missed900ms cooldown: '+result.receiptGapMs);assert.equal(result.repeat.hash,'#view-tables','Rapid native repeat navigated twice');assert.equal(result.repeat.data.appearancePage,'tables');await to('tables');
+  phase.name='late independent gesture';await page.waitForTimeout(1000);await main.evaluate(e=>e.scrollTop=e.scrollHeight);await page.mouse.wheel(0,140);await to('frame');result.late=await sample();result.pass=true;
+ }
+ assert.deepEqual(errors,[]);
+}catch(error){result.pass=false;result.error=error.message;try{result.failure=await sample();}catch{}process.exitCode=1;}
+finally{result.lastPhase=phase.name;if(brokenCooldown){result.controlKilled=result.pass===false&&result.error?.includes('Rapid native repeat navigated twice')&&result.receiptGapMs<900&&result.repeat?.hash==='#view-frame';process.exitCode=result.controlKilled?0:1;}result.finishedAt=new Date().toISOString();if(context)await context.close();if(browser)await browser.close();mkdirSync(out,{recursive:true});const name=brokenCooldown?'broken-cooldown.json':old?'old-sequence.json':staticMode?'static.json':homeFirst?'home-first.json':'gpu.json';writeFileSync(join(out,name),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({pass:result.pass,phase:result.lastPhase,gapMs:result.receiptGapMs,eventGapMs:result.eventGapMs,classification:result.classification,controlKilled:result.controlKilled,startupPattern:result.startup?.data.appearancePattern,startupError:result.startup?.data.fieldError,error:result.error,receipt:name}));}

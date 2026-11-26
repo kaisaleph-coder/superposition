@@ -197,3 +197,5 @@ assets/patterns contains lightweight, near-zero contours sampled from the actual
 The startup diagnostics are opt-in through ?timing=1 and mirrored to DOM data-field-* attributes. No review picker or __sandLab global ships. Actual-phone timing and non-Chrome hardware behavior remain separate verification limits.
 
 Phone input: deliberate taps strike; a stationary 350ms hold gathers/charges; moving after that hold draws. Movement before ownership leaves native scrolling and page swipes unclaimed. Drawing ownership suppresses the route swipe through release. A second finger cancels drawing and restores native pinch. Controls, copy selection, mouse ownership, cancellation, visibility loss and disposal clear or reject touch ownership. Native Chrome tests verify completed GPU strike/mark work and actual visualViewport zoom before/after drawing.
+
+Desktop bottom navigation activates only on click/Enter; hover and keyboard focus do not change pattern, palette or framing. Explicit Index previews remain non-committing. Full-site validation and resolved isolated wheel diagnosis: docs/receipts/WEBSITE-VALIDATION-2026-11-26.md.

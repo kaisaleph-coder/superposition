@@ -7,6 +7,12 @@ test('Index isolates its covered background, traps focus and restores access on 
  await page.locator('body').evaluate(body=>{const late=document.createElement('div');late.id='sand-dial';late.tabIndex=0;body.append(late);});await expect(page.locator('#sand-dial')).toHaveAttribute('inert','');
  await page.keyboard.press('Escape');await expect(trigger).toBeFocused();await expect(page.locator('main')).not.toHaveAttribute('inert','');await expect(page.locator('main')).not.toHaveAttribute('aria-hidden','true');await expect(page.locator('#sand-dial')).not.toHaveAttribute('inert','');
 });
+test('bottom navigation hover and focus preserve the page until explicit activation',async({page})=>{
+ await page.goto('/?force=static');const before=await appearance(page);
+ for(const id of pages){const a=page.locator('.domain-strip [data-facet="'+id+'"]');await a.hover();await a.focus();expect(await appearance(page)).toEqual(before);expect(new URL(page.url()).hash).toBe('');await expect(page.locator('.view.on')).toHaveAttribute('id','view-home');}
+ await page.keyboard.press('Enter');await expect(page.locator('body')).toHaveAttribute('data-appearance-page','orbit');await expect(page.locator('.view.on')).toHaveAttribute('id','view-orbit');
+});
+
 test('fixed home and distinct domain recipes survive reload and back navigation',async({page})=>{
  await page.goto('/?force=static');await expect(page.locator('body')).toHaveAttribute('data-appearance-pattern','sunflower');await expect(page.locator('body')).toHaveAttribute('data-appearance-scheme','signal');
  const modes=[];for(const id of pages){await page.goto('/?force=static#view-'+id);await expect(page.locator('body')).toHaveAttribute('data-appearance-page',id);modes.push((await appearance(page)).pattern);}

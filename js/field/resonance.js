@@ -554,7 +554,6 @@ export const Resonance = {
     let rx = 0, ry = 0, nx = 0, ny = 0, tilted = false;
     let pitch = 1, pitchS = 1;
     let frames = 0, clock = 0, low = 0, born = 0;
-    const stripHandlers=[];
     let pendingProgram = null, programVersion = 0, wantedMode=openingMode, wantedMix=1;
     const commitTarget = (id, amp) => { idA = mixV > 0.5 ? idB : idA; idB = id; mixV = 0; mixT = wantedMix; shakeT = 0; shakeAmp = amp; };
     const retarget = (id, amp, blend=1) => {
@@ -759,7 +758,7 @@ export const Resonance = {
       win.removeEventListener("pointermove", onMove); win.removeEventListener("pointerdown", onDown);
       win.removeEventListener("pointerup", onUp); win.removeEventListener("pointercancel", onCancel);
       doc.removeEventListener("mousedown", noSelect);
-      doc.querySelector("main")?.removeEventListener("click",queueMask);for(const [a,enter] of stripHandlers){a.removeEventListener("pointerenter",enter);a.removeEventListener("pointerleave",hoverOff);}
+      doc.querySelector("main")?.removeEventListener("click",queueMask);
       win.removeEventListener("resize", onResize); doc.removeEventListener("visibilitychange", sync);
       root.classList.remove("sand", "sand-pending");root.removeAttribute("data-field-ready"); canvas.remove(); doc.getElementById("sand-dial")?.remove();
       try { device.destroy(); } catch {}
@@ -845,10 +844,7 @@ export const Resonance = {
     win.addEventListener("resize", onResize);
     doc.addEventListener("visibilitychange", sync);
     doc.querySelector("main")?.addEventListener("click", queueMask);
-    for (const a of doc.querySelectorAll(".domain-strip a")) {
-      const enter=e=>{if(e.pointerType==="mouse")hoverOn(a.dataset.facet);};stripHandlers.push([a,enter]);a.addEventListener("pointerenter",enter);
-      a.addEventListener("pointerleave", hoverOff);
-    }
+    // Domain links activate through their anchors; hovering leaves the field unchanged.
     doc.fonts?.ready?.then(() => { dirty = true; });
     try { win.sessionStorage.setItem("sp-sand", "1"); } catch {}
     born = win.performance.now();
