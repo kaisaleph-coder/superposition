@@ -7,6 +7,7 @@ import { renderAll, FACET_ORDER } from "./render-dom.js";
 import { createRouter } from "./router.js";
 import { detectTier, TIERS } from "./field/tier.js";
 import { createUIShell } from "./ui-shell.js";
+import { createAppearanceController } from "./field/appearance.js";
 import { createFallbackRecipeController } from "./field/v2/fallback-controller.js";
 
 const body = document.body;
@@ -17,11 +18,13 @@ if (data) renderAll(data, document);
 
 let engine = null;
 const fallbackController = createFallbackRecipeController(document, { seed: q.get("seed") });
+const appearance = createAppearanceController(document, { seed: q.get("seed") });
 const activeController = () => engine || fallbackController;
 const router = createRouter(document, {
   onState(id, detail = {}) {
     const target = activeController();
     if (detail.togglePause) { target.togglePause?.(); return; }
+    appearance.setState(id);
     target.setState?.(id, detail);
   },
 });
@@ -71,37 +74,31 @@ mainEl.addEventListener(
   { passive: true }
 );
 
-let swipe = null;
-addEventListener("pointerdown", (e) => {
-  if (e.pointerType === "mouse") return;
-  swipe = { x: e.clientX, y: e.clientY, t: performance.now() };
+let swipe = null, lastSwipeAt = -Infinity;
+const touchPointers = new Set();
+const gestureControls = 'a,button,input,select,textarea,[role="button"],[role="slider"],#sand-lab,.index-overlay,.system-panel';
+addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse') return;
+  touchPointers.add(e.pointerId);
+  if (touchPointers.size !== 1 || e.isPrimary === false) { swipe = null; return; }
+  if (e.target.closest?.(gestureControls) || document.body.dataset.index === 'open') { swipe = null; return; }
+  swipe = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() };
 }, { passive: true });
-addEventListener("pointerup", (e) => {
-  if (!swipe || e.pointerType === "mouse") return;
-  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y, dt = performance.now() - swipe.t;
+addEventListener('pointerup', (e) => {
+  if (e.pointerType === 'mouse') return;
+  const started = swipe;
+  touchPointers.delete(e.pointerId);
   swipe = null;
-  if (dt < 600 && Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) {
+  if (!started || started.id !== e.pointerId || touchPointers.size) return;
+  if (!document.getSelection()?.isCollapsed) return;
+  const now = performance.now(), dx = e.clientX - started.x, dy = e.clientY - started.y;
+  if (now - started.t < 600 && now - lastSwipeAt >= 700 && Math.abs(dx) > 80 && Math.abs(dx) > 2.5 * Math.abs(dy)) {
+    lastSwipeAt = now;
     domainStep(dx < 0 ? 1 : -1, { wrap: true });
   }
 }, { passive: true });
-
-if (matchMedia("(pointer: coarse)").matches && "DeviceOrientationEvent" in window) {
-  const listen = () =>
-    addEventListener("deviceorientation", (e) => {
-      if (engine && e.gamma !== null) {
-        engine.setParallax(e.gamma / 30, (e.beta - 45) / 30);
-      }
-    }, { passive: true });
-  if (typeof DeviceOrientationEvent.requestPermission === "function") {
-    const askOnce = () => {
-      DeviceOrientationEvent.requestPermission().then((s) => s === "granted" && listen()).catch(() => {});
-      removeEventListener("pointerdown", askOnce);
-    };
-    addEventListener("pointerdown", askOnce, { passive: true });
-  } else {
-    listen();
-  }
-}
+addEventListener('pointercancel', (e) => { touchPointers.delete(e.pointerId); swipe = null; }, { passive: true });
+// Phone orientation and ordinary touch scrolling do not steer or strike the plate.
 
 const tier = detectTier({ force: q.get("force") });
 body.dataset.tier = String(tier);
@@ -120,19 +117,22 @@ function toStatic(reason) {
   body.dataset.renderer = "static";
   delete body.dataset.engine;
   fallbackController.setState(router.current, { first: true });
+  appearance.setState(router.current);
 }
 
 if (tier > 0) {
   requestAnimationFrame(() => {
     requestAnimationFrame(async () => {
+      if(!wantSand&&!q.has("seed")&&!q.get("force")){toStatic("animated appearance unavailable");return;}
       // Hardware WebGPU and no QA parameter: the resonance field (js/field/resonance.js).
       // Anything else, or any failure, continues into the legacy field below.
       if (wantSand) {
         try {
           const { Resonance } = await import("./field/resonance.js");
-          engine = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, state: router.current, onFail: toStatic });
+          engine = await Resonance.init(document, { theme: fallbackController, mobile: tier === 2, appearance, state: router.current, onFail: toStatic });
+          engine.setState?.(router.current, { first: true });
           body.dataset.renderer = "webgpu";
-          body.dataset.engine = "resonance";
+          body.dataset.engine = "resonance"; if (q.has("timing")) document.documentElement.dataset.fieldEngineReady = String(performance.now());
           uiShell.updateSystem();
           return;
         } catch (err) {
@@ -140,6 +140,7 @@ if (tier > 0) {
           document.documentElement.classList.remove("sand", "sand-pending");
           console.warn("resonance: " + (err?.message || err));
           body.dataset.resonanceError = String(err?.message || err).slice(0, 160);
+          toStatic(err?.message || err); return;
         }
       }
       try {

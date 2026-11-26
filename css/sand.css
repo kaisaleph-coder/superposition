@@ -34,3 +34,22 @@ html.sand{transition:--accent .9s ease,--accent2 .9s ease,--ink .7s ease,--muted
 #sand-dial:focus-visible{outline:1px solid var(--accent);outline-offset:3px}
 .sand-pending #sand-dial{opacity:0}
 @media(max-width:720px),print{#sand-dial{display:none}}
+
+/* Selected appearance is readable immediately and remains if GPU work fails. */
+:root{--ground:#0c0d10;--ground2:#15161a;--ink:#eceef2;--muted:#9497a0;--accent:#ff6a3d;--accent2:#ff8f66}
+body[data-tier="0"]{background-image:none!important}body[data-tier="0"] #field{display:none}
+#appearance-static{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.65;transition:opacity .4s}
+#appearance-static::before{content:"";position:absolute;inset:-12%;background:var(--appearance-sand,linear-gradient(120deg,#eef0f3,#ff6a3d,#e7e9ed));mask-image:var(--appearance-image,url("../assets/patterns/sunflower.svg"));mask-size:cover;mask-position:center;transform:var(--appearance-transform,none)}
+#appearance-static::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--ground) 0%,transparent 78%)}
+#sand{opacity:0;transition:opacity .45s}
+html[data-field-ready] #sand{opacity:1}html[data-field-ready] #appearance-static{opacity:0}
+.sand-pending .site-head,.sand-pending main,.sand-pending .domain-strip,.sand-pending .state-axis,.sand-pending .spectral-edge{opacity:1}
+.index-overlay{background:var(--ground)!important}.index-list a i{color:var(--muted)!important}
+html.sand{transition:none}
+.view h1,.view h2,.positioning,.facet-kicker,.manifest,.dossiers,.record-list,.record-intro,.site-head{background:var(--ground);box-shadow:0 0 10px 6px var(--ground)}
+.manifest li::before,.index-list a span,.home-statement span:first-child,.utilities a:hover,.utilities button:hover{color:var(--accent-text,var(--accent))}
+.index-list a small,.facet-kicker,.state-axis,.manifest a,.record-list a{color:var(--accent-text,var(--accent))}
+.positioning,.manifest,.dossier-line,.dossier-body{overflow-wrap:anywhere}
+@media(max-width:720px){main#content{touch-action:pan-y pinch-zoom;overscroll-behavior:contain;overflow-x:hidden}#appearance-static::after{background:linear-gradient(180deg,var(--ground) 0 12%,transparent 78%),linear-gradient(90deg,var(--ground),transparent 90%)}}
+@media(prefers-reduced-motion:reduce){#sand,#appearance-static{transition:none}}
+@media print{#appearance-static{display:none!important}.view h1,.view h2,.positioning,.facet-kicker,.manifest,.dossiers,.record-list,.record-intro,.site-head{background:transparent!important;box-shadow:none!important}}

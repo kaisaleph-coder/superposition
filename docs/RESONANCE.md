@@ -178,3 +178,20 @@ a quieter setting. What changed:
   out its 6 s.
 
 The sand-filled heading is in git history up to commit `6f5fd6a`.
+
+
+## Round 4 (2026-11-26): curated session appearances and staged startup
+
+Owner decisions: remove Ocean depth/Cyanotype and Drum/Moire/Apollonian circles/Conformal grid; fix the sunflower/signal homepage; make other pages stable within a session; allow subtle and dramatic crop/detail changes, constrained on phones. The owner subsequently requested randomization in the main-ready release.
+
+appearance-catalog.js retains 26 candidate IDs and 26 complete authored schemes. appearance.js draws a seed with Web Crypto, keeps the plan in sessionStorage, and builds assignments in canonical domain order. Independent seeded streams select shuffled distinct patterns, palette and composition. Home and printable record keep mode13/signal/neutral framing. Subtle/dramatic weighting starts at70/30. This is local appearance state, not visitor identification. Blocked storage remains usable; an explicit test seed neither reads nor writes appearance storage.
+
+Detail is field coordinate pitch (higher gives finer features); framing is bounded translation/rotation of the sampled field. Neither moves the DOM, text mask, pointer coordinates or marks. Phones tighten pitch/crop/rotation bounds, especially for fine and central figures. Resize adapts the stored recipe without rerolling it. Version1 re-derives canonical assignments from the stored seed and discards corrupt selections; any future catalog-version migration needs explicit preservation tests before changing the catalog.
+
+The initial compute program retains legacy modes0–8 and only the opening candidate. Other candidates compile asynchronously. One compilation runs while only the latest queued request survives. Version/target ownership checks reject stale hover or route requests. Pipeline and current mask/mark bindings activate atomically; resize rebinds current textures. A bounded ready cache avoids unbounded growth.
+
+DOM foreground colors change atomically; solid current-ground backdrops protect copy, and GPU colors/ground snap when light/dark polarity changes. Other sand colors can ease. Opaque text tokens satisfy contrast against their surfaces. Index is an opaque dialog: covered roots are inert/hidden to accessibility, focus stays inside, prior state is restored on close, and late-created controls are included.
+
+assets/patterns contains lightweight, near-zero contours sampled from the actual WGSL at a fixed pose. These are approximations of each field, not screenshots or proof that animation is ready. The static selected field and readable text show while GPU work starts. Adapter/device/opening preparation have deadlines; init failure destroys its device, and a late device is disposed. Device loss or sustained slow frames returns to the same selected static family. Full legacy seeded/forced renderer QA remains supported.
+
+The startup diagnostics are opt-in through ?timing=1 and mirrored to DOM data-field-* attributes. No review picker or __sandLab global ships. Actual-phone timing and non-Chrome hardware behavior remain separate verification limits.

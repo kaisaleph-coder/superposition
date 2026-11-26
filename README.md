@@ -1,49 +1,43 @@
 # SUPERPOSITION
 
-One GPU particle field is the whole visual identity: ~131K particles that never leave the
-screen, reorganizing into eight attractor states — one per professional domain. At rest
-the field is the blend of all eight at low amplitude; navigation collapses it into one.
-Each particle is permanently tinted by its home domain (pale hues — the text always wins);
-collapsed views cast the field toward that domain's color.
+Personal website at https://kaisabuhussein.com. The homepage keeps its sunflower spirals and white/orange palette. Eight domain pages receive distinct pattern assignments, a complete curated palette and bounded framing/detail for each browser-tab session. Refreshing or returning to a page preserves its assignment.
 
-**All content in this build is `[PLACEHOLDER]`.** Real content is a data-only swap (below).
-
-## Stack
-Static site, no framework, no build step. Hand-authored ES modules; three.js r185
-(WebGPURenderer + TSL compute, automatic WebGL2 fallback) vendored in `/vendor` — zero
-third-party requests at runtime, no analytics. All text is real DOM text: ATS parsers,
-screen readers, and Ctrl-F are first-class.
+The site uses static HTML, CSS and native ES modules with no runtime npm dependency. Hardware WebGPU runs the sand simulation; a matching lightweight SVG field remains available during startup, reduced motion, unsupported hardware or failure. Real content and the printable résumé remain ordinary semantic HTML. Fonts and assets are self-hosted; no analytics or visitor identity is added.
 
 ## Run locally
+
+```sh
+node tools/serve-secure.mjs . 8080
 ```
-python -m http.server 8080     # from repo root (any static server works)
-```
-Open http://localhost:8080. Useful flags: `?seed=1` deterministic test mode (freezes at
-sim-frame 240; add `&run=1` to keep running) · `?force=webgl` forces the WebGL2 backend.
 
-Keys: `1–8` domains · `←/→` cycle · `Esc` home · `r` full résumé · `p` print · `.` pause.
-Also: horizontal swipe (touch) and wheel-past-content-edge (desktop) page between domains;
-subtle mouse/gyro parallax (gyro is tap-to-enable on iOS).
+Open http://127.0.0.1:8080. This local server applies the production CSP except HTTPS upgrading. QA flags: ?force=static, ?force=webgl, ?seed=123 and ?timing=1. Explicit seeded QA preserves the older deterministic renderer path; the normal visitor path runs Resonance.
 
-## Content update (owner)
-1. Edit `content/resume.data.js` — the single source of truth (schema §4.2 in PLAN.md).
-2. `node tools/bake.mjs` — re-syncs the static no-JS/ATS layer inside `index.html`.
-3. Push. Nothing else changes; the print view and every facet render from the same data.
+Keyboard: 1–8 domains, arrows to cycle, Escape home/close, r standalone résumé, p print. Index contains keyboard focus while open. A deliberate horizontal swipe advances one page; vertical scrolling, pinch/cancelled gestures, controls and rapid repeats do not. Ordinary phone touch and orientation do not steer the sand.
 
-## Dev tooling (optional, gitignored)
-Node ≥ 20. `npm install`, then:
-- `node tools/budget.mjs` — gzip budget gate (≤ 900 KB total; caps per category)
-- `npx playwright test --config tests/playwright.config.js` — full QA matrix
-  (`npx playwright install chromium` once)
-- `node tools/soak.mjs 5` — 5-minute memory/fps soak against a running local server
-- `node tools/og.mjs` — regenerate the OG card from the live engine
-- `node tools/gen-static.mjs` — regenerate the T0 static-field SVG
+## Development and release checks
+
+Node/npm are development tools only. Install the pinned tools with npm install and npx playwright install chromium. Required source/browser checks live in .github/workflows/qa.yml. Start the local server before manual browser tools.
+
+- node tools/budget.mjs — existing 900 KB total and 80 KB app gzip caps.
+- node tools/bake.mjs — synchronize semantic HTML after changing content or base CSS; commit the bake output.
+- node --test tests/worker-edge.test.mjs tests/performance-policy.test.mjs tests/module-graph.test.mjs tests/appearance.test.mjs
+- node tools/appearance-interactions.mjs .
+- npx playwright test --config tests/playwright.config.js content.spec.js appearance.spec.js state.spec.js print.spec.js a11y.spec.js s4-integration.spec.js seo-p0.spec.js metadata-schema.spec.js browser-runtime-evidence.spec.js --ignore-snapshots
+- node tools/appearance-browser-qa.mjs http://127.0.0.1:8080 — real hardware Chrome desktop/mobile and failure cases.
+- node tools/appearance-gpu-qa.mjs — all 26 full SIM programs and four fault controls; requires hardware WebGPU.
+- node tools/appearance-transitions-qa.mjs — assigned-mode races, stale-owner control and frozen old/current CSS polarity contrast.
+- node tools/appearance-edge-qa.mjs — Index during startup and late device disposal.
+- node tools/appearance-plan-mutations.mjs — regression observers reject deliberately broken plan behavior.
+- node tools/appearance-palette-qa.mjs — all 26 rendered palettes on page copy and Index.
+
+Manual tool receipts and screenshots are written under test-results/appearance-release (gitignored). The older visual snapshots predate this design and are not refreshed by this change.
+
+## Hosting and branch preparation
+
+At preparation time, the live Cloudflare release is 9d1a0b7 on cloudflare-staging-anchor. main is older and historically served an archival GitHub Pages copy. The appearance-release-20261126 branch prepares the current site for integration into main; preparation does not push or deploy. Moving main alone must not be represented as updating the existing Cloudflare production branch. Preserve main's guard changes when integrating its history.
+
+Release evidence and limitations: docs/receipts/APPEARANCE-2026-11-26.md. Engine/appearance design: docs/RESONANCE.md. Content source: content/resume.data.js.
 
 ## Licenses
-- three.js — MIT (`vendor/THREE-LICENSE.md`, pinned r185)
-- Archivo & Fragment Mono — SIL OFL 1.1, self-hosted subsets in `assets/fonts/`
 
-## Accessibility & fallbacks
-Canvas is `aria-hidden`; the DOM is the complete experience. No JS / reduced motion /
-init failure → static prerendered field (SVG) with full content and navigation. Fully
-keyboard operable; print (`p`) collapses to a one-page typeset resume.
+Vendored three.js is MIT. Archivo and Fragment Mono use SIL OFL 1.1. No external runtime requests are required.

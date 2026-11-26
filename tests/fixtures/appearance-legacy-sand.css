@@ -1,0 +1,36 @@
+/* Resonance field. Scoped to html.sand (set by js/head.js before first paint wherever the
+   engine is expected, and held while it runs) and html.sand-pending (opening curtain).
+   Without them the page is the legacy page. Notes: docs/RESONANCE.md */
+#sand{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+.sand #field,.sand #atmosphere,.sand #legibility{display:none!important}
+/* the legacy static picture of the field must not show while the engine is still starting */
+.sand body[data-tier="0"]{background-image:none}
+.sand-pending .site-head,.sand-pending main,.sand-pending .domain-strip,.sand-pending .state-axis,.sand-pending .spectral-edge{opacity:0}
+.sand .site-head,.sand main,.sand .domain-strip,.sand .state-axis,.sand .spectral-edge{transition:opacity .9s ease}
+/* the engine reads glyph positions from the live layout, so the view may not slide */
+.sand .view{transform:none!important;transition:opacity .28s ease}
+.sand .index-overlay{background:color-mix(in srgb,var(--ground) 58%,transparent);backdrop-filter:blur(5px)}
+/* headings are ordinary solid type (owner's pick 2026-11-25): the plate keeps clear of them */
+.sand .positioning,.sand .manifest li,.sand .dossier-line,.sand .facet-kicker,.sand .record-list li{text-shadow:0 0 14px var(--ground),0 0 5px var(--ground)}
+@property --accent{syntax:"<color>";inherits:true;initial-value:#86d6ff}
+@property --accent2{syntax:"<color>";inherits:true;initial-value:#b59cff}
+@property --ink{syntax:"<color>";inherits:true;initial-value:#f2f4f6}
+@property --muted{syntax:"<color>";inherits:true;initial-value:#8f99a6}
+html.sand{transition:--accent .9s ease,--accent2 .9s ease,--ink .7s ease,--muted .7s ease}
+/* rows arrive in turn; opacity only, because the engine reads their rectangles */
+@keyframes sand-in{from{opacity:0}}
+.sand .view.on .manifest li{animation:sand-in .5s ease backwards;animation-delay:calc(.22s + var(--n,0)*70ms)}
+.sand .view.on .dossier{animation:sand-in .5s ease backwards;animation-delay:calc(.42s + var(--n,0)*60ms)}
+:is(.manifest li,.dossier):nth-child(2){--n:1}
+:is(.manifest li,.dossier):nth-child(3){--n:2}
+:is(.manifest li,.dossier):nth-child(4){--n:3}
+:is(.manifest li,.dossier):nth-child(5){--n:4}
+@media print{#sand{display:none!important}}
+/* a press on a heading is a press on the plate, so a heading is never selected */
+.sand .view h1,.sand .view h2{user-select:none;-webkit-user-select:none}
+#sand-dial{position:fixed;z-index:19;right:8px;top:calc(var(--header-h) + 44px);bottom:calc(var(--strip-h) + 44px);width:24px;cursor:ns-resize;touch-action:none;transition:opacity .9s ease}
+#sand-dial::before{content:"";position:absolute;left:11px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--rule) 12%,var(--rule) 88%,transparent)}
+#sand-dial i{position:absolute;left:6px;top:var(--v,50%);width:11px;height:11px;margin-top:-6px;border:1px solid var(--accent);border-radius:50%;background:var(--ground);box-sizing:border-box}
+#sand-dial:focus-visible{outline:1px solid var(--accent);outline-offset:3px}
+.sand-pending #sand-dial{opacity:0}
+@media(max-width:720px),print{#sand-dial{display:none}}

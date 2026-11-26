@@ -10,7 +10,7 @@ const VIEWS = ["home", ...FACET_ORDER, "record"];
 export function createRouter(doc, { onState } = {}) {
   const body = doc.body;
   let current = null;
-  let swapTimer = 0;
+  let swapTimer = 0, transitionVersion = 0;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const idFromHash = () => {
@@ -31,6 +31,7 @@ export function createRouter(doc, { onState } = {}) {
 
   function apply(id, first) {
     if (id === current) return;
+    const transition = ++transitionVersion;
     const prev = current;
     current = id;
 
@@ -63,12 +64,14 @@ export function createRouter(doc, { onState } = {}) {
     clearTimeout(swapTimer);
     if (fromEl) closeDossiers(fromEl);
     const show = () => {
+      if (transition !== transitionVersion) return;
       for (const v of VIEWS) {
         const el = doc.getElementById(`view-${v}`);
         el.removeAttribute("hidden");
         el.classList.toggle("on", false);
       }
       requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (transition !== transitionVersion) return;
         toEl.classList.add("on");
       }));
       doc.querySelector("main").scrollTop = 0;
@@ -117,8 +120,9 @@ export function createRouter(doc, { onState } = {}) {
 
   doc.addEventListener("keydown", (e) => {
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+    if(doc.body.dataset.index === "open") return;
     const tag = doc.activeElement && doc.activeElement.tagName;
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || doc.activeElement?.closest("#sand-lab,[contenteditable=true],[role=slider]")) return;
     if (e.key >= "1" && e.key <= String(FACET_ORDER.length)) go(FACET_ORDER[+e.key - 1]);
     else if (e.key === "Escape") go("home");
     else if (e.key === "r") location.assign("/resume/");
