@@ -1,3 +1,4 @@
+const EXPERIMENT_REFERENCE = false;
 import { createTouchInput } from "./touch-input.js";
 /* RESONANCE: the field as a resonating plate. Sand gathers on the nodal lines of the
    current mode and keeps clear of the page's text. Raw WebGPU.
@@ -393,16 +394,6 @@ export const Resonance = {
     }
     size();
 
-    // deterministic start: the same sand falls the same way on every load
-    const pBuf = device.createBuffer({ size: MAX * 16, usage: GPUBufferUsage.STORAGE, mappedAtCreation: true });
-    {
-      const a = new Float32Array(pBuf.getMappedRange());
-      let s = 0x9e3779b9;
-      const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-      for (let i = 0; i < MAX; i++) { a[i * 4] = (rnd() * 2 - 1) * ax; a[i * 4 + 1] = (rnd() * 2 - 1) * ay; a[i * 4 + 2] = 1; a[i * 4 + 3] = 0; }
-    }
-    pBuf.unmap();
-
     const U = new Float32Array(36), PAL = new Float32Array(40), V = new Float32Array(8);
     const ubo = (a) => device.createBuffer({ size: a.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const uBuf = ubo(U), palBuf = ubo(PAL), glowBuf = ubo(PAL), vBuf = ubo(V);
@@ -425,7 +416,7 @@ export const Resonance = {
     const mod = (code) => fieldTime('shaderModule', () => device.createShaderModule({ code }));
     const fieldGpuBegin = performance.now();
     device.pushErrorScope("validation");
-    const BASE_MODES = [0,1,2,3,4,5,6,7,8];
+    const BASE_MODES = []; // EXPERIMENT: opening/current/target only
     const modeFor = page => appearance.forState(page).mode;
     const pipelineCache = new Map();
     let runningProgram = null, queuedProgram = null;
@@ -456,14 +447,28 @@ export const Resonance = {
     };
     const openingMode = modeFor(state);
     body.dataset.patternLoading='1';
-    let initialProgram;
-    try { initialProgram = await deadline(programFor([openingMode]),"opening pattern"); } finally { delete body.dataset.patternLoading; }
-    let simPipe = initialProgram.pipeline, activeSimModes = initialProgram.modes;
-    root.dataset.fieldCompiledModes = [...activeSimModes].join(',');
+    // Compile while independent render setup and the unchanged particle fill run.
+    const openingProgram = deadline(programFor([openingMode]),"opening pattern");
+    // A synchronous setup failure may leave before the await below; observe rejection.
+    openingProgram.catch(() => {});
     const dm = mod(DRAW), fm = mod(FADE), sm = mod(SHOW);
     const drawPipe = fieldTime('drawPipe', () => device.createRenderPipeline({ layout: "auto", vertex: { module: dm, entryPoint: "vs" }, fragment: { module: dm, entryPoint: "fs", targets: [{ format: ACC, blend: { color: add, alpha: add } }] }, primitive: { topology: "triangle-list" } }));
     const fadePipe = fieldTime('fadePipe', () => device.createRenderPipeline({ layout: "auto", vertex: { module: fm, entryPoint: "vs" }, fragment: { module: fm, entryPoint: "fs", targets: [{ format: ACC, blend: { color: keep, alpha: keep } }] }, primitive: { topology: "triangle-list" } }));
     const showPipe = fieldTime('showPipe', () => device.createRenderPipeline({ layout: "auto", vertex: { module: sm, entryPoint: "vs" }, fragment: { module: sm, entryPoint: "fs", targets: [{ format }] }, primitive: { topology: "triangle-list" } }));
+    // deterministic start: the same sand falls the same way on every load
+    const pBuf = device.createBuffer({ size: MAX * 16, usage: GPUBufferUsage.STORAGE, mappedAtCreation: true });
+    {
+      const a = new Float32Array(pBuf.getMappedRange());
+      let s = 0x9e3779b9;
+      const rnd = () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      for (let i = 0; i < MAX; i++) { a[i * 4] = (rnd() * 2 - 1) * ax; a[i * 4 + 1] = (rnd() * 2 - 1) * ay; a[i * 4 + 2] = 1; a[i * 4 + 3] = 0; }
+    }
+    pBuf.unmap();
+
+    let initialProgram;
+    try { initialProgram = await openingProgram; } finally { delete body.dataset.patternLoading; }
+    let simPipe = initialProgram.pipeline, activeSimModes = initialProgram.modes;
+    root.dataset.fieldCompiledModes = [...activeSimModes].join(',');
     const fieldValidationBegin = performance.now();
     const bad = await device.popErrorScope();
     if (fieldTiming) { root.dataset.fieldValidationMs = String(performance.now() - fieldValidationBegin); root.dataset.fieldGpuPreparationMs=String(performance.now()-fieldGpuBegin); }
@@ -652,12 +657,17 @@ export const Resonance = {
       device.queue.copyExternalImageToTexture({ source: kc }, { texture: markTex }, [mw, mh]);
     }
 
+    // EXPERIMENT ONLY: fixed-step reference and compressed full-render replay.
     function frame(now) {
       if (!running) return;
       raf = win.requestAnimationFrame(frame);
       const dt = Math.min(Math.max((now - last) / 1000, 0), 0.033);
-      last = now; t += dt; fr++; shakeT += dt; strikeAge += dt; joltT += dt; moved += dt;
-      if (dirty && now - lastMask > 90) { dirty = false; lastMask = now; buildMask(); }
+      last = now;
+      step(dt, now, false);
+    }
+    function step(dt, now, warming) {
+      t += dt; fr++; shakeT += dt; strikeAge += dt; joltT += dt; moved += dt;
+      if (!warming && dirty && now - lastMask > 90) { dirty = false; lastMask = now; buildMask(); }
       if (!simBG) return;
       if ((markDirty || marks.length || down) && now - lastMark > 66) { markDirty = false; lastMark = now; drawMarks(); }
       if (!acc || accW !== W || accH !== H) makeAcc();
@@ -681,8 +691,8 @@ export const Resonance = {
       const tilt = (mobile || cssW <= 720 ? 0.2 : 1) * ((intro ? 1.02 * Math.pow(1 - Math.min(1, t / 1.8), 3) : 0)
         + 0.09 * shakeAmp * Math.sin(Math.PI * Math.min(1, shakeT / 0.55))
         + 0.08 * joltAmp * Math.sin(Math.PI * Math.min(1, joltT / 0.5)));
-      if (!revealed && t > 1.0) { revealed = true; root.classList.remove("sand-pending"); }
-      if(t>=1&&!root.hasAttribute("data-field-ready"))root.setAttribute("data-field-ready","");
+      if (!warming && !revealed && t > 1.0) { revealed = true; root.classList.remove("sand-pending"); }
+      if(!warming&&t>=1&&!root.hasAttribute("data-field-ready"))root.setAttribute("data-field-ready","");
       const look=appearance.current;
       if(!hovering&&idB!==look.mode)retarget(look.mode,.5);
       onRecipe();
@@ -726,6 +736,7 @@ export const Resonance = {
         device.queue.onSubmittedWorkDone().then(() => { if (!dead) { root.dataset.fieldFormedGpuDone = String(performance.now()); root.dataset.fieldFormedGpuModes=modes; root.dataset.fieldFormedGpuAge=String(age); } });
       } if (fieldTiming && !root.dataset.fieldFirstSubmit) root.dataset.fieldFirstSubmit = String(performance.now());
 
+      if (warming) return; // Fixed steps do not count as live FPS samples.
       // governor: shed grains before frames, and leave for the static ground if that fails
       frames++;
       if (now - clock >= 1000) {
@@ -741,11 +752,47 @@ export const Resonance = {
       }
     }
 
+    let warmingUp = false;
+    async function startupReplay() {
+      warmingUp = true;
+      const started = win.performance.now(), initialLook = appearance.current;
+      const valid=()=>{if(appearance.current!==initialLook||initialLook.mode!==idA||initialLook.mode!==idB){const e=new Error('Startup appearance superseded');e.name='AbortError';e.code='APPEARANCE_SUPERSEDED';throw e;}return !dead&&root.dataset.fieldStartup!=='fallback'&&!down&&!touchInput.active;};
+      canvas.style.visibility = "hidden";
+      const previousOpacity = canvas.style.opacity, previousTransition = canvas.style.transition;
+      // Render offscreen at full opacity; restore visibility only after actual queue completion.
+      canvas.style.opacity = "1"; canvas.style.transition = "none";
+      try {
+        // Wall timing starts above this wait; font load is part of startup cost.
+        await deadline(doc.fonts?.ready, "startup fonts");
+        if (!valid()) throw Error("Replay startup owner invalid");
+        // Freeze one real full-resolution text/layout mask for the fixed-step comparison.
+        // DOM animation over 90 real rAFs must not change the reference's mask workload.
+        buildMask(); dirty = false; lastMask = 0;
+        // Use a virtual timestamp only for the same mask/mark throttles in both arms.
+        // t and fr advance solely through the unchanged step implementation.
+        for (let i = 0; i < 90; i++) {
+          if (EXPERIMENT_REFERENCE) await new Promise(resolve => win.requestAnimationFrame(resolve));
+          if (!valid()) throw Error("Replay startup owner changed");
+          step(1 / 60, (i + 1) * 1000 / 60, true);
+        }
+        await deadline(device.queue.onSubmittedWorkDone(), "startup replay");
+        if (!valid()) throw Error("Replay completion owner changed");
+        root.dataset.fieldReplay = JSON.stringify({mode:EXPERIMENT_REFERENCE?"reference":"fast",steps:90,dt:1/60,age:t,frames:fr,wallMs:win.performance.now()-started,completedAt:win.performance.now()});
+        revealed = true; root.classList.remove("sand-pending"); root.setAttribute("data-field-ready", "");
+        canvas.style.visibility = "";
+        dirty = true; lastMask = -1e9; // Refresh real layout on the first live frame.
+        // Opacity is already 1 at reveal; CSS fade is deliberately bypassed in this isolated experiment.
+      } catch (error) {
+        canvas.style.opacity = previousOpacity; canvas.style.transition = previousTransition;
+        dispose(); throw error;
+      } finally { warmingUp = false; }
+    }
+
     function sync() {
       if(doc.hidden)touchInput?.cancel();
       const paused = userPaused || doc.hidden;
       body.toggleAttribute("data-paused", paused);
-      if (!paused && !running && !dead) { running = true; last = win.performance.now(); clock = last; frames = 0; raf = win.requestAnimationFrame(frame); }
+      if (!warmingUp && !paused && !running && !dead) { running = true; last = win.performance.now(); clock = last; frames = 0; raf = win.requestAnimationFrame(frame); }
       if (paused && running) { running = false; win.cancelAnimationFrame(raf); }
     }
     function dispose() {
@@ -836,6 +883,10 @@ export const Resonance = {
     root.classList.add("sand");
     body.dataset.particles = String(count);
     theme?.setState?.(state);
+    // Domain links activate through their anchors; hovering leaves the field unchanged.
+    doc.fonts?.ready?.then(() => { dirty = true; });
+    try { win.sessionStorage.setItem("sp-sand", "1"); } catch {}
+    await startupReplay();
     win.addEventListener("pointermove", onMove, { passive: true });
     win.addEventListener("pointerdown", onDown, { passive: true });
     win.addEventListener("pointerup", onUp, { passive: true });
@@ -844,9 +895,8 @@ export const Resonance = {
     win.addEventListener("resize", onResize);
     doc.addEventListener("visibilitychange", sync);
     doc.querySelector("main")?.addEventListener("click", queueMask);
-    // Domain links activate through their anchors; hovering leaves the field unchanged.
-    doc.fonts?.ready?.then(() => { dirty = true; });
-    try { win.sessionStorage.setItem("sp-sand", "1"); } catch {}
+
+    // sync takes an actual wall timestamp, never the 1.5s virtual step clock.
     born = win.performance.now();
     sync();
     return api;

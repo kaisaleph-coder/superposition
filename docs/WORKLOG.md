@@ -1,3 +1,41 @@
+## 2026-11-28T15:12:58.191Z [main] PARK preview recovery; publish approved full replay
+user decision: lets push this to the main website; guide me on anything needed. This supersedes the prior no-commit/no-push/no-deploy task boundary for this website release.
+position: Publishing appearance-release-20261126 to existing production cloudflare-staging-anchor, not archival main. Live ref remains9d1a0b7 before release; no other checkout changes. Source public assets match all frozen preview manifest resources exactly.
+verified: Fresh source checks32pass/0fail; interactions11pass/0fail; required browser suite90pass/2existing skips/0fail; wheel pass and deliberately broken cooldown correctly rejected; surface contract and bake parity pass; budget883.4KB total/78.3KB app; Wrangler deploy dry-run exit0.
+tried-failed: Wheel tests first used unserved default8080 (ERR_CONNECTION_REFUSED), then passed on actual8892. Local Wrangler auth expired; use existing Git-triggered deployment, not new account/token.
+boundaries: Full replay retained, performance500ms/50ms targets remain UNMET, physical phone/Safari/Firefox proof unavailable; broader legacy baseline-red choreography cases unchanged. Keep Preview-Local.bat, all raw untracked receipts and prior generated package.
+next: Commit two approved app files plus this continuity, push HEAD to production ref without force, then verify canonical domain exact hash and browser behavior.
+
+## 2026-11-28T14:51:13.347Z [main] - preview-link recovery
+position: Replacement HTTPS preview https://regional-interactive-described-journalists.trycloudflare.com/?preview=full-replay-latest is running through free cloudflared HTTP/2, exec session 96222, metrics 127.0.0.1:20249, origin 127.0.0.1:8878. Original tunnel and servers left running.
+decided: Preserve source and full replay; no implementation, commit, push, merge or deployment. Predecessor explicitly relinquished website writing; freshly read T3 state has no active run. Recovery receipt remains PARTIAL/owner unknown, not a free-checkout certificate.
+tried-failed: Original public URL timed out in shared browser and Node HTTP; one later IPv4 HEAD returned200. Failure is intermittent; exact cause unresolved. New hostname and HTTP/2 were changed together, so transport root cause is not established.
+verified: Replacement opened in shared Electron preview; HTTP200/exact renderer SHA024322131ab1e13e451360dfb65daf2cf8ff0eeb2a1c191c76abc10ff04734e8. Installed Chrome live resonance fresh load, Finance navigation and reload PASS, zero page errors/request failures. Receipt C:/Users/kaisa/AppData/Local/Temp/kais-sand-hill-20261128/link-restoration-chrome.json. Electron separately falls back with fieldError resonance too slow on this device; no phone proof.
+next: Kais opens replacement link on intended device; keep preview process running. Performance500ms initial/50ms median route+reload targets remain UNMET; expired climb stays closed.
+
+## 2026-11-28T14:46:10.0178309Z [main] PARK — successor requested
+user decision: handoff and spin up another thread to continue from current broken-public-link investigation. Local8811/8878 freshly200 exact final renderer; public14:17HTTP200 conflicts with repeated shared-browser timeouts and user phone failure; cause unresolved. Full replay selected; timed climb closed/targets unmet.
+position: source dirty and uncommitted; do not lose working tree. Detailed facts/ownership/processes/tests in docs/HANDOFF-WEBSITE-2026-11-28.md. Sender relinquishes website writing when successor starts; trading-ops root remains another live owner's checkout.
+next: successor reorients/receives context, reproduces public failure, restores shareable latest-build link; no new timed optimization/delegates/push inferred.
+
+
+## 2026-11-28T14:17:40.0771394Z [main] — latest build shared
+user decision: keep full replay; direct formation excluded. Requested latest-build link.
+position: existing website-owned quick tunnel now points through port8811 to frozen site-replay-final79 assets; old baseline files preserved. Previous server session45625 stopped via Ctrl-C; replacement session10695 serves latest SHA024322131ab1e13e451360dfb65daf2cf8ff0eeb2a1c191c76abc10ff04734e8. No source code changes.
+verified: public HTTPS root and renderer both200 with exact local hashes via direct HTTP after two shared-browser15000ms timeouts. URL https://legitimate-annotated-meters-requirement.trycloudflare.com/?preview=full-replay-latest . New tunnel provisioning failed once sandbox network and once429; reused owned existing tunnel instead. Timing targets remain unmet; no commit/push.
+next: owner browses the latest full-replay preview; preserve tunnel/server while needed.
+## 2026-11-28T04:59:09.101Z [main] — timed climb final verification
+position: OFF TRACK for500ms initial/50ms reload+route; original05:00:37UTC deadline. Branch now has full replay partial improvement plus verified hidden-startup correction, uncommitted/unpushed.
+decided: retain best matched41% diagnostic improvement; unapproved direct seeding stays isolated. User continuation superseded earlier stop caps, not the deadline or acceptance criteria.
+verified: final90 required browser passes/2 existing skips;32 Node passes;883.4KB total/78.3KB app; startup hold/route2pass; hidden-startup old-fails/new-passes control. Broader three legacy failures reproduced on accepted baseline and remain unresolved. Actual Android still has no WebGPU adapter.
+next: close at original deadline, report improved-but-incomplete; no main-ready/push claim. Full hashes, protocol caveats, failures and raw archives in receipts/HILL-CLIMB-2026-11-28.md.
+
+## 2026-11-28 04:40Z [main] — RESUME authorized hill climb
+position: target remains OFF TRACK; original deadline 05:00:37 UTC. Source remains scheduling-only/unpromoted; all replay/direct experiments are isolated in OS temp. Independent fifth-agent review rejects target acceptance. No push/deploy.
+decided: user explicitly authorized continued retries until target or original clock, overriding the two-failure and experiment-count stop gates. Five new agents total remains the cap, now exhausted. User approved changed initial grain/formation history for a direct-init experiment, subject to visual approval; comparison has been shown and answer is pending.
+tried-failed: additional unary/hidden-SHOW changes stayed below the frozen improvement floor. Best qualifying matched replay diagnostic remains 2.275s to 1.342s, not certified presentation/input acceptance. Direct field formation is about164ms desktop/80ms emulated phone, but fresh-context diagnostic is2.6–2.8s desktop/1.8–1.9s emulated phone, with adapter acquisition about1.4s. Power preference, compatibility request and WebGL prewarm did not remove it. Actual Android emulator Chrome133 returns no WebGPU adapter; static fallback is not acceptance.
+verified here: direct-v1 frozen79-file package budget884.3KB total/79.2KB app passes. Strict diagnostic controls12/12 reject stale/no-engine/static/partial-ancestor cases; still not presentation/input certification. Experimental max-age600 cache lab confirms23 cache hits on reload; five reload medians574.9ms desktop/386.3ms desktop phone emulation. Cache policy is hypothetical, not production. Direct-v2 adds a startup resize generation guard; native touch10/10 passed; full journeys running.
+next: finish direct-v2 journeys, trusted page-change lower-bound timing and startup-resize discrimination; retain raw evidence under OS temp kais-sand-hill-20261128. Stop at05:00:37 UTC with unmet gates explicit; do not promote unapproved direct visuals or unsupported timing claims.
 # WORKLOG — SUPERPOSITION one-shot run
 
 ## 2026-07-17 — one-shot execution session (Claude Fable 5, single agent)
@@ -196,3 +234,11 @@ next: run one isolated diagnostic with lifecycle and actual input timestamps, th
 position: user-authorized isolated diagnosis measured the old repeat at1083.3ms (>900). Correct native GPU repeat150.7ms is blocked, and a later gesture advances. Disabled-cooldown actual-main.js mutant caught at237.4ms by its intended duplicate-navigation assertion. Production wheel code unchanged. Control journeys now record a repeatable seed and startup failures include lifecycle DOM/cleanup.
 verified here: final15/15 real-renderer journeys,90 required browser passes/2 existing skips/0 failures,10 native phone cases,32 Node tests,11 source interaction cases, native GPU/static wheel positives and intended broken-cooldown rejection. All79 public files match the previously tested hover candidate; earlier26-pattern/palette/fault evidence remains applicable to unchanged bytes. Budget882.2KB total/77.2KB app. Fresh origin/main89eac7b remains an ancestor.
 next: commit the local hover/test correction, verify the80-file package and exact79-file HTTPS preview; no push/deploy without a new explicit instruction. Physical-phone/Safari/Firefox/weak-GPU timing/project-subpath proof remain open.
+
+
+## 2026-11-28 03:00Z ? timed live-sand hill climb
+User-selected hill-climb, deadline05:00:37UTC. Targets500ms firstliveformedinteractive and50ms median reload+route on desktop and physicalAndroid, existingdetail preserved. Contract and passledger: docs/receipts/HILL-CLIMB-2026-11-28.md. Baseline48e73fc, cleantracked source; Preview-Local.bat preserved. No release authorization. Evaluator challenge running; no candidate edits yet.
+
+
+## 2026-11-28 03:36Z [main] ? hill-climb stop gate
+position: best unpromoted replay diagnostic median1.342s vs2.275s, targets500msinitial/50msreload+route stillUNMET; nativeAndroidemulatorhasnoWebGPUadapter. Two experiments failed10% improvementgate; pausediteration/requested bounded ownercontinuation, originaldeadline05:00:37UTC persists. Allrawruns/controlmutants/knownprototyperaces/dirtyfiles/processes/resumeentry in receipts/HILL-CLIMB-2026-11-28.md. No sourcepromotion/push. Agent5reviewunused. next: ownerdecision; no further candidateperformancepasses beforethat.

@@ -1,6 +1,6 @@
 /* SUPERPOSITION boot (PLAN §6 load order).
    Runs deferred: re-render views from data (ADR-004), start router, detect tier,
-   then dynamic-import the field engine after first paint (P2+). The field is a
+   then start the normal field; legacy QA imports remain after first paint (P2+). The field is a
    progressive enhancement — every failure path lands on the static T0 ground. */
 
 import { renderAll, FACET_ORDER } from "./render-dom.js";
@@ -123,8 +123,7 @@ function toStatic(reason) {
 }
 
 if (tier > 0) {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(async () => {
+  const initializeField = async () => {
       if(!wantSand&&!q.has("seed")&&!q.get("force")){toStatic("animated appearance unavailable");return;}
       // Hardware WebGPU and no QA parameter: the resonance field (js/field/resonance.js).
       // Anything else, or any failure, continues into the legacy field below.
@@ -144,6 +143,7 @@ if (tier > 0) {
           return;
         } catch (err) {
           engine = null;
+          if(err?.code==='APPEARANCE_SUPERSEDED'&&document.documentElement.dataset.fieldStartup!=='fallback'){document.documentElement.classList.add('sand');return initializeField();}
           document.documentElement.classList.remove("sand", "sand-pending");
           console.warn("resonance: " + (err?.message || err));
           body.dataset.resonanceError = String(err?.message || err).slice(0, 160);
@@ -169,6 +169,7 @@ if (tier > 0) {
         body.dataset.renderer = "static";
         fallbackController.setState(router.current, { first: true });
       }
-    });
-  });
+  };
+  if (wantSand) void initializeField();
+  else requestAnimationFrame(() => requestAnimationFrame(initializeField));
 }
